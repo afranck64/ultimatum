@@ -23,22 +23,23 @@ def sigmoid_tf(x):
 def gain_tf(y_true, y_pred):
     math_pi = tf.constant(math.pi)
     one = tf.constant(1.0)
-    ten = tf.constant(10.0)
+    divider = tf.constant(40.0)
     x = tf.math.subtract(y_true, y_pred)
-    x = tf.math.truediv(x, ten)
-    left_mul = sigmoid_tf(x)
+    x = tf.math.truediv(x, divider)
+    left_mul = sigmoid1024_tf(x)
     right_mul = tf.math.cos(tf.math.divide(x, math_pi))
     return tf.math.multiply(left_mul, right_mul)
 
 def loss_tf(y_true, y_pred):
     math_pi = tf.constant(math.pi)
     one = tf.constant(1.0)
-    ten = tf.constant(10.0)
+    divider = tf.constant(40.0)
     x0 = tf.math.subtract(y_true, y_pred)
-    x = tf.math.truediv(x0, ten)
-    left_mul = sigmoid_tf(x)
+    x = tf.math.truediv(x0, divider)
+    left_mul = sigmoid1024_tf(x)
     right_mul = tf.math.cos(tf.math.divide(x, math_pi))
-    return tf.math.subtract(one*2, tf.math.multiply(left_mul, right_mul))
+    return tf.math.subtract(one, tf.math.multiply(left_mul, right_mul))
+    #return (1 - gain_tf(y_true, y_pred)) * 100
 
 def _keras_model(nb_features, loss=None, metrics=None, nb_outputs=1):
     """

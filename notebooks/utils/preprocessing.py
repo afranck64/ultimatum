@@ -1,28 +1,88 @@
 #TODO: check later (import from models.metrics?)
 MAX_GAIN = 200
 
-def df_to_xy(df, normalize=True, centered=False, drop_columns=None, normalize_target=False):
+def df_to_xy(df, normalize=True, centered=False, fuse_risk=False, drop_columns=None, select_columns=None, normalize_target=False, min_target=None, max_target=None, df_min=None, df_max=None):
+    """
+    :param df:  DataFrame with features and target (min_offer is expected to be the target col)
+    :param normalize: (bool) if True, features are normalized
+    :param centered: (bool) if True, feature are shifted to have a 0 mean
+    :param fuse_risk (bool) if True, fuse count_effort and cells into a new columns <effort> while dropping both cells and count_effort
+    :param drop_columns: (list) list of features to drop from the dataset
+    :param select_columns: (list) list of columns to select if availabe, drop_columns isn't considered
+    :param normalize_target: (bool) if True, target columns is divided by 200
+    :param min_target: min target prior to target normalization
+    :param max_target: max target prior to target normalization
+    :param df_min: DataFrame, if available will be used as min for data normalization
+    :param df_max: DataFrame, if available will be used as max for data normalization
+    """
 
-    df_effort = df[['time_spent_prop', 'count_effort']]
-    df_effort = (df_effort - df_effort.min()) / (df_effort.max() - df_effort.min())
+    df_features, df_target = df_to_xydf(df=df, normalize=normalize, centered=centered, fuse_risk=fuse_risk, drop_columns=drop_columns, select_columns=select_columns, normalize_target=normalize_target, min_target=min_target, max_target=max_target, df_min=df_min, df_max=df_max)
+    return df_features.values, df_target.values
+        
 
-    df['effort'] = df_effort['time_spent_prop'] * df_effort['count_effort']
-    df = df[['time_spent_risk', 'cells', 'selfish', 'effort',
-            'Honesty_Humility','Extraversion', 'Agreeableness', 'min_offer']]
+def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns=None, select_columns=None, normalize_target=False, min_target=None, max_target=None, df_min=None, df_max=None):
+    """
+    :param df:  (DataFrame) with features and target (min_offer is expected to be the target col)
+    :param normalize: (bool) if True, features are normalized
+    :param centered: (bool) if True, feature are shifted to have a 0 mean
+    :param fuse_risk (bool) if True, fuse time_spent_risk and cells into a new columns <risk> while dropping both cells and time_spent_risk
+    :param drop_columns: (list) list of features to drop from the dataset
+    :param select_columns: (list) list of columns to select if availabe, drop_columns isn't considered
+    :param normalize_target: (bool) if True, target columns is divided by 200
+    :param min_target: (float) min target prior to target normalization
+    :param max_target: (float) max target prior to target normalization
+    :param df_min: DataFrame, if available will be used as min for data normalization
+    :param df_max: DataFrame, if available will be used as max for data normalization
+    """
+
+    if fuse_risk:
+        risk_cols = ['cells', 'time_spent_risk']
+        df_risk = df[risk_cols]
+        df_risk = (df_risk - df_risk.min()) / (df_risk.max() - df_risk.min())
+        df_risk['risk'] = df_risk['cells'] * df_risk['time_spent_risk']
+        df = df[[col for col in df if col not in risk_cols]]    
+
+        df_features = df[[col for col in df if col != 'min_offer']].copy()
+        df_features['risk'] = df_risk['risk']
+        df_target = df[['min_offer']].copy()
     
+    else:
+        df_features = df[[col for col in df if col != 'min_offer']].copy()
+        df_target = df[['min_offer']].copy()
+
+
+    cols = [col for col in df_features]
+    if select_columns is not None:
+        cols = select_columns
+    elif drop_columns is not None:
+        cols = [col for col in df_features if col not in drop_columns]
+    df_features = df_features[cols]
+
 
     x = df.values[:, :-1]
     y = df.values[:, -1:]
 
     if normalize:
-        x_min = x.min(axis=0)
-        x_max = x.max(axis=0)
-        x = (x - x_min) / (x_max - x_min)
+        f_min = df_features.min()
+        f_max = df_features.max()
+        if df_min is not None and df_max is not None:
+            for col in f_min:
+                if col in df_min and col in df_max:
+                    f_min[col] = df_min[col]
+                    f_max[col] = df_max[col]
+
+            
+        df_features = (df_features - f_min) / (f_max - f_min)
     if centered:
-        x -= x.mean()
+        df_features -= df_features.mean()
+    
+    if min_target is not None:
+        df_target[df_target < min_target] = min_target
+     
+    if max_target is not None:
+        df_target[df_target > max_target] = max_target
     
     if normalize_target:
-        y /= MAX_GAIN
+        df_target /= MAX_GAIN
     
-    return x, y
-        
+    return df_features, df_target

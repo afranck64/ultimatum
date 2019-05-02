@@ -26,7 +26,6 @@ class AcceptanceModel(object):
         """
         self.base_model = base_model
         if base_model is None:
-            #self.base_model = LogisticRegression(penalty='l1', solver='liblinear')
             self.base_model = LinearSVR()
         self.max_gain = max_gain
         self.zero_one = zero_one
@@ -72,9 +71,13 @@ class AcceptanceModel(object):
         xNew = np.array(xNew)
         return xNew        
     
-    def fit(self, xTrain, yTrain, **kwargs):
-        xTrain_, yTrain_ = xTrain, yTrain
-        split = int(xTrain.shape[0] * 0.75)
+    def fit(self, xTrain, yTrain, shuffle_data=False, **kwargs):
+        if shuffle_data:
+            indices = np.arange(xTrain.shape[0])
+            np.random.shuffle(indices)
+            xTrain = xTrain.copy()[indices]
+            yTrain = yTrain.copy()[indices]
+        split = int(xTrain.shape[0] * 0.7)
         xTrain_only, yTrain_only = xTrain[:split], yTrain[:split]
         xVal_only, yVal_only = xTrain[split:], yTrain[split:].ravel()
         

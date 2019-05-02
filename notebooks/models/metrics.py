@@ -65,5 +65,10 @@ def avg_loss_ratio(min_offer, predicted):
     """
     return 1 - np.mean(gain(min_offer, predicted) / gain(min_offer, min_offer))
 
+def gain_mean(min_offer, predicted):
+    return gain(min_offer, predicted).mean()
 
-__all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN']
+def avg_gain_ratio(min_offer, predicted):
+    return np.mean(gain(min_offer, predicted) / gain(min_offer, min_offer))
+
+__all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN', 'gain_mean', 'avg_gain_mean']
