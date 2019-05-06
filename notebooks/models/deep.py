@@ -21,6 +21,10 @@ def sigmoid_tf(x):
     return K.sigmoid(x)
 
 def gain_tf(y_true, y_pred):
+    zero = tf.constant(0)
+    x0 = tf.math.subtract(y_true, y_pred)
+    mask_neg = K.less(x0, zero)
+
     math_pi = tf.constant(math.pi)
     one = tf.constant(1.0)
     divider = tf.constant(40.0)
