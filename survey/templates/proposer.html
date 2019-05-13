@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form>
+        <label> Offer
+        <select name="offer">
+            {% for offer in offer_values %}
+                <option value={{offer}}>{{offer}}</option>
+            {% endfor %}
+        </select>
+        </label>
+        
+        <label> Final offer
+        <select  name="final_offer">
+            {% for offer in offer_values %}
+                <option value={{offer}}>{{offer}}</option>
+            {% endfor %}
+        </select>
+        </label>
+    </form>
+{% endblock %}

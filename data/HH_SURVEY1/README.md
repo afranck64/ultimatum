@@ -7,4 +7,4 @@
 #TODO:
     1. The AI proposal should/could be shown once the user proposal have been validated and is already read only to make sure users doesn't update their first proposal.
     2. Find a testing process for worker. Is it usefull?
-    3. Gather new data from these runs? (time_spent_prop, effort, min_offer ???)
+    3. 

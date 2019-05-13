@@ -27,7 +27,7 @@ class FeaturelessModel(object):
         return res
 
 class RandomModel(object):
-    def __init__(self, max_value):
+    def __init__(self, max_value=MAX_GAIN):
         self.value = max_value
         self._trained = False
 
