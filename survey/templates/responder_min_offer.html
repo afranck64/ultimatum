@@ -10,13 +10,6 @@
             {% endfor %}
         </select>
         </label>
-        
-        <label> Final minimum offer
-        <select  name="final_min_offer">
-            {% for offer in offer_values %}
-                <option value={{offer}}>{{offer}}</option>
-            {% endfor %}
-        </select>
-        </label>
+        <p> {{form.submit()}}</p>        
     </form>
 {% endblock %}

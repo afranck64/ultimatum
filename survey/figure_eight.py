@@ -28,6 +28,10 @@ class FigureEight(object):
         self.api_key = api_key
         self.api_version = api_version
     
+    def post(self, url, data=None, params=None, headers=None):
+        if headers is None:
+            pass
+    
     def get_url(self, worker_id=None, unit_id=None, endpoint=None, api_format="json"):
         """
         Build the required url
@@ -58,6 +62,15 @@ class FigureEight(object):
 
 
     #### Job related actions
+    def job_upload(self, job_json, job_id=None):
+        if job_id is None:
+            url = f"https://api.figure-eight.com/{self.api_version}/jobs/upload.json?key={self.api_key}"
+        else:
+            url = self.get_url()
+        return requests.post(url, json=job_json)
+        
+
+
     def job_pause(self):
         """Pauses a Job that is currently running."""
         url = self.get_url(endpoint="pause")
@@ -110,6 +123,44 @@ class FigureEight(object):
                 out_f.write(resp.content)
         else:
             warnings("Something went wrong: %s" % resp)
+    
+    def jobs_user(self, page=None):
+        """
+        Queries all jobs under the account related to the API key
+        :param page: 
+        :returns: latest 10 jobs if page is None otherwise shifted job by page x 10
+        """
+        url = f"https://api.figure-eight.com/{self.api_version}/jobs.json?key={self.api_key}"
+        if page:
+            url += f"&page={page}"
+        resp = requests.get(url)
+        if resp.status_code == Status.SUCCESS:
+            return resp.json()
+        return {}
+    
+    def jobs_team(self, team_id, page=None):
+        """
+        Queries for all Jobs under the team specified as a parameter.
+        The API key used to make the call should belong to a user on the team.
+        :param team_id:
+        :param page: 
+        :returns: latest 10 jobs if page is None otherwise shifted job by page x 10
+        """
+        url = f"https://api.figure-eight.com/{self.api_version}/jobs.json?key={self.api_key}&team_id={team_id}"
+        if page:
+            url += f"&page={page}"
+        resp = requests.get(url)
+        if resp.status_code == Status.SUCCESS:
+            return resp.json()
+        return {}
+    
+
+    def account_info(self):
+        url = f"https://api.figure-eight.com/{self.api_version}/jobs.json?key={self.api_key}"
+        resp = requests.get(url)
+        if resp.status_code == Status.SUCCESS:
+            return resp.json()
+        return {}
 
     
     
