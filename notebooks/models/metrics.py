@@ -71,4 +71,14 @@ def gain_mean(min_offer, predicted):
 def avg_gain_ratio(min_offer, predicted):
     return np.mean(gain(min_offer, predicted) / gain(min_offer, min_offer))
 
+def cross_compute(min_offer, predicted, metric):
+    """
+    :param min_offer:
+    """
+    res = 0
+    for idx in range(predicted.shape[0]):
+        sub_predicted = np.ones_like(min_offer) * predicted[idx]
+        res += metric(min_offer, predicted)
+    return res/predicted.shape[0]
+
 __all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN', 'gain_mean', 'avg_gain_mean']
