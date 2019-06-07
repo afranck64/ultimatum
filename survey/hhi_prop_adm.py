@@ -3,6 +3,9 @@ import os
 import warnings
 import random
 import string
+import csv
+import time
+import datetime
 
 from flask import (
     Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify
@@ -15,26 +18,102 @@ from flask_wtf.csrf import CSRFProtect
 
 from survey._app import app
 from survey.figure_eight import FigureEight, API_KEY, JOB_ID, RowState
-from survey.unit import HHI_Prop_ADM,  hhi_prop_adm_to_prop_result, save_prop_result
+#from survey.unit import HHI_Prop_ADM,  hhi_prop_adm_to_prop_result, save_prop_result
 from notebooks.utils.explanation import get_acceptance_propability, get_best_offer_probability
 from notebooks.utils import value_repr
 from notebooks.models.metrics import gain
 
-TUBE_RES_FILENAME = os.environ.get("TUBE_RES_FILENAME", "./data/HH_SURVEY1/out/hhi_prop_adm.csv")
+
+############ Consts #################################
+TUBE_RES_FILENAME = os.environ.get("TUBE_RES_FILENAME", "./data/HH_SURVEY1/output/hhi_prop_adm.csv")
 
 SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
 
 BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
 
 
-with open(SURVEY_INFOS_FILENAME) as inp_f:
-    model_infos = json.load(inp_f)
-
-fig8 = FigureEight(job_id=JOB_ID, api_key=API_KEY)
-
 OFFER_VALUES = [str(val) for val in range(0, 201, 5)]
 
 DEBUG = True
+
+with open(SURVEY_INFOS_FILENAME) as inp_f:
+    MODEL_INFOS = json.load(inp_f)
+######################################################
+
+
+
+############# HELPERS   ###########################
+
+class HHI_Prop_ADM(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self["offer"] = None
+        self["time_start"] = time.time()
+        self["time_stop"] = None
+        self["ai_calls_offer"] = []
+        self["ai_calls_time"] = []
+        self["ai_calls_response"] = []
+        self["time_stop"] = None
+
+
+def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=None, row_data=None):
+    """
+    :returns: {
+        offer: final proposer offer
+        time_spent: whole time spent for the proposal
+        ai_nb_calls: number of calls of the ADM system
+        ai_call_min_offer: min offer checked on the ADM
+        ai_call_max_offer: max offer checked on the ADM
+        ai_mean_time: mean time between consecutive calls on to the ADM
+        ai_call_offers: ":" separated values
+    }
+    """
+    if row_data is None:
+        row_data = {}
+    result = {}
+    result["time"] = str(datetime.datetime.now())
+    result["offer"] = proposal["offer"]
+    result["time_spent"] = proposal["time_stop"] - proposal["time_start"]
+    ai_nb_calls = len(proposal["ai_calls_offer"])
+    result["ai_nb_calls"] = ai_nb_calls
+    if ai_nb_calls > 0:
+        result["ai_call_min_offer"] = min(proposal["ai_calls_offer"])
+        result["ai_call_max_offer"] = max(proposal["ai_calls_offer"])
+    else:
+        result["ai_call_min_offer"] = None
+        result["ai_call_max_offer"] = None
+    if ai_nb_calls == 0:
+        result["ai_mean_time"] = 0
+    elif ai_nb_calls == 1:
+        result["ai_mean_time"] = proposal["ai_calls_time"][0] - proposal["time_start"]
+    else:
+        ai_times = []
+        ai_times.append(proposal["ai_calls_time"][0] - proposal["time_start"])
+        for idx in range(1, ai_nb_calls):
+            ai_times.append(proposal["ai_calls_time"][idx] - proposal["ai_calls_time"][idx-1])
+        result["ai_mean_time"] = sum(ai_times) / ai_nb_calls
+    result["ai_call_offers"] = ":".join(str(val) for val in proposal["ai_calls_offer"])
+    result["job_id"] = job_id
+    result["worker_id"] = worker_id
+    result["unit_id"] = unit_id
+    for k, v in row_data.items():
+        result[f"data__{k}"] = v
+    return result
+
+
+def save_prop_result(filename, proposal_result):
+    file_exists = os.path.exists(filename)
+    os.makedirs(os.path.split(filename)[0], exist_ok=True)
+    with open(filename, "a") as out_f:
+
+        writer = csv.writer(out_f)
+        if not file_exists:
+            writer.writerow(proposal_result.keys())
+        writer.writerow(proposal_result.values())
+############################################################
+
+
+fig8 = FigureEight(job_id=JOB_ID, api_key=API_KEY)
 
 def generate_completion_code():
     part1 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
@@ -96,8 +175,8 @@ def proposer_check():
 
     proposal["ai_calls_time"].append(time.time())
     ai_offer = int(session["row_info"]["data"]["ai_offer"])
-    acceptance_probability = get_acceptance_propability(offer, model_infos["pdf"])
-    best_offer_probability = get_best_offer_probability(ai_offer=ai_offer, offer=offer, accuracy=model_infos["acc"], train_err_pdf=model_infos["train_err_pdf"])
+    acceptance_probability = get_acceptance_propability(offer, MODEL_INFOS["pdf"])
+    best_offer_probability = get_best_offer_probability(ai_offer=ai_offer, offer=offer, accuracy=MODEL_INFOS["acc"], train_err_pdf=MODEL_INFOS["train_err_pdf"])
 
     #TODO: use the model predictions, data distribution to generate the ai_calls_response
     proposal["ai_calls_response"].append([acceptance_probability, best_offer_probability])
