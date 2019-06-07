@@ -111,8 +111,8 @@
             <label> Offer
                 <select name="offer" id="user2ai" onchange="drawChart()" required>
                     <option value="" selected disabled hidden>Select a value</option>
-                    {% for offer in offer_values %}
-                        <option value={{offer}}>{{offer}}</option>
+                    {% for value, label in offer_values.items() %}
+                        <option value={{value}}>{{label}}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -131,8 +131,8 @@
             <label> Final Offer
                 <select name="offer" required>
                     <option value="" selected disabled hidden>Select a value</option>
-                    {% for offer in offer_values %}
-                        <option value={{offer}}>{{offer}}</option>
+                    {% for value, label in offer_values.items() %}
+                        <option value={{value}}>{{label}}</option>
                     {% endfor %}
                 </select>
             </label>

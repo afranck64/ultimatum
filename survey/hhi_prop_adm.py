@@ -32,7 +32,7 @@ SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG
 BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
 
 
-OFFER_VALUES = [str(val) for val in range(0, 201, 5)]
+OFFER_VALUES = {str(val):value_repr(val) for val in range(0, 201, 5)}
 
 DEBUG = True
 
@@ -59,6 +59,7 @@ class HHI_Prop_ADM(dict):
 def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=None, row_data=None):
     """
     :returns: {
+        time: server time when genererting the result
         offer: final proposer offer
         time_spent: whole time spent for the proposal
         ai_nb_calls: number of calls of the ADM system
@@ -66,6 +67,10 @@ def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=N
         ai_call_max_offer: max offer checked on the ADM
         ai_mean_time: mean time between consecutive calls on to the ADM
         ai_call_offers: ":" separated values
+        job_id: fig-8 job id
+        worker_id: fig-8 worker id
+        unit_id: fig-8 unit/row id
+        data__*: base unit data
     }
     """
     if row_data is None:
@@ -102,6 +107,10 @@ def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=N
 
 
 def save_prop_result(filename, proposal_result):
+    prefix = ""
+    if "job_id" in proposal_result:
+        folder, fname = os.path.split(filename)
+        filename = os.path.join(folder, f"{proposal_result['job_id']}__{fname}")
     file_exists = os.path.exists(filename)
     os.makedirs(os.path.split(filename)[0], exist_ok=True)
     with open(filename, "a") as out_f:
@@ -110,16 +119,19 @@ def save_prop_result(filename, proposal_result):
         if not file_exists:
             writer.writerow(proposal_result.keys())
         writer.writerow(proposal_result.values())
-############################################################
 
-
-fig8 = FigureEight(job_id=JOB_ID, api_key=API_KEY)
 
 def generate_completion_code():
+
     part1 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
     part2 = BASE_COMPLETION_CODE
     part3 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
     return "".join([part1, part2, part3])
+
+############################################################
+
+
+fig8 = FigureEight(job_id=JOB_ID, api_key=API_KEY)
 
 class ProposerForm(FlaskForm):
     offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
