@@ -216,9 +216,12 @@ def done():
     session.clear()
     return render_template("done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
 
-@app.route("/hhi_prop_adm/webhook", methods=["POST"])
-def process_row_receive():
+@app.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
+def process_row_result():
+    req_json = request.get_json()
+    print("req_json", req_json)
     print("ARGS: ", request.args)
+
     return "200, OK"
 
 #app.config["SECRET_KEY"] = SECRET_KEY
