@@ -18,7 +18,7 @@ class Status(object):
     REDIRECT = 302
     BAD_REQUEST = 400
     UNAUTHENTICATED = 401
-    PAYMENT_REQUIred = 402
+    PAYMENT_REQUIRED = 402
     METHOD_NOT_ALLOWED = 405
     NOT_ACCEPTABLE = 406
     UNIT_LIMIT_REACHED = 422
@@ -286,7 +286,8 @@ class FigureEight(object):
         :amount_in_cents: USD amount in cents
         """
         url = self.get_url(worker_id=worker_id, endpoint="bonus")
-        return requests.post(url=url, json={"amount":amout_in_cents})
+        print("PAY url: ", url)
+        #return requests.post(url=url, json={"amount":amout_in_cents})
 
     def contributor_notify(self, worker_id, message):
         """
@@ -340,3 +341,4 @@ if __name__ == "__main__":
     fig8 = FigureEight(api_key=API_KEY, job_id=JOB_ID)
     print(fig8.job_status())
     print(fig8.row_get("2314014348"))
+    print(fig8.contributor_pay("xxx", 0))

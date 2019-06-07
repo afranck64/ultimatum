@@ -216,6 +216,11 @@ def done():
     session.clear()
     return render_template("done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
 
+@app.route("/hhi_prop_adm/webhook", methods=["POST"])
+def process_row_receive():
+    print("ARGS: ", request.args)
+    return "200, OK"
+
 #app.config["SECRET_KEY"] = SECRET_KEY
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
