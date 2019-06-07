@@ -6,5 +6,5 @@ from .acceptance import AcceptanceModel
 from .cluster import ClusterModel, ClusterExtModel
 from .featureless import FeaturelessModel, ConservativeModel, RandomModel
 from .conservative import ConservativeModel
-from .deep import KerasModel, loss_tf, gain_tf
-
+# Takes much time to load
+#from .deep import KerasModel, loss_tf, gain_tf

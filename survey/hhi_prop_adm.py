@@ -47,7 +47,7 @@ class ProposerForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
-@app.route("/proposer_hhi_adm", methods=["GET", "POST"])
+@app.route("/hhi_prop_adm", methods=["GET", "POST"])
 def proposer_interactive():
     if request.method == "GET":
         session['proposal'] = Proposal()
@@ -79,7 +79,7 @@ def proposer_interactive():
         return redirect("/done")
 
     session["proposer_interactive"] = True
-    return render_template("proposer_hhi_adm.html", offer_values=OFFER_VALUES, form=ProposerForm())
+    return render_template("hhi_prop_adm.html", offer_values=OFFER_VALUES, form=ProposerForm())
 
 import time
 import random
