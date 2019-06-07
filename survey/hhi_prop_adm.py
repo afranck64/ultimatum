@@ -167,7 +167,7 @@ def hhi_prop_adm():
         proposal["offer"] = offer
         ##TODO return redirect
         session['proposal'] = proposal
-        return redirect("hhi_prop_adm/done")
+        return redirect("/hhi_prop_adm/done")
 
     session["hhi_prop_adm"] = True
     return render_template("hhi_prop_adm.html", offer_values=OFFER_VALUES, form=ProposerForm())
