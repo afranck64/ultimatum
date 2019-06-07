@@ -1,9 +1,10 @@
+import os
+import csv
 import time
+import datetime
 
 
-
-
-class Proposal(dict):
+class HHI_Prop_ADM(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self["offer"] = None
@@ -14,7 +15,8 @@ class Proposal(dict):
         self["ai_calls_response"] = []
         self["time_stop"] = None
 
-def proposal_to_proposal_result(proposal):
+
+def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=None, row_data=None):
     """
     :returns: {
         offer: final proposer offer
@@ -26,7 +28,10 @@ def proposal_to_proposal_result(proposal):
         ai_call_offers: ":" separated values
     }
     """
+    if row_data is None:
+        row_data = {}
     result = {}
+    result["time"] = str(datetime.datetime.now())
     result["offer"] = proposal["offer"]
     result["time_spent"] = proposal["time_stop"] - proposal["time_start"]
     ai_nb_calls = len(proposal["ai_calls_offer"])
@@ -48,4 +53,19 @@ def proposal_to_proposal_result(proposal):
             ai_times.append(proposal["ai_calls_time"][idx] - proposal["ai_calls_time"][idx-1])
         result["ai_mean_time"] = sum(ai_times) / ai_nb_calls
     result["ai_call_offers"] = ":".join(str(val) for val in proposal["ai_calls_offer"])
+    result["job_id"] = job_id
+    result["worker_id"] = worker_id
+    result["unit_id"] = unit_id
+    for k, v in row_data.items():
+        result[f"data__{k}"] = v
     return result
+
+
+def save_prop_result(filename, proposal_result):
+    file_exists = os.path.exists(filename)
+    with open(filename, "a") as out_f:
+
+        writer = csv.writer(out_f)
+        if not file_exists:
+            writer.writerow(proposal_result.keys())
+        writer.writerow(proposal_result.values())

@@ -13,25 +13,24 @@ from wtforms.validators import DataRequired, NumberRange, InputRequired
 from wtforms.widgets import html5
 from flask_wtf.csrf import CSRFProtect
 
+from survey._app import app
 from survey.figure_eight import FigureEight, API_KEY, JOB_ID, RowState
-from survey.unit import Proposal,  proposal_to_proposal_result
+from survey.unit import HHI_Prop_ADM,  hhi_prop_adm_to_prop_result, save_prop_result
 from notebooks.utils.explanation import get_acceptance_propability, get_best_offer_probability
 from notebooks.utils import value_repr
 from notebooks.models.metrics import gain
+
+TUBE_RES_FILENAME = os.environ.get("TUBE_RES_FILENAME", "./data/HH_SURVEY1/out/hhi_prop_adm.csv")
 
 SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
 
 BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
 
-SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", os.urandom(32))
 
 with open(SURVEY_INFOS_FILENAME) as inp_f:
     model_infos = json.load(inp_f)
 
 fig8 = FigureEight(job_id=JOB_ID, api_key=API_KEY)
-app = Flask(__name__)
-
-csrf = CSRFProtect(app)
 
 OFFER_VALUES = [str(val) for val in range(0, 201, 5)]
 
@@ -45,22 +44,23 @@ def generate_completion_code():
 
 class ProposerForm(FlaskForm):
     offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
-    final_offer = StringField("Final Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
 
 @app.route("/hhi_prop_adm", methods=["GET", "POST"])
-def proposer_interactive():
+def hhi_prop_adm():
     if request.method == "GET":
-        session['proposal'] = Proposal()
+        session['proposal'] = HHI_Prop_ADM()
         unit_id = request.args.get("unit_id", "")
         worker_id = request.args.get("worker_id", "")
         job_id = request.args.get("job_id", "")
         fig8 = FigureEight(job_id, API_KEY)
         row_info = fig8.row_get(unit_id)
+        session["unit_id"] = unit_id
+        session["worker_id"] = worker_id
+        session["job_id"] = job_id
         data = row_info.get("data", {})
         session["row_info"] = row_info
-        print("Row info: ", row_info)
         #TODO: check if worker_id has started answering this unit
         #TODO: break
         if not row_info or row_info["state"] != RowState.JUDGABLE:
@@ -74,21 +74,18 @@ def proposer_interactive():
         except ValueError as err:
             offer = None
         proposal["offer"] = offer
-        print("Done...", proposal)
         ##TODO return redirect
-        #return redirect("/done")
         session['proposal'] = proposal
-        return redirect("/done")
+        return redirect("hhi_prop_adm/done")
 
-    session["proposer_interactive"] = True
+    session["hhi_prop_adm"] = True
     return render_template("hhi_prop_adm.html", offer_values=OFFER_VALUES, form=ProposerForm())
 
 import time
 import random
-@app.route("/proposer_interactive/check", methods=["GET", "POST"])
+@app.route("/hhi_prop_adm/check", methods=["GET", "POST"])
 def proposer_check():
-    print(request.args)
-    if not session.get("proposer_interactive", None):
+    if not session.get("hhi_prop_adm", None):
         return "Sorry, you are not allowed to use this service. ^_^"
     if request.method == "POST":
         pass
@@ -99,7 +96,6 @@ def proposer_check():
 
     proposal["ai_calls_time"].append(time.time())
     ai_offer = int(session["row_info"]["data"]["ai_offer"])
-    print("proposal: ", offer)
     acceptance_probability = get_acceptance_propability(offer, model_infos["pdf"])
     best_offer_probability = get_best_offer_probability(ai_offer=ai_offer, offer=offer, accuracy=model_infos["acc"], train_err_pdf=model_infos["train_err_pdf"])
 
@@ -111,17 +107,22 @@ def proposer_check():
     #return "checked %s - acceptance: %s, best_offer: %s" % (offer, acceptance_probability, best_offer_probability)
 
 
-@app.route("/done")
+@app.route("/hhi_prop_adm/done")
 def done():
     worker_code = session.get('worker_code', '')
     worker_code = generate_completion_code()
     proposal = session["proposal"]
     row_info = session["row_info"]
+    job_id = session["job_id"]
+    worker_id = session["worker_id"]
+    unit_id = session["unit_id"]
     worker_bonus = gain(int(row_info["data"]["min_offer"]), proposal["offer"])
-    print("RESULT: ", proposal_to_proposal_result(proposal))
+    prop_result = hhi_prop_adm_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info["data"])
+    print("RESULT: ", hhi_prop_adm_to_prop_result(proposal))
+    save_prop_result(TUBE_RES_FILENAME, prop_result)
     session.clear()
     return render_template("done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
 
-app.config["SECRET_KEY"] = SECRET_KEY
+#app.config["SECRET_KEY"] = SECRET_KEY
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)

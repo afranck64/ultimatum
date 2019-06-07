@@ -8,7 +8,7 @@ from wtforms.widgets import html5
 from flask_wtf.csrf import CSRFProtect
 
 from survey.figure_eight import FigureEight
-from survey.unit import Proposal
+from survey.unit import HHI_Prop_ADM as Proposal
 
 app = Flask(__name__)
 
