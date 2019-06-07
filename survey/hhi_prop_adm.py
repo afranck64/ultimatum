@@ -219,8 +219,7 @@ def done():
 @app.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
 def process_row_result():
     req_json = request.get_json()
-    print("req_json", req_json)
-    print("ARGS: ", request.args)
+    app.logger.log(f"req_json: {req_json}")
 
     return "200, OK"
 
