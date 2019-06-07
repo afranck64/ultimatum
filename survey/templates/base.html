@@ -1,6 +1,11 @@
 <!doctype html>
-<title>{% block title %}{% endblock %} - Flaskr</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}
+    <title>{% block title %}{% endblock %}</title>
+  {% endblock %}
+</head>
+
 <nav>
   <h1>Ultimatum Bargaining Experiment</h1>
   <ul>

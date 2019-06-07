@@ -1,8 +1,16 @@
+import math
+import os
 import requests
 import warnings
 
-JOB_ID = "1377208"
-API_KEY = "buCrBzWBggATJVyu5bzW"
+JOB_ID = ""
+API_KEY = ""
+
+try:
+    from survey.secret import *
+    print("imported secrets")
+except ModuleNotFoundError:
+    pass
 
 class Status(object):
     SUCCESS = 200
@@ -16,6 +24,17 @@ class Status(object):
     UNIT_LIMIT_REACHED = 422
     TOO_MANY_REQUESTS = 429
     INTERNAL_SERVER_ERROR = 500
+
+class RowState(object):
+    NEW = "new"
+    JUDGABLE = "judgable"
+    JUDGING = "judging"
+    JUDGED = "judged"
+    ORDERED = "ordered"
+    FINALIZED = "finalized"
+    GOLDEN = "golden"
+    HIDDEN_GOLD = "hidden_gold"
+    CANCELED = "canceled"
 
 class FigureEight(object):
     def __init__(self, job_id, api_key, api_version="v1", *args, **kwargs):
@@ -93,6 +112,9 @@ class FigureEight(object):
         resp = requests.get(url)
         if resp.status_code == Status.SUCCESS:
             return resp.json()
+        warnings.warn(resp.text)
+        return {}
+
     
     def job_get(self):
         """
@@ -116,13 +138,46 @@ class FigureEight(object):
         :param report_type: (full|aggregated|json|gold_report|workset|source)
         :param filename: (str) filename path to a zip file where to save the report
         """
-        url_enable = self.get_url(api_format="csv") + f"&type={report_type}"
-        resp = requests.post(url_enable)
+        url = self.get_url(api_format="csv") + f"&type={report_type}"
+        resp = requests.post(url)
         if resp.status_code == Status.SUCCESS:
             with open(filename, "wb") as out_f:
                 out_f.write(resp.content)
         else:
             warnings("Something went wrong: %s" % resp)
+    
+    def job_rows(self, page=None):
+        page = page or "1"
+        url = self.get_url(endpoint="units") + f"&page={page}&uni_id=2314014348" 
+        rows_count = self.job_rows_count()
+        if rows_count is None:
+            resp = requests.get(url)
+            if resp.status_code == Status.SUCCESS:
+                return resp.json()
+        else:
+            err = 0
+            result = dict()
+            nb_pages = math.ceil(rows_count/1000)
+            for page in range(1, rows_count+1):
+                url = self.get_url(endpoint="units") + f"&page={page}&uni_id=2314014348" 
+                resp = requests.get(url)
+                if resp.status_code == Status.SUCCESS:
+                    result.update(resp.json())
+                else:
+                    err = 1
+                    break
+            if err == 0:
+                return result
+        warnings.warn(resp.text)
+        return {}
+    
+    def job_rows_count(self):
+        url = self.get_url(endpoint="units/ping")
+        resp = requests.get(url)
+        if resp.status_code == Status.SUCCESS:
+            return resp.json()["count"]
+        warnings.warn(resp.text)
+        return None
     
     def jobs_user(self, page=None):
         """
@@ -136,6 +191,7 @@ class FigureEight(object):
         resp = requests.get(url)
         if resp.status_code == Status.SUCCESS:
             return resp.json()
+        warnings.warn(resp.text)
         return {}
     
     def jobs_team(self, team_id, page=None):
@@ -152,6 +208,7 @@ class FigureEight(object):
         resp = requests.get(url)
         if resp.status_code == Status.SUCCESS:
             return resp.json()
+        warnings.warn(resp.text)
         return {}
     
 
@@ -160,11 +217,26 @@ class FigureEight(object):
         resp = requests.get(url)
         if resp.status_code == Status.SUCCESS:
             return resp.json()
+        warnings.warn(resp.text)
         return {}
 
     
     
     ### Row/Question related action
+    def row_get(self, unit_id):
+        """
+        Returns informations about a row
+        """
+        url = self.get_url(unit_id=unit_id)
+        resp = requests.get(url)
+        if resp.status_code == Status.SUCCESS:
+            return resp.json()
+        warnings.warn(resp.text)
+        return {}
+    
+    def row_get_data(self, unit_id):
+        return self.row_get(unit_id).get("data", {})
+
     def row_disable(self, unit_id):
         """
         Disable a question/row
@@ -186,7 +258,11 @@ class FigureEight(object):
         Get all rows and their jugdments
         """
         url = self.get_url(endpoint="judgments")
-        return requests.get(url).json
+        resp = requests.get(url)
+        if resp.status_code == Status.SUCCESS:
+            return resp.json()
+        warnings.warn(resp.text)
+        return {}
     
     def row_result(self, unit_id):
         """
@@ -194,7 +270,11 @@ class FigureEight(object):
         :param unit_id: Question/Row's id
         """
         url = self.get_url(unit_id=unit_id)
-        return requests.get(url).json
+        resp = requests.get(url)
+        if resp.status_code == Status.SUCCESS:
+            return resp.json()
+        warnings.warn(resp.text)
+        return {}
 
 
     ### Contributor related actions
@@ -206,7 +286,7 @@ class FigureEight(object):
         :amount_in_cents: USD amount in cents
         """
         url = self.get_url(worker_id=worker_id, endpoint="bonus")
-        requests.post(url=url, json={"amount":amout_in_cents})
+        return requests.post(url=url, json={"amount":amout_in_cents})
 
     def contributor_notify(self, worker_id, message):
         """
@@ -215,7 +295,7 @@ class FigureEight(object):
         :param message: message to the worker
         """
         url = self.get_url(worker_id=worker_id, endpoint="notify")
-        requests.post(url=url, json={'message':message})
+        return requests.post(url=url, json={'message':message})
     
     def contributor_flag(self, worker_id, reason):
         """
@@ -224,7 +304,7 @@ class FigureEight(object):
         :param reason: Reason for flagging the contributor
         """
         url = self.get_url(worker_id=worker_id)
-        requests.put(url=url, json={'flag': reason})
+        return requests.put(url=url, json={'flag': reason})
     
     def contributor_flag_overall(self, worker_id, reason):
         """
@@ -233,7 +313,7 @@ class FigureEight(object):
         :param reason: Reason for flagging the contributor
         """
         url = self.get_url(worker_id=worker_id) + "&persist=true"
-        requests.put(url=url, json={'flag': reason})
+        return requests.put(url=url, json={'flag': reason})
     
     def contributor_unflag(self, worker_id, reason):
         """
@@ -242,7 +322,7 @@ class FigureEight(object):
         :param reason: Reason for unflagging the contributor
         """
         url = self.get_url(worker_id=worker_id)
-        requests.put(url=url, json={'unflag': reason})
+        return requests.put(url=url, json={'unflag': reason})
     
     def contributor_reject(self, worker_id, reason):
         """
@@ -251,7 +331,7 @@ class FigureEight(object):
         :param reason: Reason for rejecting the contributor
         """
         url = self.get_url(worker_id=worker_id, endpoint="reject")
-        requests.put(url=url, json={'reason': reason, 'manual': True})
+        return requests.put(url=url, json={'reason': reason, 'manual': True})
     
     
 
@@ -259,3 +339,4 @@ class FigureEight(object):
 if __name__ == "__main__":
     fig8 = FigureEight(api_key=API_KEY, job_id=JOB_ID)
     print(fig8.job_status())
+    print(fig8.row_get("2314014348"))

@@ -2,12 +2,10 @@ import numpy as np
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.linear_model import LogisticRegression
 
-from .metrics import MAX_GAIN
+from .metrics import MAX_GAIN, avg_loss_ratio
 
 def ultimatum_score(y_true, y_pred):
-    res = MAX_GAIN - y_pred
-    res[y_pred < y_true] = 0
-    return res.mean()
+    return 1 - avg_loss_ratio(y_true, y_pred)
     
 
 class AcceptanceModel(object):
@@ -33,7 +31,7 @@ class AcceptanceModel(object):
             self.classes = [0, 1]
         else:
             self.classes = [-1, 1]
-        self.offers = np.arange(0, max_gain, step)
+        self.offers = np.arange(0, max_gain+1, step)
         self.decision_line = 0
         if metric is None:
             metric = ultimatum_score
@@ -77,9 +75,9 @@ class AcceptanceModel(object):
             np.random.shuffle(indices)
             xTrain = xTrain.copy()[indices]
             yTrain = yTrain.copy()[indices]
-        split = int(xTrain.shape[0] * 0.7)
-        xTrain_only, yTrain_only = xTrain[:split], yTrain[:split]
-        xVal_only, yVal_only = xTrain[split:], yTrain[split:].ravel()
+
+        xTrain_only, yTrain_only = xTrain, yTrain
+        xVal_only, yVal_only = xTrain, yTrain
         
         xTrain_only, yTrain_only = self._transform_train(xTrain_only, yTrain_only)
         self.base_model.fit(xTrain_only, yTrain_only)
@@ -114,3 +112,22 @@ class AcceptanceModel(object):
         
     def predict(self, xTest, **kwargs):
         return self._predict(self.base_model, xTest, self.decision_line)
+    
+    @classmethod
+    def get_trained_model(cls, xTrain, yTrain, epochs=10, model_dict=None, fit_dict=None, metric=None):
+        top_model = None
+        top_score = float('-inf')
+        if metric is None:
+            metric = ultimatum_score
+        if model_dict is None:
+            model_dict = {}
+        if fit_dict is None:
+            fit_dict = {}
+        for epoch in range(epochs):
+            model = AcceptanceModel(**model_dict)
+            model.fit(xTrain, yTrain, **fit_dict)
+            score = avg_loss_ratio(yTrain, model.predict(xTrain))
+            if top_model is None or score > top_score:
+                top_model = model
+                top_score = score
+        return model

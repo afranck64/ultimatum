@@ -2,14 +2,25 @@ from flask import (
     Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for
 )
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired
-from werkzeug.exceptions import abort
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField
+from wtforms.validators import DataRequired, NumberRange
+from wtforms.widgets import html5
+from flask_wtf.csrf import CSRFProtect
+
+from survey.figure_eight import FigureEight
+from survey.unit import Proposal
 
 app = Flask(__name__)
 
-OFFER_VALUES = [str(val) for val in range(0, 201, 5)]
+csrf = CSRFProtect(app)
 
+OFFER_VALUES = [str(val) for val in range(0, 201, 5)]
+OFFER_VALUES.insert(0, None)
+
+class ProposerCheckForm(FlaskForm):
+    #offer = IntegerField("Offer", validators=[DataRequired, NumberRange(min=0, max=200)])
+    offer = IntegerField("Offer: ", validators=[DataRequired, NumberRange(min=0, max=200)], widget=html5.NumberInput(5, 0, 200))
+    submit = SubmitField("Submit to AI")
 
 class ProposerForm(FlaskForm):
     offer = StringField("Offer", validators=[DataRequired()])
@@ -87,6 +98,49 @@ def proposer_final_offer():
 @app.route("/proposer/", methods=["GET", "POST"])
 def proposer():
     return redirect("proposer/offer")
+
+
+@app.route("/proposer_interactive", methods=["GET", "POST"])
+def proposer_interactive():
+    if request.method == "GET":
+        session['proposal'] = Proposal()
+    if request.method == "POST":
+        proposal = session["proposal"]
+        proposal["time_stop"] = time.time()
+        offer = request.form["offer"]
+        try:
+            offer = int(offer)
+        except ValueError as err:
+            offer = None
+        proposal["offer"] = offer
+        print("Done...", proposal)
+        ##TODO return redirect
+        #return redirect("/done")
+        session['proposal'] = Proposal()
+
+    session["proposer_interactive"] = True
+    return render_template("proposer_interactive.html", offer_values=OFFER_VALUES, form=ProposerForm())
+
+import time
+import random
+@app.route("/proposer_interactive/check", methods=["GET", "POST"])
+def proposer_check():
+    print(request.args)
+    if not session.get("proposer_interactive", None):
+        return "Sorry, you are not allowed to use this service. ^_^"
+    if request.method == "POST":
+        pass
+    
+    proposal = session["proposal"]
+    proposal["ai_calls_offer"].append(request.args.get("offer", None))
+
+    proposal["ai_calls_time"].append(time.time())
+
+    #TODO: use the model predictions, data distribution to generate the ai_calls_response
+    proposal["ai_calls_response"].append(random.random())
+    session["proposal"] = proposal
+    print("proposal: ", proposal)
+    return "checked %s - %s" % (request.args.get("offer", None), time.time())
 
 
 @app.route("/done")

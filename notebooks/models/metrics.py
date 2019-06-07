@@ -59,6 +59,10 @@ def gain(min_offer, predicted):
     res[predicted < min_offer] = 0
     return res
 
+@np.vectorize
+def gain(min_offer, predicted):
+    return 0 if predicted < min_offer else MAX_GAIN - predicted
+
 def avg_loss_ratio(min_offer, predicted):
     """
     Compute the avg gain ratio in relation to the maximal gain
@@ -73,7 +77,9 @@ def avg_gain_ratio(min_offer, predicted):
 
 def cross_compute(min_offer, predicted, metric):
     """
-    :param min_offer:
+    :param min_offer: responder's minimal acceptable offer
+    :param predicted: proposed values
+    :metric: (func) computation metric
     """
     res = 0
     for idx in range(predicted.shape[0]):
@@ -81,4 +87,5 @@ def cross_compute(min_offer, predicted, metric):
         res += metric(min_offer, predicted)
     return res/predicted.shape[0]
 
-__all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN', 'gain_mean', 'avg_gain_mean']
+
+__all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN', 'gain_mean', 'avg_gain_mean', "cross_compute"]

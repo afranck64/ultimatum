@@ -108,3 +108,7 @@ venv.bak/
 
 # vscode configs
 *.vscode
+
+
+# secret files
+*secret*
