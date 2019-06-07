@@ -23,6 +23,8 @@ SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG
 
 BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
 
+SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", os.urandom(32))
+
 with open(SURVEY_INFOS_FILENAME) as inp_f:
     model_infos = json.load(inp_f)
 
@@ -120,6 +122,6 @@ def done():
     session.clear()
     return render_template("done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
 
+app.config["SECRET_KEY"] = SECRET_KEY
 if __name__ == "__main__":
-    app.config['SECRET_KEY'] = "You will never guess"
     app.run(host='0.0.0.0', port=8000)
