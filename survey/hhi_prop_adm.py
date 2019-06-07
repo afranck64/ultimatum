@@ -167,7 +167,7 @@ def hhi_prop_adm():
         proposal["offer"] = offer
         ##TODO return redirect
         session['proposal'] = proposal
-        return redirect("/hhi_prop_adm/done")
+        return redirect(url_for("/hhi_prop_adm/done"))
 
     session["hhi_prop_adm"] = True
     return render_template("hhi_prop_adm.html", offer_values=OFFER_VALUES, form=ProposerForm())
@@ -177,7 +177,7 @@ import random
 @app.route("/hhi_prop_adm/check", methods=["GET", "POST"])
 def proposer_check():
     if not session.get("hhi_prop_adm", None):
-        return "Sorry, you are not allowed to use this service. ^_^"
+        return "<h1>Sorry, you are not allowed to use this service. ^_^</h1>"
     if request.method == "POST":
         pass
     
@@ -200,6 +200,8 @@ def proposer_check():
 
 @app.route("/hhi_prop_adm/done")
 def done():
+    if not session.get("hhi_prop_adm", None):
+        return "<h1>Sorry, you are not allowed to use this service. ^_^</h1>"
     worker_code = session.get('worker_code', '')
     worker_code = generate_completion_code()
     proposal = session["proposal"]
