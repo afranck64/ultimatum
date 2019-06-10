@@ -5,5 +5,7 @@ matplotlib
 seaborn
 keras
 tensorflow
+#tensorflow-gpu
 imbalanced-learn
 mlxtend
+xlrd

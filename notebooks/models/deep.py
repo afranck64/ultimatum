@@ -45,8 +45,8 @@ def gain_tf(y_true, y_pred):
 #     return tf.math.multiply(left_mul, right_mul)
 
 def loss_tf(y_true, y_pred):
-    math_pi = tf.constant(math.pi)
-    one = tf.constant(1.0)
+    math_pi = tf.constant(math.pi, dtype=K.floatx())
+    one = tf.constant(1.0, dtype=K.floatx())
     # divider = tf.constant(40.0)
     # #x0 = tf.math.subtract(y_true, y_pred)
     # x0 = tf.math.subtract(y_pred, y_true)
@@ -57,9 +57,9 @@ def loss_tf(y_true, y_pred):
     #return (1 - gain_tf(y_true, y_pred)) * 100
 
     x0 = tf.math.subtract(y_pred, y_true)
-    offset = tf.constant(1.0)
-    x1 = (x0 + offset) / K.constant(16.0)
-    x2 = (x0) / K.constant(40.0)
+    offset = tf.constant(1.0, dtype=K.floatx())
+    x1 = (x0 + offset) / K.constant(16.0, dtype=K.floatx())
+    x2 = (x0) / K.constant(40.0, dtype=K.floatx())
     left_mul = sigmoid1024_tf(x1)
     right_mul = tf.math.cos(tf.math.divide(x2, math_pi))
     return tf.math.subtract(one, tf.math.multiply(left_mul, right_mul))
@@ -126,8 +126,8 @@ class KerasModel(object):
     def fit(self, xTrain, yTrain, **kwargs):
         nb_outputs = 1
         #yTrain = yTrain.ravel()
-        xTrain = xTrain.astype(float)
-        yTrain = yTrain.astype(float)
+        xTrain = xTrain.astype(K.floatx())
+        yTrain = yTrain.astype(K.floatx())
         model_builder = keras_model
         if self.no_hidden_layer:
             model_builder = keras_hiddenless_model

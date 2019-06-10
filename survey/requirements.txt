@@ -1,2 +1,4 @@
+# These packages are required together with the packages in code/requirements.txt
 flask
 flask-wtf
+requests

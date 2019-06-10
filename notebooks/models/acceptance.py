@@ -69,18 +69,19 @@ class AcceptanceModel(object):
         xNew = np.array(xNew)
         return xNew        
     
-    def fit(self, xTrain, yTrain, shuffle_data=False, **kwargs):
+    def fit(self, xTrain, yTrain, shuffle_data=False, fit_kwargs=None):
         if shuffle_data:
             indices = np.arange(xTrain.shape[0])
             np.random.shuffle(indices)
             xTrain = xTrain.copy()[indices]
             yTrain = yTrain.copy()[indices]
-
+        if fit_kwargs is None:
+            fit_kwargs = {}
         xTrain_only, yTrain_only = xTrain, yTrain
         xVal_only, yVal_only = xTrain, yTrain
         
         xTrain_only, yTrain_only = self._transform_train(xTrain_only, yTrain_only)
-        self.base_model.fit(xTrain_only, yTrain_only)
+        self.base_model.fit(xTrain_only, yTrain_only, **fit_kwargs)
 
         # optimization for the decision_line
         top_decision_line = None
@@ -96,11 +97,13 @@ class AcceptanceModel(object):
             
         self._trained = True
     
-    def _predict(self, model, xTest, decision_line, **kwargs):
+    def _predict(self, model, xTest, decision_line, predict_kwargs=None):
+        if predict_kwargs is None:
+            predict_kwargs = {}
         xShape = xTest.shape
         xTest = self._transform_predict(xTest)
         
-        y_pred = model.predict(xTest)
+        y_pred = model.predict(xTest, **predict_kwargs)
         res = []
         for idx in np.arange(0, xShape[0]):
             mask = np.arange(idx*self.offers.shape[0], (idx+1)*self.offers.shape[0])
@@ -110,8 +113,10 @@ class AcceptanceModel(object):
             res.append(target * self.max_gain)
         return np.array(res)
         
-    def predict(self, xTest, **kwargs):
-        return self._predict(self.base_model, xTest, self.decision_line)
+    def predict(self, xTest, predict_kwargs=None):
+        if predict_kwargs is None:
+            predict_kwargs = {}
+        return self._predict(self.base_model, xTest, self.decision_line, predict_kwargs)
     
     @classmethod
     def get_trained_model(cls, xTrain, yTrain, epochs=10, model_dict=None, fit_dict=None, metric=None):
