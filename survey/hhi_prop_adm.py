@@ -16,7 +16,7 @@ from wtforms.validators import DataRequired, NumberRange, InputRequired
 from wtforms.widgets import html5
 from flask_wtf.csrf import CSRFProtect
 
-from survey._app import app
+from survey._app import app, csrf_protect
 from survey.figure_eight import FigureEight, API_KEY, JOB_ID, RowState
 #from survey.unit import HHI_Prop_ADM,  hhi_prop_adm_to_prop_result, save_prop_result
 from notebooks.utils.explanation import get_acceptance_propability, get_best_offer_probability
@@ -216,6 +216,7 @@ def done():
     session.clear()
     return render_template("done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
 
+@csrf_protect.exempt
 @bp.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
 def webhook():
     #req_json = request.get_json()

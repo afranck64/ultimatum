@@ -7,7 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 
-csrf = CSRFProtect(app)
+csrf_protect = CSRFProtect(app)
 
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", os.urandom(32))
 
