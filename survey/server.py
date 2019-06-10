@@ -124,7 +124,7 @@ def proposer_interactive():
 import time
 import random
 @app.route("/proposer_interactive/check", methods=["GET", "POST"])
-def proposer_check():
+def check():
     print(request.args)
     if not session.get("proposer_interactive", None):
         return "Sorry, you are not allowed to use this service. ^_^"

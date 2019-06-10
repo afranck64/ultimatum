@@ -8,7 +8,7 @@ import time
 import datetime
 
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify
+    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
 )
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField
@@ -38,6 +38,8 @@ DEBUG = True
 
 with open(SURVEY_INFOS_FILENAME) as inp_f:
     MODEL_INFOS = json.load(inp_f)
+
+bp = Blueprint("hhi_prop_adm", __name__)
 ######################################################
 
 
@@ -138,8 +140,8 @@ class ProposerForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
-@app.route("/hhi_prop_adm", methods=["GET", "POST"])
-def hhi_prop_adm():
+@bp.route("/hhi_prop_adm/", methods=["GET", "POST"])
+def index():
     if request.method == "GET":
         session['proposal'] = HHI_Prop_ADM()
         unit_id = request.args.get("unit_id", "")
@@ -167,19 +169,17 @@ def hhi_prop_adm():
         proposal["offer"] = offer
         ##TODO return redirect
         session['proposal'] = proposal
-        return redirect(url_for("done"))
+        return redirect(url_for("hhi_prop_adm.done"))
 
     session["hhi_prop_adm"] = True
     return render_template("hhi_prop_adm.html", offer_values=OFFER_VALUES, form=ProposerForm())
 
 import time
 import random
-@app.route("/hhi_prop_adm/check", methods=["GET", "POST"])
-def proposer_check():
+@bp.route("/hhi_prop_adm/check")
+def check():
     if not session.get("hhi_prop_adm", None):
         return "<h1>Sorry, you are not allowed to use this service. ^_^</h1>"
-    if request.method == "POST":
-        pass
     
     proposal = session["proposal"]
     offer = int(request.args.get("offer", 0))
@@ -198,7 +198,7 @@ def proposer_check():
     #return "checked %s - acceptance: %s, best_offer: %s" % (offer, acceptance_probability, best_offer_probability)
 
 
-@app.route("/hhi_prop_adm/done")
+@bp.route("/hhi_prop_adm/done")
 def done():
     if not session.get("hhi_prop_adm", None):
         return "<h1>Sorry, you are not allowed to use this service. ^_^</h1>"
@@ -216,13 +216,14 @@ def done():
     session.clear()
     return render_template("done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
 
-@app.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
-def process_row_result():
-    req_json = request.get_json()
-    app.logger.log(f"req_json: {req_json}")
+@bp.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
+def webhook():
+    #req_json = request.get_json()
+    #app.logger.info(f"req_json: {req_json}")
+    app.logger.info(f"request: {request.args}")
 
-    return "200, OK"
 
-#app.config["SECRET_KEY"] = SECRET_KEY
+    return Response(status=200)
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
