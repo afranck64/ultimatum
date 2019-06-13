@@ -9,10 +9,10 @@ app = Flask(__name__)
 
 csrf_protect = CSRFProtect(app)
 
-SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", os.urandom(32))
-
-app.config["SECRET_KEY"] = SECRET_KEY
+app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(32))
 app.config["APPLICATION_ROOT"] = os.environ.get("APPLICATION_ROOT", "/")
+app.config["UPLOAD_SECRET"] = os.environ.get("UPLOAD_SECRET")
+app.config["DATABASE"] = os.environ.get("DATABASE", "./db.sqlite3")
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the 
@@ -51,3 +51,7 @@ gunicorn_error_logger = logging.getLogger('gunicorn.error')
 app.logger.handlers.extend(gunicorn_error_logger.handlers)
 app.logger.setLevel(logging.DEBUG)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
+
+from survey.db import init_app, init_db
+
+#init_app(app)

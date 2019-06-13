@@ -6,15 +6,19 @@ import string
 import csv
 import time
 import datetime
+import io
+
+import pandas as pd
 
 from flask import (
     Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
 )
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField
 from wtforms.validators import DataRequired, NumberRange, InputRequired
 from wtforms.widgets import html5
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.utils import secure_filename
 
 from survey._app import app, csrf_protect
 from survey.figure_eight import FigureEight, API_KEY, JOB_ID, RowState
@@ -22,6 +26,8 @@ from survey.figure_eight import FigureEight, API_KEY, JOB_ID, RowState
 from notebooks.utils.explanation import get_acceptance_propability, get_best_offer_probability
 from notebooks.utils import value_repr
 from notebooks.models.metrics import gain
+
+from survey.db import insert, get_db
 
 
 ############ Consts #################################
@@ -35,6 +41,8 @@ BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
 OFFER_VALUES = {str(val):value_repr(val) for val in range(0, 201, 5)}
 
 DEBUG = True
+
+ALLOWED_EXTENSIONS = {"csv", "xls", "xlsx", "tsv", "xml"}
 
 with open(SURVEY_INFOS_FILENAME) as inp_f:
     MODEL_INFOS = json.load(inp_f)
@@ -56,6 +64,12 @@ class HHI_Prop_ADM(dict):
         self["ai_calls_time"] = []
         self["ai_calls_response"] = []
         self["time_stop"] = None
+
+
+class UploadForm(FlaskForm):
+    job_id = StringField("Job id", validators=[DataRequired()])
+    overwite = BooleanField("Overwrite")
+    submit = SubmitField("Submit")
 
 
 def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=None, row_data=None):
@@ -130,6 +144,9 @@ def generate_completion_code():
     part3 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
     return "".join([part1, part2, part3])
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 ############################################################
 
 
@@ -214,7 +231,7 @@ def done():
     print("RESULT: ", hhi_prop_adm_to_prop_result(proposal))
     save_prop_result(TUBE_RES_FILENAME, prop_result)
     session.clear()
-    return render_template("done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
+    return render_template("hhi_prop_adm.done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
 
 @csrf_protect.exempt
 @bp.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
@@ -225,6 +242,43 @@ def webhook():
 
 
     return Response(status=200)
+
+@csrf_protect.exempt
+@bp.route("/hhi_prop_adm/upload", methods=["GET", "POST"])
+def upload():
+    if request.method == 'POST':
+        print("rrequest.data:", request.form)
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        up_file = request.files['file']
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if up_file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        job_id = request.form['job_id']
+        if not job_id:
+            flash('No job id')
+            return redirect(request.url)
+        secret = request.form.get('secret')
+        if secret != app.config['UPLOAD_SECRET']:
+            flash('Incorrect secret, please try again!!!')
+            return redirect(request.url)
+        if up_file and allowed_file(up_file.filename):
+            filename = secure_filename(up_file.filename)
+            overwrite = bool(request.form.get('overwrite'))
+            df = pd.read_csv(io.BytesIO(up_file.read()))
+            df['_status'] = 'jugable'
+            df['_time_change'] = time.time()
+            table = f"hhi_prop_adm__{job_id}"
+            # TODO should use g instead
+            con = get_db()
+            insert(df, table, con=con, overwrite=overwrite)
+            return redirect(url_for('hhi_prop_adm.upload',
+                                    filename=filename))
+    return render_template('upload.html')
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)

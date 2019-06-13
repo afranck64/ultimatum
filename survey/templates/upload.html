@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}
+Upload your data rows
+{% endblock %}
+
+{% block content %}
+<form method=post enctype=multipart/form-data name="form">
+    <label>Secret: <input type="password"></label>
+    <label>Job-id: <input type=text name=job_id></label>
+    <br>
+    <label>Overwrite actual data: <input type="checkbox" name=overwrite></label>
+    <label>Filename: <input type=file name=file></label>
+    <input type=submit value=Upload>
+</form>
+
+{% endblock %}
