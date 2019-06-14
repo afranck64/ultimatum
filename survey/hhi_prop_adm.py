@@ -37,10 +37,21 @@ SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG
 
 BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
 
+LAST_CHANGE_KEY = '_time_change'
+
+STATUS_KEY = '_status'
+
+# sqlite return 'rowid' as default 
+PK_KEY = 'rowid'
 
 OFFER_VALUES = {str(val):value_repr(val) for val in range(0, 201, 5)}
 
+JUDGING_TIMEOUT_SEC = 10*60
+
 DEBUG = True
+
+if DEBUG:
+    JUDGING_TIMEOUT_SEC = 10
 
 ALLOWED_EXTENSIONS = {"csv", "xls", "xlsx", "tsv", "xml"}
 
@@ -147,6 +158,52 @@ def generate_completion_code():
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_table(job_id):
+    """
+    Generate a table name based on the job_id
+    :param job_id:
+    """
+
+    return f"hhi_prop_adm__{job_id}"
+
+def get_row(con, job_id):
+    """
+    Get a row and change it's state to Judging with a last modified time
+    :param con: sqlite3|sqlalchemy connection
+    :param job_id: job id
+    """
+    table = get_table(job_id)
+    free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGEABLE}"').fetchone()
+    if free_rowid:
+        free_rowid = free_rowid[PK_KEY]
+        ## let's search for a rowid that hasn't been processed yetf
+        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}={free_rowid}').fetchone())
+        with con:
+            con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGING}" where {PK_KEY}={free_rowid}')
+        return res
+    else:
+        ## let's search for a rowid which has been too long in the judging state
+        dep_change_time = time.time() - JUDGING_TIMEOUT_SEC
+        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGING}" and {LAST_CHANGE_KEY} < {dep_change_time}').fetchone()
+        if free_rowid:
+            print("FREE_ROWID: ", dict(free_rowid))
+            free_rowid = free_rowid[PK_KEY]
+            res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}={free_rowid}').fetchone())
+            with con:
+                con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGING}" where {PK_KEY}={free_rowid}')
+            return res
+
+def close_row(con, job_id, row_id):
+    table = get_table(job_id)
+    with con:
+        con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGED}" where {PK_KEY}={row_id} and {STATUS_KEY}="{RowState.JUDGING}"')
+
+
+def save_prop_result2db(con, proposal_result, job_id):
+    table = get_table(job_id)
+    df = pd.DataFrame(data=[proposal_result])
+    df.to_sql(table, con, index=False, if_exists='append')
 ############################################################
 
 
@@ -165,16 +222,29 @@ def index():
         worker_id = request.args.get("worker_id", "")
         job_id = request.args.get("job_id", "")
         fig8 = FigureEight(job_id, API_KEY)
-        row_info = fig8.row_get(unit_id)
+        #row_info = fig8.row_get(unit_id)
+        row_info = get_row(get_db(), job_id)
+
+        print("ROW_INFO: ", row_info)
         session["unit_id"] = unit_id
         session["worker_id"] = worker_id
         session["job_id"] = job_id
-        data = row_info.get("data", {})
         session["row_info"] = row_info
+        #data = row_info.get("data", {})
+
+        if job_id in ("", "na") or worker_id in ("", "na"):
+            # flash("Valid job_id and worker_id are required")
+            # return render_template("error.html")
+            pass
+
         #TODO: check if worker_id has started answering this unit
         #TODO: break
-        if not row_info or row_info["state"] != RowState.JUDGABLE:
+        if not row_info:
             warnings.warn(f"ERROR: The row can no longer be processed. unit_id: {unit_id} - worker_id: {worker_id}")
+
+            flash(f"Unfortunately, there is no more row available. Thank you for your participation")
+            if not DEBUG:
+                return render_template("error.html")
     if request.method == "POST":
         proposal = session["proposal"]
         proposal["time_stop"] = time.time()
@@ -196,14 +266,15 @@ import random
 @bp.route("/hhi_prop_adm/check")
 def check():
     if not session.get("hhi_prop_adm", None):
-        return "<h1>Sorry, you are not allowed to use this service. ^_^</h1>"
+        flash("Sorry, you are not allowed to use this service. ^_^")
+        return render_template("error.html")
     
     proposal = session["proposal"]
     offer = int(request.args.get("offer", 0))
     proposal["ai_calls_offer"].append(offer)
 
     proposal["ai_calls_time"].append(time.time())
-    ai_offer = int(session["row_info"]["data"]["ai_offer"])
+    ai_offer = int(session["row_info"]["ai_offer"])
     acceptance_probability = get_acceptance_propability(offer, MODEL_INFOS["pdf"])
     best_offer_probability = get_best_offer_probability(ai_offer=ai_offer, offer=offer, accuracy=MODEL_INFOS["acc"], train_err_pdf=MODEL_INFOS["train_err_pdf"])
 
@@ -218,7 +289,8 @@ def check():
 @bp.route("/hhi_prop_adm/done")
 def done():
     if not session.get("hhi_prop_adm", None):
-        return "<h1>Sorry, you are not allowed to use this service. ^_^</h1>"
+        flash("Sorry, you are not allowed to use this service. ^_^")
+        return render_template("error.html")
     worker_code = session.get('worker_code', '')
     worker_code = generate_completion_code()
     proposal = session["proposal"]
@@ -226,10 +298,11 @@ def done():
     job_id = session["job_id"]
     worker_id = session["worker_id"]
     unit_id = session["unit_id"]
-    worker_bonus = gain(int(row_info["data"]["min_offer"]), proposal["offer"])
-    prop_result = hhi_prop_adm_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info["data"])
-    print("RESULT: ", hhi_prop_adm_to_prop_result(proposal))
+    close_row(get_db(), job_id, row_info[PK_KEY])
+    worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
+    prop_result = hhi_prop_adm_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info)
     save_prop_result(TUBE_RES_FILENAME, prop_result)
+    save_prop_result2db(get_db("RESULT"), prop_result, job_id)
     session.clear()
     return render_template("hhi_prop_adm.done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
 
@@ -264,15 +337,16 @@ def upload():
             return redirect(request.url)
         secret = request.form.get('secret')
         if secret != app.config['UPLOAD_SECRET']:
+            print("Yourr secret: ", secret)
             flash('Incorrect secret, please try again!!!')
             return redirect(request.url)
         if up_file and allowed_file(up_file.filename):
             filename = secure_filename(up_file.filename)
             overwrite = bool(request.form.get('overwrite'))
             df = pd.read_csv(io.BytesIO(up_file.read()))
-            df['_status'] = 'jugable'
-            df['_time_change'] = time.time()
-            table = f"hhi_prop_adm__{job_id}"
+            df[STATUS_KEY] = RowState.JUDGEABLE
+            df[LAST_CHANGE_KEY] = time.time()
+            table = get_table(job_id)
             # TODO should use g instead
             con = get_db()
             insert(df, table, con=con, overwrite=overwrite)

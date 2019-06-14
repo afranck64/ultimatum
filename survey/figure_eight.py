@@ -27,7 +27,7 @@ class Status(object):
 
 class RowState(object):
     NEW = "new"
-    JUDGABLE = "judgable"
+    JUDGEABLE = "judgeable"
     JUDGING = "judging"
     JUDGED = "judged"
     ORDERED = "ordered"

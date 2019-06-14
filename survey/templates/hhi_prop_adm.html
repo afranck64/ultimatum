@@ -86,21 +86,29 @@
         var data = google.visualization.arrayToDataTable([
           ['Label', 'Value'],
           ['Accepted', 100 * window.acceptance_probability],
-          ['Best offer', 100 * window.best_offer_probability],
         ]);
 
         var options = {
-          width: 600, height: 140,
+          width: 200, height: 160,
           redFrom: 0, redTo: 45,
           yellowFrom:45, yellowTo: 70,
           greenFrom:70, greenTo: 100,
           minorTicks: 5
         };
 
-        document.getElementById("ai_response_chart_div").style.visibility = "visible";
-        var chart = new google.visualization.Gauge(document.getElementById('ai_response_chart_div'));
+        var chart = new google.visualization.Gauge(document.getElementById('ai_response_accepted'));
 
         chart.draw(data, options);
+
+
+        var data2 = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          ['Best offer', 100 * window.best_offer_probability],
+        ]);
+
+        var chart2 = new google.visualization.Gauge(document.getElementById('ai_response_best'));
+
+        chart2.draw(data2, options);
       }
     </script>
 
@@ -120,7 +128,21 @@
 
             <div align="center"> 
                     <div class="chart" id="piechart" style="opacity: 1;" ></div>
-                    <div id="ai_response_chart_div"  style="width: 280px; height: 140px; visibility: hidden;"></div>
+                    <div id="ai_response">
+                        <table style="width: max-content">
+                            <tr style="width: max-content">
+                                <td style="width: 50%" align="center" style="display: inline-block">
+                                    <div id="ai_response_accepted"></div>
+                                </td>
+                                <td style="width: 50%" align="center" style="display: inline-block">
+                                    <div id="ai_response_best"></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Chances of your offer beeing accepted</td><td>Chances of your offer bringing your the highest gain</td>
+                            </tr>
+                        </table>
+                    </div>
             </div>
         </div>
     <!-- </form> -->

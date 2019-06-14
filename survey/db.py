@@ -5,15 +5,27 @@ from flask import current_app, g
 from flask.cli import with_appcontext
 
 
-def get_db():
-    if 'db' not in g:
-        g.db = sqlite3.connect(
-            current_app.config['DATABASE'],
+def get_db(name='data'):
+    """
+    :param name: (db|data|result)
+    :returns: an open database (connection)
+    """
+    if name =='db':
+        if name not in g:
+            g.db = sqlite3.connect(
+                current_app.config['DATABASE'],
+                detect_types=sqlite3.PARSE_DECLTYPES
+            )
+            g.db.row_factory = sqlite3.Row
+        return g.db
+    name = name.upper()
+    if name not in g:
+        db = sqlite3.connect(
+            current_app.config[f'DATABASE_{name}'],
             detect_types=sqlite3.PARSE_DECLTYPES
         )
-        g.db.row_factory = sqlite3.Row
-
-    return g.db
+        db.row_factory = sqlite3.Row
+    return db
 
 
 def close_db(e=None):
@@ -25,6 +37,8 @@ def close_db(e=None):
 
 def init_db():
     get_db()
+    # get_db('DATA')
+    # get_db('RESULT')
 
 
 @click.command('init-db')

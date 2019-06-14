@@ -13,6 +13,8 @@ app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(32))
 app.config["APPLICATION_ROOT"] = os.environ.get("APPLICATION_ROOT", "/")
 app.config["UPLOAD_SECRET"] = os.environ.get("UPLOAD_SECRET")
 app.config["DATABASE"] = os.environ.get("DATABASE", "./db.sqlite3")
+app.config["DATABASE_DATA"] = os.environ.get("DATABASE_DATA", "./db.data.sqlite3")
+app.config["DATABASE_RESULT"] = os.environ.get("DATABASE_RESULT", "./db.result.sqlite3")
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the 

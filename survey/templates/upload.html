@@ -6,7 +6,7 @@ Upload your data rows
 
 {% block content %}
 <form method=post enctype=multipart/form-data name="form">
-    <label>Secret: <input type="password"></label>
+    <label>Secret: <input name=secret type="password"></label>
     <label>Job-id: <input type=text name=job_id></label>
     <br>
     <label>Overwrite actual data: <input type="checkbox" name=overwrite></label>
