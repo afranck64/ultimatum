@@ -27,6 +27,7 @@ from notebooks.utils.explanation import get_acceptance_propability, get_best_off
 from notebooks.utils import value_repr
 from notebooks.models.metrics import gain
 
+from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
 
 
@@ -214,9 +215,6 @@ def save_prop_result2db(con, proposal_result, job_id, overwrite=False):
     insert(df, table=table, con=con, overwrite=overwrite)
 ############################################################
 
-
-fig8 = FigureEight(job_id=JOB_ID, api_key=API_KEY)
-
 class ProposerForm(FlaskForm):
     offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
@@ -229,8 +227,6 @@ def index():
         unit_id = request.args.get("unit_id", "")
         worker_id = request.args.get("worker_id", "")
         job_id = request.args.get("job_id", "")
-        fig8 = FigureEight(job_id, API_KEY)
-        #row_info = fig8.row_get(unit_id)
         row_info = get_row(get_db("DATA"), job_id, worker_id)
 
         print("ROW_INFO: ", row_info)
@@ -324,8 +320,20 @@ def done():
 def webhook():
     #req_json = request.get_json()
     #app.logger.info(f"req_json: {req_json}")
-    app.logger.info(f"request: {request.args}")
+    app.logger.info(f"request.arg: {request.args}")
+    try:
+        app.logger.info(f"request.data: {request.data}")
+        app.logger.info(f"request.form: {request.form}")
+    except:
+        pass
 
+    #TODO:
+    # job_id = "na"
+    # job_config = get_job_config(get_db("DB"), job_id)
+    # worker_id = "na"
+    # worker_bonus = 0
+    # fig8 = FigureEight(job_id, job_config["api_key"])
+    # fig8.contributor_pay(worker_id, worker_bonus)
 
     return Response(status=200)
 

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p>Welcome to the admin page ^_^</p>
+
+    <form method=post enctype=multipart/form-data name="form">
+        <label>Secret: <input name=secret type="password" required></label>
+        <label>Job-id: <input type=text name=job_id required></label>
+        <br>
+        <label>API-Key: <input type=text name=api_key required></label>
+        <input type=submit value=Submit>
+    </form>
+    
+{% endblock %}

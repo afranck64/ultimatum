@@ -10,7 +10,7 @@ def get_db(name='db'):
     :param name: (db|data|result)
     :returns: an open database (connection)
     """
-    if name =='db':
+    if name.lower() =='db':
         if name not in g:
             g.db = sqlite3.connect(
                 current_app.config['DATABASE'],
@@ -60,9 +60,9 @@ def insert(df, table, con=None, overwrite=False):
     
     con = con or g.db
     if overwrite:
-        df.to_sql(table, con=con, if_exists='replace')
+        df.to_sql(table, con=con, if_exists='replace', index=False)
     else:
-        df.to_sql(table, con=con, if_exists='append')
+        df.to_sql(table, con=con, if_exists='append', index=False)
 
 
 def table_exists(con, table):

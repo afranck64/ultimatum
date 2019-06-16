@@ -9,11 +9,13 @@ app = Flask(__name__)
 
 csrf_protect = CSRFProtect(app)
 
-app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(32))
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["APPLICATION_ROOT"] = os.environ.get("APPLICATION_ROOT", "/")
-app.config["UPLOAD_SECRET"] = os.environ.get("UPLOAD_SECRET")
+# Main database
 app.config["DATABASE"] = os.environ.get("DATABASE", "./db.sqlite3")
+# Data (job based) database
 app.config["DATABASE_DATA"] = os.environ.get("DATABASE_DATA", "./db.data.sqlite3")
+# Results (job based) database
 app.config["DATABASE_RESULT"] = os.environ.get("DATABASE_RESULT", "./db.result.sqlite3")
 app.config["API_KEY"] = os.environ.get("API_KEY", "")
 app.config["ADMIN_SECRET"] = os.environ.get("ADMIN_SECRET", "")
