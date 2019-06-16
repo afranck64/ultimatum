@@ -7,6 +7,7 @@ import csv
 import time
 import datetime
 import io
+import hashlib
 
 import pandas as pd
 
@@ -159,12 +160,16 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def get_table(job_id):
+def get_table(job_id, category=None):
     """
     Generate a table name based on the job_id
     :param job_id:
+    :param category:
     """
-    return f"hhi_prop_adm__{job_id}"
+    if category is None:
+        return f"hhi_prop_adm__{job_id}"
+    else:
+        return f"hhi_prop_adm__{category}__{job_id}"
 
 def get_row(con, job_id, worker_id):
     """
@@ -176,29 +181,29 @@ def get_row(con, job_id, worker_id):
     table = get_table(job_id)
     if not table_exists(con, table):
         return None
-    free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGEABLE}"').fetchone()
+    free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==?', (RowState.JUDGEABLE,)).fetchone()
     res = None
     if free_rowid:
         free_rowid = free_rowid[PK_KEY]
         ## let's search for a rowid that hasn't been processed yetf
-        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}={free_rowid}').fetchone())
+        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid,)).fetchone())
         with con:
-            con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGING}", {WORKER_KEY}="{worker_id}" where {PK_KEY}={free_rowid}')
+            con.execute(f'update {table} set {LAST_CHANGE_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid))
         return res
 
     else:
         dep_change_time = time.time() - JUDGING_TIMEOUT_SEC
         # Let's check if the same worker is looking for a row (then give him the one he is working on back)
-        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGING}" and {WORKER_KEY}=="{worker_id}" and {LAST_CHANGE_KEY} > {dep_change_time}').fetchone()
+        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {WORKER_KEY}==? and {LAST_CHANGE_KEY} > ?', (RowState.JUDGING, worker_id, dep_change_time)).fetchone()
         if not free_rowid:
             ## let's search for a row that remained too long in the 'judging' state
-            free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGING}" and {LAST_CHANGE_KEY} < {dep_change_time}').fetchone()
+            free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {LAST_CHANGE_KEY} < ?', (RowState.JUDGING, dep_change_time)).fetchone()
     if free_rowid:
         print("FREE_ROWID: ", dict(free_rowid))
         free_rowid = free_rowid[PK_KEY]
-        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}={free_rowid}').fetchone())
+        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid, )).fetchone())
         with con:
-            con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGING}", {WORKER_KEY}="{worker_id}" where {PK_KEY}={free_rowid}')
+            con.execute(f'update {table} set {LAST_CHANGE_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid))
     return res
 
 def close_row(con, job_id, row_id):
@@ -206,13 +211,53 @@ def close_row(con, job_id, row_id):
     if not table_exists(con, table):
         return
     with con:
-        con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGED}" where {PK_KEY}={row_id} and {STATUS_KEY}="{RowState.JUDGING}"')
+        con.execute(f'update {table} set {LAST_CHANGE_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING))
 
 
 def save_prop_result2db(con, proposal_result, job_id, overwrite=False):
     table = get_table(job_id)
     df = pd.DataFrame(data=[proposal_result])
     insert(df, table=table, con=con, overwrite=overwrite)
+
+def get_worker_bonus(con, job_id, worker_id):
+    table = get_table(job_id)
+    if table_exists(con, table):
+        row = con.execute(f"SELECT * from {table} WHERE worker_id=?", (worker_id,)).fetchone()
+        if row:
+            return gain(row["data__min_offer"], row["offer"])
+    return 0
+
+def pay_worker_bonus(con, job_id, worker_id, bonus_cents, fig8, overwrite=False):
+    """
+    :param con:
+    :param job_id:
+    :param worker_id:
+    :param bonus_cents:
+    :param fig8:
+    :param overwite:
+    :returns True if payment was done, False otherwise
+    """
+    df = pd.DataFrame(data=[{'job_id':job_id, 'worker_id': worker_id, 'time': str(datetime.datetime.now()), 'bonus_cents': bonus_cents}])
+    table = get_table(job_id, category="payment")
+
+    should_pay = False
+    if table_exists(con, table):
+        with con:
+            row = con.execute(f'select worker_id from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
+            if not row:
+                #The user wasn't paid yet
+                should_pay = True
+    else:
+        should_pay = True
+    
+    if should_pay:
+        fig8.contributor_pay(worker_id, bonus_cents)
+        insert(df, table=table, con=con, overwrite=overwrite)
+        fig8.contributor_notify(worker_id, f"Thank you for your participation. You just received your bonus of {value_repr(bonus_cents)} ^_^")
+        return True
+    else:
+        #fig8.contributor_notify(worker_id, f"Thank you for your participation. You seems to have already been paid. ^_^")
+        pass
 ############################################################
 
 class ProposerForm(FlaskForm):
@@ -265,8 +310,7 @@ def index():
     session["hhi_prop_adm"] = True
     return render_template("hhi_prop_adm.html", offer_values=OFFER_VALUES, form=ProposerForm())
 
-import time
-import random
+
 @bp.route("/hhi_prop_adm/check")
 def check():
     if not session.get("hhi_prop_adm", None):
@@ -306,8 +350,14 @@ def done():
         close_row(get_db("DATA"), job_id, row_info[PK_KEY])
         worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
         prop_result = hhi_prop_adm_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info)
-        save_prop_result(TUBE_RES_FILENAME, prop_result)
-        save_prop_result2db(get_db("RESULT"), prop_result, job_id)
+        try:
+            save_prop_result(TUBE_RES_FILENAME, prop_result)
+        except Exception as err:
+            app.logger.error(f"{err}")
+        try:
+            save_prop_result2db(get_db("RESULT"), prop_result, job_id)
+        except Exception as err:
+            app.logger.error(f"{err}")
         session.clear()
 
         session["hhi_prop_adm"] = True
@@ -315,26 +365,44 @@ def done():
         session["worker_code"] = worker_code
     return render_template("hhi_prop_adm.done.html", worker_code=session["worker_code"], worker_bonus=session["worker_bonus"])
 
+
+def _async_process_payments(signal, payload, job_id, job_config):
+    with app.app_context():
+        app.logger.info(f"Started part-payments..., signal: {signal}")
+        if signal == "new_judgements":
+            try:
+                judgments_count = payload['judgments_count']
+                fig8 = FigureEight(job_id, job_config["api_key"])
+                con = get_db("RESULT")
+                for idx in range(judgments_count):
+                    worker_judgment = payload['results']['judgments'][idx]
+                    worker_id = worker_id = worker_judgment["worker_id"]
+                    worker_bonus = get_worker_bonus(con, job_id, worker_id)
+                    pay_worker_bonus(con, job_id, worker_id, worker_bonus, fig8)
+            except Exception as err:
+                app.logger.error(f"Error: {err}")
+        elif signal == "unit_complete":
+            #TODO: may process the whole unit here
+            pass
+        app.logger.info(f"Started part-payments..., signal: {signal}")
+
 @csrf_protect.exempt
 @bp.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
 def webhook():
-    #req_json = request.get_json()
-    #app.logger.info(f"req_json: {req_json}")
-    app.logger.info(f"request.arg: {request.args}")
-    try:
-        app.logger.info(f"request.data: {request.data}")
-        app.logger.info(f"request.form: {request.form}")
-    except:
-        pass
-
-    #TODO:
-    # job_id = "na"
-    # job_config = get_job_config(get_db("DB"), job_id)
-    # worker_id = "na"
-    # worker_bonus = 0
-    # fig8 = FigureEight(job_id, job_config["api_key"])
-    # fig8.contributor_pay(worker_id, worker_bonus)
-
+    app.logger.info(f"request.form: {request.form}")
+    signal = request.form['signal']
+    if signal in {'unit_complete', 'new_judgements'}:
+        payload_raw = request.form['payload']
+        signature = request.form['signature']
+        payload = json.loads(payload_raw)
+        job_id = payload['job_id']
+        
+        job_config = get_job_config(get_db("DB"), job_id)
+        payload_ext = payload_raw + job_config["api_key"]
+        verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
+        if signature == verif_signature:
+            kwargs = {'signal': signal, 'job_id':job_id, 'job_config':job_config, 'payload': payload}
+            app.config["THREADS_POOL"].starmap_async(_async_process_payments, [kwargs])
     return Response(status=200)
 
 @csrf_protect.exempt
@@ -358,7 +426,6 @@ def upload():
             return redirect(request.url)
         secret = request.form.get('secret')
         if secret != app.config['ADMIN_SECRET']:
-            print("Yourr secret: ", secret)
             flash('Incorrect secret, please try again!!!')
             return redirect(request.url)
         if up_file and allowed_file(up_file.filename):

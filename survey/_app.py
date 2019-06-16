@@ -1,5 +1,6 @@
 import os
 import logging
+from multiprocessing import pool
 from flask import (
     Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify
 )
@@ -20,6 +21,7 @@ app.config["DATABASE_RESULT"] = os.environ.get("DATABASE_RESULT", "./db.result.s
 app.config["API_KEY"] = os.environ.get("API_KEY", "")
 app.config["ADMIN_SECRET"] = os.environ.get("ADMIN_SECRET", "")
 app.config["DEBUG"] = os.environ.get("DEBUG")
+app.config["THREADS_POOL"] = pool.ThreadPool(processes=1)
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the 
