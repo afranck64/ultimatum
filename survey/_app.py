@@ -15,6 +15,9 @@ app.config["UPLOAD_SECRET"] = os.environ.get("UPLOAD_SECRET")
 app.config["DATABASE"] = os.environ.get("DATABASE", "./db.sqlite3")
 app.config["DATABASE_DATA"] = os.environ.get("DATABASE_DATA", "./db.data.sqlite3")
 app.config["DATABASE_RESULT"] = os.environ.get("DATABASE_RESULT", "./db.result.sqlite3")
+app.config["API_KEY"] = os.environ.get("API_KEY", "")
+app.config["ADMIN_SECRET"] = os.environ.get("ADMIN_SECRET", "")
+app.config["DEBUG"] = os.environ.get("DEBUG")
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the 

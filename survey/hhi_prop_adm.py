@@ -27,7 +27,7 @@ from notebooks.utils.explanation import get_acceptance_propability, get_best_off
 from notebooks.utils import value_repr
 from notebooks.models.metrics import gain
 
-from survey.db import insert, get_db
+from survey.db import insert, get_db, table_exists
 
 
 ############ Consts #################################
@@ -41,6 +41,8 @@ LAST_CHANGE_KEY = '_time_change'
 
 STATUS_KEY = '_status'
 
+WORKER_KEY = '_worker'
+
 # sqlite return 'rowid' as default 
 PK_KEY = 'rowid'
 
@@ -48,9 +50,7 @@ OFFER_VALUES = {str(val):value_repr(val) for val in range(0, 201, 5)}
 
 JUDGING_TIMEOUT_SEC = 10*60
 
-DEBUG = True
-
-if DEBUG:
+if app.config["DEBUG"]:
     JUDGING_TIMEOUT_SEC = 10
 
 ALLOWED_EXTENSIONS = {"csv", "xls", "xlsx", "tsv", "xml"}
@@ -147,7 +147,6 @@ def save_prop_result(filename, proposal_result):
             writer.writerow(proposal_result.keys())
         writer.writerow(proposal_result.values())
 
-
 def generate_completion_code():
 
     part1 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
@@ -164,46 +163,55 @@ def get_table(job_id):
     Generate a table name based on the job_id
     :param job_id:
     """
-
     return f"hhi_prop_adm__{job_id}"
 
-def get_row(con, job_id):
+def get_row(con, job_id, worker_id):
     """
     Get a row and change it's state to Judging with a last modified time
     :param con: sqlite3|sqlalchemy connection
     :param job_id: job id
+    :param worker_id: worker's id
     """
     table = get_table(job_id)
+    if not table_exists(con, table):
+        return None
     free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGEABLE}"').fetchone()
+    res = None
     if free_rowid:
         free_rowid = free_rowid[PK_KEY]
         ## let's search for a rowid that hasn't been processed yetf
         res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}={free_rowid}').fetchone())
         with con:
-            con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGING}" where {PK_KEY}={free_rowid}')
+            con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGING}", {WORKER_KEY}="{worker_id}" where {PK_KEY}={free_rowid}')
         return res
+
     else:
-        ## let's search for a rowid which has been too long in the judging state
         dep_change_time = time.time() - JUDGING_TIMEOUT_SEC
-        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGING}" and {LAST_CHANGE_KEY} < {dep_change_time}').fetchone()
-        if free_rowid:
-            print("FREE_ROWID: ", dict(free_rowid))
-            free_rowid = free_rowid[PK_KEY]
-            res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}={free_rowid}').fetchone())
-            with con:
-                con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGING}" where {PK_KEY}={free_rowid}')
-            return res
+        # Let's check if the same worker is looking for a row (then give him the one he is working on back)
+        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGING}" and {WORKER_KEY}=="{worker_id}" and {LAST_CHANGE_KEY} > {dep_change_time}').fetchone()
+        if not free_rowid:
+            ## let's search for a row that remained too long in the 'judging' state
+            free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}=="{RowState.JUDGING}" and {LAST_CHANGE_KEY} < {dep_change_time}').fetchone()
+    if free_rowid:
+        print("FREE_ROWID: ", dict(free_rowid))
+        free_rowid = free_rowid[PK_KEY]
+        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}={free_rowid}').fetchone())
+        with con:
+            con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGING}", {WORKER_KEY}="{worker_id}" where {PK_KEY}={free_rowid}')
+    return res
 
 def close_row(con, job_id, row_id):
     table = get_table(job_id)
+    if not table_exists(con, table):
+        return
     with con:
         con.execute(f'update {table} set {LAST_CHANGE_KEY}={time.time()}, {STATUS_KEY}="{RowState.JUDGED}" where {PK_KEY}={row_id} and {STATUS_KEY}="{RowState.JUDGING}"')
 
 
-def save_prop_result2db(con, proposal_result, job_id):
+def save_prop_result2db(con, proposal_result, job_id, overwrite=False):
     table = get_table(job_id)
     df = pd.DataFrame(data=[proposal_result])
-    df.to_sql(table, con, index=False, if_exists='append')
+    insert(df, table=table, con=con, overwrite=overwrite)
 ############################################################
 
 
@@ -223,7 +231,7 @@ def index():
         job_id = request.args.get("job_id", "")
         fig8 = FigureEight(job_id, API_KEY)
         #row_info = fig8.row_get(unit_id)
-        row_info = get_row(get_db(), job_id)
+        row_info = get_row(get_db("DATA"), job_id, worker_id)
 
         print("ROW_INFO: ", row_info)
         session["unit_id"] = unit_id
@@ -243,7 +251,7 @@ def index():
             warnings.warn(f"ERROR: The row can no longer be processed. unit_id: {unit_id} - worker_id: {worker_id}")
 
             flash(f"Unfortunately, there is no more row available. Thank you for your participation")
-            if not DEBUG:
+            if not app.config["DEBUG"]:
                 return render_template("error.html")
     if request.method == "POST":
         proposal = session["proposal"]
@@ -251,7 +259,7 @@ def index():
         offer = request.form["offer"]
         try:
             offer = int(offer)
-        except ValueError as err:
+        except ValueError:
             offer = None
         proposal["offer"] = offer
         ##TODO return redirect
@@ -291,20 +299,25 @@ def done():
     if not session.get("hhi_prop_adm", None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
-    worker_code = session.get('worker_code', '')
-    worker_code = generate_completion_code()
-    proposal = session["proposal"]
-    row_info = session["row_info"]
-    job_id = session["job_id"]
-    worker_id = session["worker_id"]
-    unit_id = session["unit_id"]
-    close_row(get_db(), job_id, row_info[PK_KEY])
-    worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
-    prop_result = hhi_prop_adm_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info)
-    save_prop_result(TUBE_RES_FILENAME, prop_result)
-    save_prop_result2db(get_db("RESULT"), prop_result, job_id)
-    session.clear()
-    return render_template("hhi_prop_adm.done.html", worker_code=worker_code, worker_bonus=value_repr(worker_bonus))
+    if not (session.get("worker_bonus") and session.get("worker_code")):
+        worker_code = session.get('worker_code', '')
+        worker_code = generate_completion_code()
+        proposal = session["proposal"]
+        row_info = session["row_info"]
+        job_id = session["job_id"]
+        worker_id = session["worker_id"]
+        unit_id = session["unit_id"]
+        close_row(get_db("DATA"), job_id, row_info[PK_KEY])
+        worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
+        prop_result = hhi_prop_adm_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info)
+        save_prop_result(TUBE_RES_FILENAME, prop_result)
+        save_prop_result2db(get_db("RESULT"), prop_result, job_id)
+        session.clear()
+
+        session["hhi_prop_adm"] = True
+        session["worker_bonus"] = value_repr(worker_bonus)
+        session["worker_code"] = worker_code
+    return render_template("hhi_prop_adm.done.html", worker_code=session["worker_code"], worker_bonus=session["worker_bonus"])
 
 @csrf_protect.exempt
 @bp.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
@@ -336,7 +349,7 @@ def upload():
             flash('No job id')
             return redirect(request.url)
         secret = request.form.get('secret')
-        if secret != app.config['UPLOAD_SECRET']:
+        if secret != app.config['ADMIN_SECRET']:
             print("Yourr secret: ", secret)
             flash('Incorrect secret, please try again!!!')
             return redirect(request.url)
@@ -346,9 +359,10 @@ def upload():
             df = pd.read_csv(io.BytesIO(up_file.read()))
             df[STATUS_KEY] = RowState.JUDGEABLE
             df[LAST_CHANGE_KEY] = time.time()
+            df[WORKER_KEY] = None
             table = get_table(job_id)
             # TODO should use g instead
-            con = get_db()
+            con = get_db("DATA")
             insert(df, table, con=con, overwrite=overwrite)
             return redirect(url_for('hhi_prop_adm.upload',
                                     filename=filename))

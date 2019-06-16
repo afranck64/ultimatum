@@ -5,7 +5,7 @@ from flask import current_app, g
 from flask.cli import with_appcontext
 
 
-def get_db(name='data'):
+def get_db(name='db'):
     """
     :param name: (db|data|result)
     :returns: an open database (connection)
@@ -50,12 +50,28 @@ def init_db_command():
 
 
 def insert(df, table, con=None, overwrite=False):
+    """
+    Insert rows in df to into the given table
+    :param df: (DataFrame)
+    :param table: (str) table name
+    :param con: (sqlite|sqlachemy- Connection)
+    :param overwrite: (bool)
+    """
+    
     con = con or g.db
     if overwrite:
         df.to_sql(table, con=con, if_exists='replace')
     else:
         df.to_sql(table, con=con, if_exists='append')
 
+
+def table_exists(con, table):
+    """
+    :param con: sqlite3/sqlalchemy connection
+    :param table: (str) table name
+    :returns: True if the table exists and False otherwise
+    """
+    return bool(con.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'").fetchone())
 
 def init_app(app):
     app.teardown_appcontext(close_db)
