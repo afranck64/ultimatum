@@ -50,7 +50,7 @@ PK_KEY = 'rowid'
 
 OFFER_VALUES = {str(val):value_repr(val) for val in range(0, 201, 5)}
 
-JUDGING_TIMEOUT_SEC = 10*60
+JUDGING_TIMEOUT_SEC = 5*60
 
 if app.config["DEBUG"]:
     JUDGING_TIMEOUT_SEC = 10
@@ -366,9 +366,15 @@ def done():
     return render_template("hhi_prop_adm.done.html", worker_code=session["worker_code"], worker_bonus=session["worker_bonus"])
 
 
-def _async_process_payments(signal, payload, job_id, job_config):
+def _process_judgments(signal, payload, job_id, job_config):
+    """
+    :param signal: (str)
+    :param payload: (dict)
+    :param job_id: (int|str)
+    :param job_config: (JobConfig)
+    """
     with app.app_context():
-        app.logger.info(f"Started part-payments..., signal: {signal}")
+        app.logger.info(f"Started part-payments..., with signal: {signal}")
         if signal == "new_judgements":
             try:
                 judgments_count = payload['judgments_count']
@@ -384,16 +390,17 @@ def _async_process_payments(signal, payload, job_id, job_config):
         elif signal == "unit_complete":
             #TODO: may process the whole unit here
             pass
-        app.logger.info(f"Started part-payments..., signal: {signal}")
+        app.logger.info("Started part-payments..., with signal: %s ^_^ " % signal)
 
 @csrf_protect.exempt
 @bp.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
 def webhook():
-    app.logger.info(f"request.form: {request.form}")
-    signal = request.form['signal']
+    form = request.form.to_dict()
+    signal = form['signal']
     if signal in {'unit_complete', 'new_judgements'}:
-        payload_raw = request.form['payload']
-        signature = request.form['signature']
+        app.logger.info(f"SIGNAL: {signal}")
+        payload_raw = form['payload']
+        signature = form['signature']
         payload = json.loads(payload_raw)
         job_id = payload['job_id']
         
@@ -401,8 +408,8 @@ def webhook():
         payload_ext = payload_raw + job_config["api_key"]
         verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
         if signature == verif_signature:
-            kwargs = {'signal': signal, 'job_id':job_id, 'job_config':job_config, 'payload': payload}
-            app.config["THREADS_POOL"].starmap_async(_async_process_payments, [kwargs])
+            args = (signal, job_id, job_config, payload)
+            app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
     return Response(status=200)
 
 @csrf_protect.exempt
