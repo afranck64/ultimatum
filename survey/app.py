@@ -1,11 +1,15 @@
 from flask import render_template
 
+from survey import hhi_adm
 from survey import hhi_prop_adm
+from survey import hhi_resp_adm
 from survey import admin
 
 from survey._app import app
 
+app.register_blueprint(hhi_adm.bp)
 app.register_blueprint(hhi_prop_adm.bp)
+app.register_blueprint(hhi_resp_adm.bp)
 app.register_blueprint(admin.bp)
 
 @app.route("/")

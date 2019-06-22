@@ -213,6 +213,16 @@ def close_row(con, job_id, row_id):
     with con:
         con.execute(f'update {table} set {LAST_CHANGE_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING))
 
+def insert_row(job_id, row, overwrite=False):
+    df = pd.DataFrame(data=[row])
+    df[STATUS_KEY] = RowState.JUDGEABLE
+    df[LAST_CHANGE_KEY] = time.time()
+    df[WORKER_KEY] = None
+    df["ai_offer"] = app.config["HHI_ADM"].predict()
+    table = get_table(job_id)
+    # TODO should use g instead
+    con = get_db("DATA")
+    insert(df, table, con=con, overwrite=overwrite)
 
 def save_prop_result2db(con, proposal_result, job_id, overwrite=False):
     table = get_table(job_id)

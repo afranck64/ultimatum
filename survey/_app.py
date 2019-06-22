@@ -10,6 +10,13 @@ app = Flask(__name__)
 
 csrf_protect = CSRFProtect(app)
 
+class FakeModel(object):
+    def predict(self, *args, **kwargs):
+        import random
+        import warnings
+        warnings.warn("You are using the fake model!!!")
+        return random.randint(0, 200)
+
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["APPLICATION_ROOT"] = os.environ.get("APPLICATION_ROOT", "/")
 # Main database
@@ -22,6 +29,7 @@ app.config["API_KEY"] = os.environ.get("API_KEY", "")
 app.config["ADMIN_SECRET"] = os.environ.get("ADMIN_SECRET", "")
 app.config["DEBUG"] = os.environ.get("DEBUG")
 app.config["THREADS_POOL"] = pool.ThreadPool(processes=1)
+app.config["HHI_ADM"] = FakeModel()
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the 
