@@ -17,7 +17,8 @@ class FakeModel(object):
         warnings.warn("You are using the fake model!!!")
         return random.randint(0, 200)
 
-_debug = os.environ.get("DEBUG").upper()
+_debug = os.environ.get("DEBUG")
+_debug = _debug.upper() if _debug else _debug
 app.config["DEBUG"] = _debug in {"YES", "TRUE"}
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["APPLICATION_ROOT"] = os.environ.get("APPLICATION_ROOT", "/")
