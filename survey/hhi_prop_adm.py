@@ -149,11 +149,12 @@ def save_prop_result(filename, proposal_result):
             writer.writerow(proposal_result.keys())
         writer.writerow(proposal_result.values())
 
-def generate_completion_code():
-
+def generate_completion_code(job_id):
+    job_config = get_job_config(get_db("DB"), job_id)
+    base_completion_code = job_config["base_code"]
     part1 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
-    part2 = BASE_COMPLETION_CODE
-    part3 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
+    part2 = base_completion_code
+    part3 = "-PROP"
     return "".join([part1, part2, part3])
 
 def allowed_file(filename):
@@ -301,7 +302,7 @@ def index():
         if not row_info:
             warnings.warn(f"ERROR: The row can no longer be processed. unit_id: {unit_id} - worker_id: {worker_id}")
 
-            flash(f"Unfortunately, there is no more row available. Thank you for your participation")
+            flash(f"There are either no more rows available or you already took part on this survey. Thank you for your participation")
             if not app.config["DEBUG"]:
                 return render_template("error.html")
     if request.method == "POST":
@@ -350,11 +351,10 @@ def done():
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
     if not (session.get("worker_bonus") and session.get("worker_code")):
-        worker_code = session.get('worker_code', '')
-        worker_code = generate_completion_code()
+        job_id = session["job_id"]
+        worker_code = generate_completion_code(job_id)
         proposal = session["proposal"]
         row_info = session["row_info"]
-        job_id = session["job_id"]
         worker_id = session["worker_id"]
         unit_id = session["unit_id"]
         close_row(get_db("DATA"), job_id, row_info[PK_KEY])
@@ -363,11 +363,11 @@ def done():
         try:
             save_prop_result(TUBE_RES_FILENAME, prop_result)
         except Exception as err:
-            app.logger.error(f"{err}")
+            app.log_exception(err)
         try:
             save_prop_result2db(get_db("RESULT"), prop_result, job_id)
         except Exception as err:
-            app.logger.error(f"{err}")
+            app.log_exception(err)
         session.clear()
 
         session["hhi_prop_adm"] = True
@@ -459,6 +459,3 @@ def upload():
             return redirect(url_for('hhi_prop_adm.upload',
                                     filename=filename))
     return render_template('upload.html')
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000)

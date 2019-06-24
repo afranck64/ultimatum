@@ -17,6 +17,8 @@ class FakeModel(object):
         warnings.warn("You are using the fake model!!!")
         return random.randint(0, 200)
 
+_debug = os.environ.get("DEBUG").upper()
+app.config["DEBUG"] = _debug in {"YES", "TRUE"}
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["APPLICATION_ROOT"] = os.environ.get("APPLICATION_ROOT", "/")
 # Main database
@@ -27,7 +29,6 @@ app.config["DATABASE_DATA"] = os.environ.get("DATABASE_DATA", "./db.data.sqlite3
 app.config["DATABASE_RESULT"] = os.environ.get("DATABASE_RESULT", "./db.result.sqlite3")
 app.config["API_KEY"] = os.environ.get("API_KEY", "")
 app.config["ADMIN_SECRET"] = os.environ.get("ADMIN_SECRET", "")
-app.config["DEBUG"] = os.environ.get("DEBUG")
 app.config["THREADS_POOL"] = pool.ThreadPool(processes=1)
 app.config["HHI_ADM"] = FakeModel()
 
