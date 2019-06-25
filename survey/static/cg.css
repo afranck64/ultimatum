@@ -1,0 +1,79 @@
+div {
+    padding-top: 50px;
+    padding-right: 30px;
+    padding-bottom: 50px;
+    padding-left: 80px;
+}
+
+#links { margin: 10px 50px 30px 10px; }
+
+h2 { color: #111; 
+    font-family: 'Open Sans', sans-serif; 
+    font-size: 30px; 
+    font-weight: 10; 
+    line-height: 32px; 
+    margin:auto; 
+    text-align: center; }
+
+.donation{  /*background: #fe921f; */
+    background:#808080;
+    color: #ffffff; 
+    display: inline-block; 
+    font-family: 'Lato', sans-serif; 
+    font-size: 20px; 
+    font-weight: bold; 
+    line-height: 12px; 
+    letter-spacing: 2px; 
+    text-transform: uppercase; 
+    padding: 10px 15px 8px; 
+    margin: auto;
+ }
+
+ .button {
+    background-color: #008CBA;
+    border: none;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.charity{
+    color: #008CBA; 
+    font-family: 'Raleway',sans-serif; 
+    font-size: 30px; 
+    font-weight: 10; 
+    line-height: 12px; 
+    margin: auto; 
+    text-align: center; 
+    text-transform: uppercase;
+}
+
+.total{  /*background: #fe921f;*/
+   background:#808080;
+    color: #ffffff; 
+    display: inline-block; 
+    font-family: 'Lato', sans-serif; 
+    font-size: 20px; 
+    font-weight: bold; 
+    line-height: 12px; 
+    letter-spacing: 2px; 
+    text-transform: uppercase; 
+    padding: 10px 15px 8px; 
+    margin: auto;
+ }
+
+ .summary{ color: #111;
+     font-family: 'Helvetica Neue', sans-serif;
+     font-size: 25px; 
+     font-weight: bold; 
+     letter-spacing: -1px; 
+     line-height: 1; 
+     text-align: center; 
+
+    }

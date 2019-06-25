@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{url_for('static', filename='eff.css')}}">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<title>Image Transcription</title>
+</head>
+<body>
+
+<h1 align="center">Please transcbribe the following images!</h1>
+
+<h2>For each image that you correctly transcribe, you will receive 2 USD cents. <br>
+    There are 4 letters in each image. <br>
+    You have 2 minutes to transcribe as many images as you can.</h2>
+
+<script type="text/javascript">
+        function startTimer(duration, display) {
+    var timer = duration, minutes, seconds;
+    setInterval(function () {
+        minutes = parseInt(timer / 60, 10)
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds;
+
+        if (--timer < 0) {
+            document.getElementById("effort").submit();
+        }
+    }, 1000);
+}
+
+window.onload = function () {
+    var twoMinutes = 60 * 2,
+        display = document.querySelector('#time');
+    startTimer(twoMinutes, display);
+};
+
+</script>
+
+<div style="text-align: center;">
+<div class="timer" style="text-align:center;"> You have <span id="time">02:00</span> minutes left!</div> 
+</div>
+
+<form action="{{url_for('tasks.eff.index')}}" method="POST" id="effort">
+  <div class="captchas">
+    
+    <div>
+        <img src="{{ url_for('static', filename='captchas/1.jpg') }}" alt="img_1"> <br>
+        <h3> &#9885; Transcribe the image above: </h3>
+        <input type="text" name="img_1" id="img_1" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/2.jpg') }}" alt="img_2"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_2" id="img_2" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/3.jpg') }}" alt="img_3"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_3" id="img_3" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/4.jpg') }}" alt="img_4"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_4" id="img_4" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/5.jpg') }}" alt="img_5"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_5" id="img_5" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/6.jpg') }}" alt="img_6"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_6" id="img_6" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/7.jpg') }}" alt="img_7"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_7" id="img_7" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/8.jpg') }}" alt="img_8"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_8" id="img_8" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/9.jpg') }}" alt="img_9"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_9" id="img_9" style="height:25px;font-size:16pt;">
+    </div>
+      <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/10.jpg') }}" alt="img_10"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_10" id="img_10" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/11.jpg') }}" alt="img_11"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_11" id="img_11" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/12.jpg') }}" alt="img_12"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_12" id="img_12" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/13.jpg') }}" alt="img_13"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_13" id="img_13" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/14.jpg') }}" alt="img_14"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_14" id="img_14" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/15.jpg') }}" alt="img_15"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_15" id="img_15" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/16.jpg') }}" alt="img_16"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_16" id="img_16" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/17.jpg') }}" alt="img_17"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_17" id="img_17" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/18.jpg') }}" alt="img_18"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_18" id="img_18" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/19.jpg') }}" alt="img_19"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_19" id="img_19" style="height:25px;font-size:16pt;">
+    </div>
+    <hr>
+    <div>
+        <img src="{{ url_for('static', filename='captchas/20.jpg') }}" alt="img_20"> <br>
+        <h3> &#9885; Transcribe the image above:  </h3>
+        <input type="text" name="img_20" id="img_20" style="height:25px;font-size:16pt;">
+    </div>
+    <br>
+   
+
+
+  </div>  
+
+  <br>
+<div style="text-align:center">
+<input type="submit" value="Submit" style="margin:50" id="submit1"></div>
+</form>
+</body>
+</html>
+    
+    

@@ -17,9 +17,10 @@ import random
 
 from survey._app import app
 from survey.db import get_db, table_exists
-from survey.hhi_prop_adm import get_table as get_prop_table, JUDGING_TIMEOUT_SEC, LAST_CHANGE_KEY, STATUS_KEY
-from survey.hhi_resp_adm import get_table as get_resp_table
+from survey.hhi_prop_adm import BASE as hhi_prop_adm_BASE, JUDGING_TIMEOUT_SEC, LAST_CHANGE_KEY, STATUS_KEY
+from survey.hhi_resp_adm import BASE as hhi_resp_adm_BASE
 from survey.figure_eight import RowState
+from survey.utils import get_table
 
 
 #### const
@@ -33,8 +34,8 @@ def index():
     is_proposer = (random.random() > 0.5)
     job_id = request.args.get("job_id", "na")
     worker_id = request.args.get("worker_id", "na")
-    resp_table = get_resp_table(job_id)
-    prop_table = get_prop_table(job_id)
+    resp_table = get_table(hhi_resp_adm_BASE, job_id)
+    prop_table = get_table(hhi_prop_adm_BASE, job_id)
 
     con = get_db("DATA")
     nb_resp = 0
@@ -57,6 +58,7 @@ def index():
             if tmp:
                 nb_prop = tmp["count"]
     
+    #TODO: if nb_resp >= expected row/2, should only take props
     if nb_prop_open > 0:
         is_proposer = True
     else:
@@ -64,8 +66,6 @@ def index():
             is_proposer = True
         else:
             is_proposer = False
-    
-    print(f"{nb_prop, nb_prop_open, nb_resp}")
 
 
     if is_proposer:

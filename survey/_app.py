@@ -31,7 +31,9 @@ app.config["DATABASE_RESULT"] = os.environ.get("DATABASE_RESULT", "./db.result.s
 app.config["API_KEY"] = os.environ.get("API_KEY", "")
 app.config["ADMIN_SECRET"] = os.environ.get("ADMIN_SECRET", "")
 app.config["THREADS_POOL"] = pool.ThreadPool(processes=1)
-app.config["HHI_ADM"] = FakeModel()
+app.config["HHI_ADM_MODEL"] = FakeModel()
+app.config["OUTPUT_DIR"] = os.environ.get("OUTPUT_DIR", "./data/output")
+os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the 

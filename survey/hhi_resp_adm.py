@@ -31,6 +31,7 @@ from notebooks.models.metrics import gain
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
 from survey.hhi_prop_adm import insert_row, get_table as get_prop_table
+from survey.utils import save_result2db, save_result2file, get_output_filename, generate_completion_code
 
 
 ############ Consts #################################
@@ -39,6 +40,8 @@ TUBE_RES_FILENAME = os.environ.get("TUBE_RES_FILENAME", "./data/HH_SURVEY1/outpu
 SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
 
 BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
+
+BASE = "hhi_resp_adm"
 
 LAST_CHANGE_KEY = '_time_change'
 
@@ -98,47 +101,44 @@ def hhi_resp_adm_to_resp_result(response, job_id=None, worker_id=None):
     return result
 
 
-def save_resp_result(filename, response_result):
-    if "job_id" in response_result:
-        folder, fname = os.path.split(filename)
-        filename = os.path.join(folder, f"{response_result['job_id']}__{fname}")
-    file_exists = os.path.exists(filename)
-    os.makedirs(os.path.split(filename)[0], exist_ok=True)
-    with open(filename, "a") as out_f:
+# def save_resp_result(filename, response_result):
+#     if "job_id" in response_result:
+#         folder, fname = os.path.split(filename)
+#         filename = os.path.join(folder, f"{response_result['job_id']}__{fname}")
+#     file_exists = os.path.exists(filename)
+#     os.makedirs(os.path.split(filename)[0], exist_ok=True)
+#     with open(filename, "a") as out_f:
 
-        writer = csv.writer(out_f)
-        if not file_exists:
-            writer.writerow(response_result.keys())
-        writer.writerow(response_result.values())
+#         writer = csv.writer(out_f)
+#         if not file_exists:
+#             writer.writerow(response_result.keys())
+#         writer.writerow(response_result.values())
 
-def generate_completion_code(job_id):
-    job_config = get_job_config(get_db("DB"), job_id)
-    base_completion_code = job_config["base_code"]
-    part1 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
-    part2 = base_completion_code
-    part3 = "-RESP"
-    return "".join([part1, part2, part3])
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def get_table(job_id, category=None):
-    """
-    Generate a table name based on the job_id
-    :param job_id:
-    :param category:
-    """
-    if category is None:
-        return f"hhi_resp_adm__{job_id}"
-    else:
-        return f"hhi_resp_adm__{category}__{job_id}"
+# def generate_completion_code(job_id):
+#     job_config = get_job_config(get_db("DB"), job_id)
+#     base_completion_code = job_config["base_code"]
+#     part1 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
+#     part2 = base_completion_code
+#     part3 = "-RESP"
+#     return "".join([part1, part2, part3])
 
 
-def save_resp_result2db(con, response_result, job_id, overwrite=False):
-    table = get_table(job_id)
-    df = pd.DataFrame(data=[response_result])
-    insert(df, table=table, con=con, overwrite=overwrite)
+# def get_table(job_id, category=None):
+#     """
+#     Generate a table name based on the job_id
+#     :param job_id:
+#     :param category:
+#     """
+#     if category is None:
+#         return f"hhi_resp_adm__{job_id}"
+#     else:
+#         return f"hhi_resp_adm__{category}__{job_id}"
+
+
+# def save_resp_result2db(con, response_result, job_id, overwrite=False):
+#     table = get_table(job_id)
+#     df = pd.DataFrame(data=[response_result])
+#     insert(df, table=table, con=con, overwrite=overwrite)
 
 class ProposerForm(FlaskForm):
     min_offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
@@ -177,16 +177,18 @@ def done():
         return render_template("error.html")
     if not session.get("worker_code") or app.config["DEBUG"]:
         job_id = session["job_id"]
-        worker_code = generate_completion_code(job_id)
+        worker_code = generate_completion_code(BASE, job_id)
         response = session["response"]
         worker_id = session["worker_id"]
         resp_result = hhi_resp_adm_to_resp_result(response, job_id=job_id, worker_id=worker_id)
         try:
-            save_resp_result(TUBE_RES_FILENAME, resp_result)
+            #save_resp_result(TUBE_RES_FILENAME, resp_result)
+            save_result2file(get_output_filename("hhi_resp_adm", job_id), resp_result)
         except Exception as err:
             app.log_exception(err)
         try:
-            save_resp_result2db(get_db("RESULT"), resp_result, job_id)
+            #save_resp_result2db(get_db("RESULT"), resp_result, job_id)
+            save_result2db("hhi_resp_adm", resp_result, job_id, unique_fields=["worker_id"])
         except Exception as err:
             app.log_exception(err)
         insert_row(job_id, response)

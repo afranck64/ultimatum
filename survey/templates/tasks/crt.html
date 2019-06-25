@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{url_for('static', filename='crt.css')}}">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<title>Questions</title>
+</head>
+<body>
+
+<div>
+<h1 align="center">Answer the following questions!</h1>
+
+<h2>For each question that you correctly answer, you will receive 15 USD cents. <br>You have 2 minutes and 30 seconds to answer these questions.</h2>
+
+<script type="text/javascript">
+	function startTimer(duration, display) {
+    var timer = duration, minutes, seconds;
+    setInterval(function () {
+        minutes = parseInt(timer / 60, 10)
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds;
+
+        if (--timer < 0) {
+            document.getElementById("crt").submit();
+        }
+    }, 1000);
+}
+
+window.onload = function () {
+    var threeMinutes = 60 * 2.5,
+        display = document.querySelector('#time');
+    startTimer(threeMinutes, display);
+};
+
+</script>
+
+<div style="text-align:center">
+
+<div class="timer" style="text-align:center"> You have <span id="time">02:30</span> minutes left!</div> </div>
+
+<form action="{{url_for('tasks.crt.index')}}" method="POST" id="crt">
+
+  <div class="questions">
+
+    <p><b>(1).</b> A child goes to a toystore to buy some toys. A toy airplane and a ship cost 2,10 EUR in total. The airplane costs 2,00 USD more than the ship. <br>
+        How much does the ship cost (in cents)? Please enter the cost of the ship using numbers instead of words. </p>
+    <input type="number" name="q1" maxlength="3" > CENTS <br>
+
+    <p><b>(2).</b> If it takes 10 men 10 minutes to change 10 light bulbs, how long would it take 200 men to change 200 light bulbs (in minutes)?<br>
+     Please enter your answer  using numbers instead of words.</p>
+    <input type="number" name="q2" maxlength="4" > MINUTES <br>
+
+    <p><b>(3).</b> A painter paints a wall, and every day the area of the wall that is painted doubles in size. <br>
+     If it takes 24 days for the painter to paint the entire wall, how long would it take for the painter to paint half of the wall (in days)? <br>
+     Please enter your answer  using numbers instead of words.</p>
+       <input type="number" name="q3" maxlength="4" > DAYS <br>
+
+  </div>  
+
+  <br>
+    <div style="text-align:center">
+    <input class="button" type="submit" value="Submit" style="margin:50"></div>
+</form>
+</div>
+</div>
+</body>
+</html>
+    
+    

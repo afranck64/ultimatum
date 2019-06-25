@@ -30,6 +30,7 @@ from notebooks.models.metrics import gain
 
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
+from survey.utils import save_result2db, save_result2file, get_output_filename, get_table, generate_completion_code
 
 
 ############ Consts #################################
@@ -38,6 +39,8 @@ TUBE_RES_FILENAME = os.environ.get("TUBE_RES_FILENAME", "./data/HH_SURVEY1/outpu
 SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
 
 BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
+
+BASE = "hhi_prop_adm"
 
 LAST_CHANGE_KEY = '_time_change'
 
@@ -50,7 +53,7 @@ PK_KEY = 'rowid'
 
 OFFER_VALUES = {str(val):value_repr(val) for val in range(0, 201, 5)}
 
-JUDGING_TIMEOUT_SEC = 5*60
+JUDGING_TIMEOUT_SEC = 10*60
 
 if app.config["DEBUG"]:
     JUDGING_TIMEOUT_SEC = 10
@@ -77,12 +80,7 @@ class HHI_Prop_ADM(dict):
         self["ai_calls_time"] = []
         self["ai_calls_response"] = []
         self["time_stop"] = None
-
-
-class UploadForm(FlaskForm):
-    job_id = StringField("Job id", validators=[DataRequired()])
-    overwite = BooleanField("Overwrite")
-    submit = SubmitField("Submit")
+        self.__dict__ = self
 
 
 def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=None, row_data=None):
@@ -135,42 +133,42 @@ def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=N
     return result
 
 
-def save_prop_result(filename, proposal_result):
-    prefix = ""
-    if "job_id" in proposal_result:
-        folder, fname = os.path.split(filename)
-        filename = os.path.join(folder, f"{proposal_result['job_id']}__{fname}")
-    file_exists = os.path.exists(filename)
-    os.makedirs(os.path.split(filename)[0], exist_ok=True)
-    with open(filename, "a") as out_f:
+# def save_prop_result(filename, proposal_result):
+#     if "job_id" in proposal_result:
+#         folder, fname = os.path.split(filename)
+#         filename = os.path.join(folder, f"{proposal_result['job_id']}__{fname}")
+#     file_exists = os.path.exists(filename)
+#     os.makedirs(os.path.split(filename)[0], exist_ok=True)
+#     with open(filename, "a") as out_f:
 
-        writer = csv.writer(out_f)
-        if not file_exists:
-            writer.writerow(proposal_result.keys())
-        writer.writerow(proposal_result.values())
+#         writer = csv.writer(out_f)
+#         if not file_exists:
+#             writer.writerow(proposal_result.keys())
+#         writer.writerow(proposal_result.values())
 
-def generate_completion_code(job_id):
-    job_config = get_job_config(get_db("DB"), job_id)
-    base_completion_code = job_config["base_code"]
-    part1 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
-    part2 = base_completion_code
-    part3 = "-PROP"
-    return "".join([part1, part2, part3])
+# def generate_completion_code(job_id):
+#     job_config = get_job_config(get_db("DB"), job_id)
+#     base_completion_code = job_config["base_code"]
+#     part1 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
+#     part2 = base_completion_code
+#     part3 = "-PROP"
+#     return "".join([part1, part2, part3])
+
+# def get_table(job_id, category=None):
+#     """
+#     Generate a table name based on the job_id
+#     :param job_id:
+#     :param category:
+#     """
+#     if category is None:
+#         return f"hhi_prop_adm__{job_id}"
+#     else:
+#         return f"hhi_prop_adm__{category}__{job_id}"
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def get_table(job_id, category=None):
-    """
-    Generate a table name based on the job_id
-    :param job_id:
-    :param category:
-    """
-    if category is None:
-        return f"hhi_prop_adm__{job_id}"
-    else:
-        return f"hhi_prop_adm__{category}__{job_id}"
 
 def get_row(con, job_id, worker_id):
     """
@@ -179,7 +177,7 @@ def get_row(con, job_id, worker_id):
     :param job_id: job id
     :param worker_id: worker's id
     """
-    table = get_table(job_id)
+    table = get_table("hhi_prop_adm", job_id)
     if not table_exists(con, table):
         return None
     free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==?', (RowState.JUDGEABLE,)).fetchone()
@@ -208,7 +206,7 @@ def get_row(con, job_id, worker_id):
     return res
 
 def close_row(con, job_id, row_id):
-    table = get_table(job_id)
+    table = get_table(BASE, job_id)
     if not table_exists(con, table):
         return
     with con:
@@ -219,19 +217,19 @@ def insert_row(job_id, row, overwrite=False):
     df[STATUS_KEY] = RowState.JUDGEABLE
     df[LAST_CHANGE_KEY] = time.time()
     df[WORKER_KEY] = None
-    df["ai_offer"] = app.config["HHI_ADM"].predict()
-    table = get_table(job_id)
+    df["ai_offer"] = app.config["HHI_ADM_MODEL"].predict()
+    table = get_table(BASE, job_id)
     # TODO should use g instead
     con = get_db("DATA")
     insert(df, table, con=con, overwrite=overwrite)
 
 def save_prop_result2db(con, proposal_result, job_id, overwrite=False):
-    table = get_table(job_id)
+    table = get_table(BASE, job_id)
     df = pd.DataFrame(data=[proposal_result])
     insert(df, table=table, con=con, overwrite=overwrite)
 
 def get_worker_bonus(con, job_id, worker_id):
-    table = get_table(job_id)
+    table = get_table(BASE, job_id)
     if table_exists(con, table):
         row = con.execute(f"SELECT * from {table} WHERE worker_id=?", (worker_id,)).fetchone()
         if row:
@@ -352,7 +350,7 @@ def done():
         return render_template("error.html")
     if not (session.get("worker_bonus") and session.get("worker_code")):
         job_id = session["job_id"]
-        worker_code = generate_completion_code(job_id)
+        worker_code = generate_completion_code(BASE, job_id)
         proposal = session["proposal"]
         row_info = session["row_info"]
         worker_id = session["worker_id"]
@@ -361,11 +359,13 @@ def done():
         worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
         prop_result = hhi_prop_adm_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info)
         try:
-            save_prop_result(TUBE_RES_FILENAME, prop_result)
+            #save_prop_result(TUBE_RES_FILENAME, prop_result)
+            save_result2file(get_output_filename("hhi_prop_adm", job_id), prop_result)
         except Exception as err:
             app.log_exception(err)
         try:
-            save_prop_result2db(get_db("RESULT"), prop_result, job_id)
+            #save_prop_result2db(get_db("RESULT"), prop_result, job_id)
+            save_result2db("hhi_prop_adm", prop_result, job_id, unique_fields=["worker_id"])
         except Exception as err:
             app.log_exception(err)
         session.clear()
@@ -452,7 +452,7 @@ def upload():
             df[STATUS_KEY] = RowState.JUDGEABLE
             df[LAST_CHANGE_KEY] = time.time()
             df[WORKER_KEY] = None
-            table = get_table(job_id)
+            table = get_table(BASE, job_id)
             # TODO should use g instead
             con = get_db("DATA")
             insert(df, table, con=con, overwrite=overwrite)

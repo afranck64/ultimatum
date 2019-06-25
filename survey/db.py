@@ -49,20 +49,38 @@ def init_db_command():
 
 
 
-def insert(df, table, con=None, overwrite=False):
+def insert(df, table, con=None, overwrite=False, unique_worker=False, unique_fields=None):
     """
     Insert rows in df to into the given table
     :param df: (DataFrame)
     :param table: (str) table name
     :param con: (sqlite|sqlachemy- Connection)
     :param overwrite: (bool)
+    :param unique_worker: (bool) if True, an unique index is add to the table
+    :param unique_fiedls: (str|list[str]) create unique index for the grouped fields
     """
     
     con = con or g.db
+    table_already_created = table_exists(con, table)
+    #sql_unique_worker = f"CREATE UNIQUE INDEX IF NOT EXISTS unique_worker_index_{table} ON {table}(worker_id)"
+    if unique_fields is not None:
+        if isinstance(unique_fields, str):
+            unique_fields = (unique_fields,)
+        else:
+            unique_fields = tuple(unique_fields)
+        sql_unique_fields = f"CREATE UNIQUE INDEX IF NOT EXISTS unique_worker_index_{table} ON {table}({','.join(unique_fields)})"
     if overwrite:
         df.to_sql(table, con=con, if_exists='replace', index=False)
+        if unique_fields:
+            with con:
+                con.execute(sql_unique_fields)
     else:
         df.to_sql(table, con=con, if_exists='append', index=False)
+        if not table_already_created:
+            if unique_fields:
+                with con:
+                    con.execute(sql_unique_fields)
+
 
 
 def table_exists(con, table):

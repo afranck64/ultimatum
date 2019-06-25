@@ -39,26 +39,6 @@ class JobConfig(dict):
         self["expected_judgments"] = expected_judgments
         self.__dict__ = self
 
-        # @property
-        # def job_id(self):
-        #     return self["job_id"]
-        
-        # @property
-        # def api_key(self):
-        #     return self["api_key"]
-        
-        # @property
-        # def nb_rows(self):
-        #     return self["nb_rows"]
-        
-        # @property
-        # def unique_worker(self):
-        #     return self["unique_workder"]
-        
-        # @property
-        # def base_code(self):
-        #     return self["base_code"]
-        #self["nb_judgments"] = 0
 
 def get_job_config(con, job_id, table="jobs"):
     """
