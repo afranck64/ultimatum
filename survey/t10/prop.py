@@ -23,33 +23,26 @@ from werkzeug.utils import secure_filename
 
 from survey._app import app, csrf_protect
 from survey.figure_eight import FigureEight, RowState
-#from survey.unit import HHI_Prop_ADM,  hhi_prop_adm_to_prop_result, save_prop_result
+#from survey.unit import HHI_Prop_ADM,  prop_to_prop_result, save_prop_result
 from notebooks.utils.explanation import get_acceptance_propability, get_best_offer_probability
 from notebooks.utils import value_repr
 from notebooks.models.metrics import gain
 
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
-from survey.utils import save_result2db, save_result2file, get_output_filename, get_table, generate_completion_code
+from survey.utils import save_result2db, save_result2file, get_output_filename, get_table, generate_completion_code, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY
 
 
 ############ Consts #################################
-TUBE_RES_FILENAME = os.environ.get("TUBE_RES_FILENAME", "./data/HH_SURVEY1/output/hhi_prop_adm.csv")
+TUBE_RES_FILENAME = os.environ.get("TUBE_RES_FILENAME", "./data/HH_SURVEY1/output/prop.csv")
 
 SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
 
 BASE_COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
 
-BASE = "hhi_prop_adm"
+TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
+BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 
-LAST_MODIFIED_KEY = '_time_change'
-
-STATUS_KEY = '_status'
-
-WORKER_KEY = '_worker'
-
-# sqlite return 'rowid' as default 
-PK_KEY = 'rowid'
 
 OFFER_VALUES = {str(val):value_repr(val) for val in range(0, 201, 5)}
 
@@ -63,7 +56,7 @@ ALLOWED_EXTENSIONS = {"csv", "xls", "xlsx", "tsv", "xml"}
 with open(SURVEY_INFOS_FILENAME) as inp_f:
     MODEL_INFOS = json.load(inp_f)
 
-bp = Blueprint("hhi_prop_adm", __name__)
+bp = Blueprint("t10.prop", __name__)
 ######################################################
 
 
@@ -83,7 +76,7 @@ class HHI_Prop_ADM(dict):
         self.__dict__ = self
 
 
-def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=None, row_data=None):
+def prop_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=None, row_data=None):
     """
     :returns: {
         time: server time when genererting the result
@@ -154,16 +147,6 @@ def hhi_prop_adm_to_prop_result(proposal, job_id=None, worker_id=None, unit_id=N
 #     part3 = "-PROP"
 #     return "".join([part1, part2, part3])
 
-# def get_table(job_id, category=None):
-#     """
-#     Generate a table name based on the job_id
-#     :param job_id:
-#     :param category:
-#     """
-#     if category is None:
-#         return f"hhi_prop_adm__{job_id}"
-#     else:
-#         return f"hhi_prop_adm__{category}__{job_id}"
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -177,7 +160,7 @@ def get_row(con, job_id, worker_id):
     :param job_id: job id
     :param worker_id: worker's id
     """
-    table = get_table("hhi_prop_adm", job_id)
+    table = get_table(base=BASE, job_id=job_id, treatment=TREATMENT)
     if not table_exists(con, table):
         return None
     free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==?', (RowState.JUDGEABLE,)).fetchone()
@@ -206,7 +189,8 @@ def get_row(con, job_id, worker_id):
     return res
 
 def close_row(con, job_id, row_id):
-    table = get_table(BASE, job_id)
+    
+    table = get_table(BASE, job_id, treatment=TREATMENT)
     if not table_exists(con, table):
         return
     with con:
@@ -218,21 +202,22 @@ def insert_row(job_id, row, overwrite=False):
     df[LAST_MODIFIED_KEY] = time.time()
     df[WORKER_KEY] = None
     df["ai_offer"] = app.config["T10_MODEL"].predict()
-    table = get_table(BASE, job_id)
+    table = get_table(BASE, job_id, treatment=TREATMENT)
     # TODO should use g instead
     con = get_db("DATA")
     insert(df, table, con=con, overwrite=overwrite)
 
 def save_prop_result2db(con, proposal_result, job_id, overwrite=False):
-    table = get_table(BASE, job_id)
+    table = get_table(BASE, job_id, treatment=TREATMENT)
     df = pd.DataFrame(data=[proposal_result])
     insert(df, table=table, con=con, overwrite=overwrite)
 
 def get_worker_bonus(con, job_id, worker_id):
-    table = get_table(BASE, job_id)
+    table = get_table(BASE, job_id, treatment=TREATMENT)
     if table_exists(con, table):
         row = con.execute(f"SELECT * from {table} WHERE worker_id=?", (worker_id,)).fetchone()
         if row:
+            print("ROW: ", row)
             return gain(row["data__min_offer"], row["offer"])
     return 0
 
@@ -247,7 +232,7 @@ def pay_worker_bonus(con, job_id, worker_id, bonus_cents, fig8, base=None, overw
     :returns True if payment was done, False otherwise
     """
     df = pd.DataFrame(data=[{'job_id':job_id, 'worker_id': worker_id, 'timestamp': str(datetime.datetime.now()), 'bonus_cents': bonus_cents}])
-    table = get_table(BASE, job_id, category="payment")
+    table = get_table(BASE, job_id, category="payment", treatment=TREATMENT)
 
     should_pay = False
     if table_exists(con, table):
@@ -274,7 +259,7 @@ class ProposerForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
-@bp.route("/hhi_prop_adm/", methods=["GET", "POST"])
+@bp.route("/prop/", methods=["GET", "POST"])
 def index():
     if request.method == "GET":
         session['proposal'] = HHI_Prop_ADM()
@@ -288,15 +273,8 @@ def index():
         session["worker_id"] = worker_id
         session["job_id"] = job_id
         session["row_info"] = row_info
-        #data = row_info.get("data", {})
-
-        if job_id in ("", "na") or worker_id in ("", "na"):
-            # flash("Valid job_id and worker_id are required")
-            # return render_template("error.html")
-            pass
-
+        
         #TODO: check if worker_id has started answering this unit
-        #TODO: break
         if not row_info:
             warnings.warn(f"ERROR: The row can no longer be processed. unit_id: {unit_id} - worker_id: {worker_id}")
 
@@ -314,15 +292,15 @@ def index():
         proposal["offer"] = offer
         ##TODO return redirect
         session['proposal'] = proposal
-        return redirect(url_for("hhi_prop_adm.done"))
+        return redirect(url_for(f"{TREATMENT}.prop.done"))
 
-    session["hhi_prop_adm"] = True
-    return render_template("hhi_prop_adm.html", offer_values=OFFER_VALUES, form=ProposerForm())
+    session[BASE] = True
+    return render_template(f"{TREATMENT}/prop.html", offer_values=OFFER_VALUES, form=ProposerForm())
 
 
-@bp.route("/hhi_prop_adm/check")
+@bp.route("/prop/check")
 def check():
-    if not session.get("hhi_prop_adm", None):
+    if not session.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
     
@@ -343,37 +321,37 @@ def check():
     #return "checked %s - acceptance: %s, best_offer: %s" % (offer, acceptance_probability, best_offer_probability)
 
 
-@bp.route("/hhi_prop_adm/done")
+@bp.route("/prop/done")
 def done():
-    if not session.get("hhi_prop_adm", None):
+    if not session.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
     if not (session.get("worker_bonus") and session.get("worker_code")):
         job_id = session["job_id"]
-        worker_code = generate_completion_code("prop", job_id)
+        worker_code = generate_completion_code(base=BASE, job_id=job_id)
         proposal = session["proposal"]
         row_info = session["row_info"]
         worker_id = session["worker_id"]
         unit_id = session["unit_id"]
         close_row(get_db("DATA"), job_id, row_info[PK_KEY])
         worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
-        prop_result = hhi_prop_adm_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info)
+        prop_result = prop_to_prop_result(proposal, job_id=job_id, worker_id=worker_id, unit_id=unit_id, row_data=row_info)
         try:
             #save_prop_result(TUBE_RES_FILENAME, prop_result)
-            save_result2file(get_output_filename("hhi_prop_adm", job_id), prop_result)
+            save_result2file(get_output_filename(base=BASE, job_id=job_id, treatment=TREATMENT), prop_result)
         except Exception as err:
             app.log_exception(err)
         try:
             #save_prop_result2db(get_db("RESULT"), prop_result, job_id)
-            save_result2db("hhi_prop_adm", prop_result, job_id, unique_fields=["worker_id"])
+            save_result2db(table=get_table(base=BASE, job_id=job_id, treatment=TREATMENT), response_result=prop_result, unique_fields=["worker_id"])
         except Exception as err:
             app.log_exception(err)
         session.clear()
 
-        session["hhi_prop_adm"] = True
+        session[BASE] = True
         session["worker_bonus"] = value_repr(worker_bonus)
         session["worker_code"] = worker_code
-    return render_template("hhi_prop_adm.done.html", worker_code=session["worker_code"], worker_bonus=session["worker_bonus"])
+    return render_template(f"{TREATMENT}/{BASE}.done.html", worker_code=session["worker_code"], worker_bonus=session["worker_bonus"])
 
 
 def _process_judgments(signal, payload, job_id, job_config):
@@ -403,7 +381,7 @@ def _process_judgments(signal, payload, job_id, job_config):
         app.logger.info("Started part-payments..., with signal: %s ^_^ " % signal)
 
 @csrf_protect.exempt
-@bp.route("/hhi_prop_adm/webhook", methods=["GET", "POST"])
+@bp.route("/prop/webhook", methods=["GET", "POST"])
 def webhook():
     form = request.form.to_dict()
     signal = form['signal']
@@ -423,7 +401,7 @@ def webhook():
     return Response(status=200)
 
 @csrf_protect.exempt
-@bp.route("/hhi_prop_adm/upload", methods=["GET", "POST"])
+@bp.route("/prop/upload", methods=["GET", "POST"])
 def upload():
     if request.method == 'POST':
         print("rrequest.data:", request.form)
@@ -452,10 +430,10 @@ def upload():
             df[STATUS_KEY] = RowState.JUDGEABLE
             df[LAST_MODIFIED_KEY] = time.time()
             df[WORKER_KEY] = None
-            table = get_table(BASE, job_id)
+            table = get_table(BASE, job_id, treatment=TREATMENT)
             # TODO should use g instead
             con = get_db("DATA")
             insert(df, table, con=con, overwrite=overwrite)
-            return redirect(url_for('hhi_prop_adm.upload',
+            return redirect(url_for('prop.upload',
                                     filename=filename))
     return render_template('upload.html')

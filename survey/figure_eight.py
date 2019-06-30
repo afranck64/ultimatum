@@ -3,14 +3,6 @@ import os
 import requests
 import warnings
 
-JOB_ID = ""
-API_KEY = ""
-
-try:
-    from survey.secret import *
-    print("imported secrets")
-except ModuleNotFoundError:
-    pass
 
 class Status(object):
     SUCCESS = 200
@@ -333,12 +325,3 @@ class FigureEight(object):
         """
         url = self.get_url(worker_id=worker_id, endpoint="reject")
         return requests.put(url=url, json={'reason': reason, 'manual': True})
-    
-    
-
-    
-if __name__ == "__main__":
-    fig8 = FigureEight(api_key=API_KEY, job_id=JOB_ID)
-    print(fig8.job_status())
-    print(fig8.row_get("2314014348"))
-    print(fig8.contributor_pay("xxx", 0))

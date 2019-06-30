@@ -16,6 +16,22 @@ from survey._app import app
 from survey.db import get_db, insert
 from survey.admin import get_job_config
 
+
+######
+
+LAST_MODIFIED_KEY = 'updated'
+
+STATUS_KEY = 'status'
+
+WORKER_KEY = 'worker_id'
+
+JOB_KEY = 'job_id'
+
+PK_KEY = 'rowid'
+
+######
+
+
 def generate_completion_code(base, job_id):
     """
     :param base:
@@ -25,10 +41,10 @@ def generate_completion_code(base, job_id):
     base_completion_code = job_config["base_code"]
     part1 = f"{base}:"
     part2 = base_completion_code
-    part3 = "".join(random.choices(string.ascii_letters + string.digits, k=8))
+    part3 = "".join(random.choices(string.ascii_letters + string.digits, k=5))
     return "".join([part1, part2, part3])
 
-def get_table(base, job_id, category=None):
+def get_table(base, job_id, category=None, treatment=None):
     """
     Generate a table name based on the job_id
     :param base:
@@ -36,13 +52,31 @@ def get_table(base, job_id, category=None):
     :param category:
     """
     if category is None:
-        return f"{base}__{job_id}"
+        res = f"{base}__{job_id}"
     else:
-        return f"{base}__{category}__{job_id}"
+        res = f"{base}__{category}__{job_id}"
+    if treatment:
+        res = f"{treatment}__{res}"
+    return res
 
 
-def get_output_filename(base, job_id):
-    return os.path.join(app.config["OUTPUT_DIR"], f"{base}_{job_id}.csv")
+def get_output_filename(base, job_id, category=None, treatment=None):
+    """
+    Generate a table name based on the job_id
+    :param base:
+    :param job_id:
+    :param category:
+    :param treatment:
+    """
+
+    if category is None:
+        basename = f"{base}__{job_id}"
+    else:
+        basename = f"{base}__{category}__{job_id}"
+    if treatment:
+        basename = f"{treatment}__{basename}"
+
+    return os.path.join(app.config["OUTPUT_DIR"], f"{basename}.csv")
 
 
 def save_result2file(filename, response_result, overwrite=False):
@@ -61,15 +95,13 @@ def save_result2file(filename, response_result, overwrite=False):
             writer.writerow(response_result.keys())
         writer.writerow(response_result.values())
 
-def save_result2db(base, response_result, job_id, overwrite=False, unique_fields=None):
+def save_result2db(table, response_result, overwrite=False, unique_fields=None):
     """
-    :param base: (str)
+    :param table: (str)
     :param response_result: (dict)
-    :param job_id: (int)
     :param overwrite: (bool)
     :param unique_fields: (str|list)
     """
-    table = get_table(base, job_id)
     df = pd.DataFrame(data=[response_result])
     insert(df, table=table, con=get_db("RESULT"), overwrite=overwrite, unique_fields=unique_fields)
 
@@ -164,5 +196,5 @@ def handle_task_done(base, response2result_func=None, numeric_fields=None, uniqu
     
 
         session[base] = True
-        session["worker_code"] = worker_code
-    return render_template("done.html", worker_code=session["worker_code"])
+        session[f"{base}worker_code"] = worker_code
+    return render_template("done.html", worker_code=session[f"{base}worker_code"])
