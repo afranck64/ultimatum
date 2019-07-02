@@ -98,7 +98,7 @@ class ProposerForm(FlaskForm):
     min_offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
-
+@csrf_protect.exempt
 @bp.route("/resp/", methods=["GET", "POST"])
 def index():
     if request.method == "GET":

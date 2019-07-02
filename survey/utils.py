@@ -123,7 +123,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     result["worker_id"] = worker_id
     return result
 
-def handle_task_index(base):
+def handle_task_index(base, validate_response=None):
     # if session.get("eff", None) and session.get("worker_id", None):
     #     return redirect(url_for("eff.done"))
     if request.method == "GET":
@@ -135,9 +135,12 @@ def handle_task_index(base):
         session["time_start"] = time.time()
     if request.method == "POST":
         response = request.form.to_dict()
-        response["time_stop"] = time.time()
-        response["time_start"] = session.get("time_start")
-        session["response"] = response
+        if validate_response is not None and validate_response(response):
+            response["time_stop"] = time.time()
+            response["time_start"] = session.get("time_start")
+            session["response"] = response
+        else:
+            flash("Please check your fields")
         
         print("REDIRECT")
         return redirect(url_for(f"tasks.{base}.done"))

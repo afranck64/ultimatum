@@ -32,6 +32,12 @@ SOLUTIONS = {
     "img_20": "tnrb"    #None?
 }
 
+def validate_response(response):
+    for key in SOLUTIONS:
+        if key not in response:
+            return False
+    return True
+
 def response_to_bonus(response):
     bonus = 0
     for key, value in SOLUTIONS:
@@ -43,7 +49,7 @@ def response_to_bonus(response):
 @csrf_protect.exempt
 @bp.route("/eff/", methods=["GET", "POST"])
 def index():
-    return handle_task_index("eff")
+    return handle_task_index("eff", validate_response=validate_response)
 
 
 @bp.route("/eff/done")

@@ -29,7 +29,7 @@ bp = Blueprint("admin", __name__)
 
 ###### helpers #####
 class JobConfig(dict):
-    def __init__(self, job_id, api_key, nb_rows=0, unique_worker=True, base_code="", expected_judgments=None):
+    def __init__(self, job_id, api_key, nb_rows=0, unique_worker=True, base_code="", expected_judgments=0):
         super().__init__()
         self["job_id"] = job_id
         self["api_key"] = api_key
@@ -47,13 +47,12 @@ def get_job_config(con, job_id, table="jobs"):
     :param job_id:
     :param table:
     """
-    if not table_exists(con, table):
-        return None
-    else:
+    _job_config = None
+    if table_exists(con, table):
         with con:
             _job_config = con.execute(f"SELECT * from {table} WHERE job_id==?", (job_id,)).fetchone()
     if _job_config is None:
-        job_config = JobConfig(job_id, app.config["API_KEY"])
+        job_config = JobConfig(job_id, api_key='')
     else:
         job_config = JobConfig(**_job_config)
     return job_config

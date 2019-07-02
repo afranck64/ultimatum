@@ -9,6 +9,13 @@ from survey.utils import handle_task_done, handle_task_index
 #### const
 bp = Blueprint("tasks.hexaco", __name__)
 
+FORM_FIELDS = {f"q{i}" for i in range(1, 31)}
+def validate_response(response):
+    for field in FORM_FIELDS:
+        if field not in response:
+            return False
+    return True
+
 def response_to_bonus(response):
     bonus = 0
     return bonus
@@ -17,7 +24,7 @@ def response_to_bonus(response):
 @csrf_protect.exempt
 @bp.route("/hexaco/", methods=["GET", "POST"])
 def index():
-    return handle_task_index("hexaco")
+    return handle_task_index("hexaco", validate_response)
 
 
 @bp.route("/hexaco/done")

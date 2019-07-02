@@ -9,6 +9,14 @@ from survey.utils import handle_task_done, handle_task_index
 #### helpers
 bp = Blueprint("tasks.cg", __name__)
 
+FIELDS = {"donation_a", "donation_b", "donation_c"}
+
+def validate_response(response):
+    for key in FIELDS:
+        if key not in response:
+            return False
+    return True
+
 def response_to_bonus(response):
     bonus = 60
     for k in ["donation_a", "donation_b", "donation_c"]:
@@ -20,7 +28,7 @@ def response_to_bonus(response):
 @csrf_protect.exempt
 @bp.route("/cg/", methods=["GET", "POST"])
 def index():
-    return handle_task_index("cg")
+    return handle_task_index("cg", validate_response=validate_response)
 
 
 @bp.route("/cg/done")

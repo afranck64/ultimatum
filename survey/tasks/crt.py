@@ -9,6 +9,12 @@ from survey.utils import handle_task_done, handle_task_index
 #### const
 bp = Blueprint("tasks.crt", __name__)
 
+def validate_response(response):
+    for field in ["q1", "q2", "q3"]:
+        if field not in response:
+            return False
+    return True
+
 def response_to_bonus(response):
     bonus = 0
     if response["q1"] == 10:
@@ -23,7 +29,7 @@ def response_to_bonus(response):
 @csrf_protect.exempt
 @bp.route("/crt/", methods=["GET", "POST"])
 def index():
-    return handle_task_index("crt")
+    return handle_task_index("crt", validate_response=validate_response)
 
 
 @bp.route("/crt/done")

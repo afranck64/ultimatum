@@ -196,14 +196,14 @@ def close_row(con, job_id, row_id):
     with con:
         con.execute(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING))
 
-def insert_row(job_id, row, overwrite=False):
-    df = pd.DataFrame(data=[row])
+def insert_row(job_id, resp_row, overwrite=False):
+    df = pd.DataFrame(data=[resp_row])
     df[STATUS_KEY] = RowState.JUDGEABLE
     df[LAST_MODIFIED_KEY] = time.time()
     df[WORKER_KEY] = None
-    df["ai_offer"] = app.config["T10_MODEL"].predict()
+    #TODO: use correct features for selection
+    df["ai_offer"] = app.config[f"{TREATMENT.upper()}_MODEL"].predict(**resp_row)
     table = get_table(BASE, job_id, treatment=TREATMENT)
-    # TODO should use g instead
     con = get_db("DATA")
     insert(df, table, con=con, overwrite=overwrite)
 
@@ -258,7 +258,7 @@ class ProposerForm(FlaskForm):
     offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
-
+@csrf_protect.exempt
 @bp.route("/prop/", methods=["GET", "POST"])
 def index():
     if request.method == "GET":
@@ -276,7 +276,7 @@ def index():
         
         #TODO: check if worker_id has started answering this unit
         if not row_info:
-            warnings.warn(f"ERROR: The row can no longer be processed. unit_id: {unit_id} - worker_id: {worker_id}")
+            warnings.warn(f"ERROR: The row can no longer be processed. job_id: {job_id} - worker_id: {worker_id}")
 
             flash(f"There are either no more rows available or you already took part on this survey. Thank you for your participation")
             if not app.config["DEBUG"]:
@@ -298,7 +298,7 @@ def index():
     return render_template(f"{TREATMENT}/prop.html", offer_values=OFFER_VALUES, form=ProposerForm())
 
 
-@bp.route("/prop/check")
+@bp.route("/prop/check/")
 def check():
     if not session.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
