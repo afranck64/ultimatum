@@ -25,7 +25,7 @@ from survey._app import app, csrf_protect
 from survey.figure_eight import FigureEight, RowState
 #from survey.unit import HHI_Resp_ADM,  resp_to_resp_result, save_resp_result
 from notebooks.utils.explanation import get_acceptance_propability, get_best_offer_probability
-from notebooks.utils import value_repr
+from notebooks.utils import cents_repr
 from notebooks.models.metrics import gain
 
 from survey.admin import get_job_config
@@ -36,14 +36,14 @@ from survey.utils import save_result2db, save_result2file, get_output_filename, 
 
 
 ############ Consts #################################
-SURVEY_INFOS_FILENAME = os.environ.get("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
+SURVEY_INFOS_FILENAME = os.getenv("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
 
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 
 LAST_MODIFIED_KEY = '_time_change'
 
-OFFER_VALUES = {str(val):value_repr(val) for val in range(0, 201, 5)}
+OFFER_VALUES = {str(val):cents_repr(val) for val in range(0, 201, 5)}
 
 JUDGING_TIMEOUT_SEC = 5*60
 
@@ -66,7 +66,7 @@ class HHI_Resp_ADM(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self["min_offer"] = None
-        self["time_start"] = None
+        self["time_start"] = time.time()
         self["timestamp"] = None
 
 
@@ -85,9 +85,8 @@ def resp_to_resp_result(response, job_id=None, worker_id=None):
         worker_id: fig-8 worker id
     }
     """
-    result = {}
+    result = dict(response)
     result["timestamp"] = str(datetime.datetime.now())
-    result["min_offer"] = response["min_offer"]
     
     result["job_id"] = job_id
     result["worker_id"] = worker_id
@@ -103,8 +102,8 @@ class ProposerForm(FlaskForm):
 def index():
     if request.method == "GET":
         session['response'] = HHI_Resp_ADM()
-        worker_id = request.args.get("worker_id", "")
-        job_id = request.args.get("job_id", "")
+        worker_id = request.args.get("worker_id", "na")
+        job_id = request.args.get("job_id", "na")
         session["worker_id"] = worker_id
         session["job_id"] = job_id
 
@@ -126,10 +125,11 @@ def index():
 
 @bp.route("/resp/done")
 def done():
+    worker_code_key = f"{BASE}__worker_code"
     if not session.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
-    if not session.get("worker_code") or app.config["DEBUG"]:
+    if not session.get(worker_code_key) or app.config["DEBUG"]:
         job_id = session["job_id"]
         worker_code = generate_completion_code(BASE, job_id)
         response = session["response"]
@@ -145,13 +145,14 @@ def done():
             save_result2db(table=get_table(base=BASE, job_id=job_id, treatment=TREATMENT), response_result=resp_result, unique_fields=["worker_id"])
         except Exception as err:
             app.log_exception(err)
-        insert_row(job_id, response)
+        print("RESP_DONE")
+        insert_row(job_id, resp_result)
         session.clear()
     
 
         session[BASE] = True
-        session["worker_code"] = worker_code
-    return render_template(f"{TREATMENT}/resp.done.html", worker_code=session["worker_code"])
+        session[worker_code_key] = worker_code
+    return render_template(f"{TREATMENT}/resp.done.html", worker_code=session[worker_code_key])
 
 
 def _process_judgments(signal, payload, job_id, job_config):

@@ -15,6 +15,7 @@ from flask import (
 from survey._app import app
 from survey.db import get_db, insert
 from survey.admin import get_job_config
+from notebooks.utils import cents_repr
 
 
 ######
@@ -121,6 +122,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id
+    result["worker_bonus"] = 0
     return result
 
 def handle_task_index(base, validate_response=None):
@@ -139,11 +141,9 @@ def handle_task_index(base, validate_response=None):
             response["time_stop"] = time.time()
             response["time_start"] = session.get("time_start")
             session["response"] = response
+            return redirect(url_for(f"tasks.{base}.done"))
         else:
             flash("Please check your fields")
-        
-        print("REDIRECT")
-        return redirect(url_for(f"tasks.{base}.done"))
     return render_template(f"tasks/{base}.html")
 
 def value_to_numeric(value):
@@ -154,20 +154,24 @@ def value_to_numeric(value):
     else:
         return f_value
 
-def handle_task_done(base, response2result_func=None, numeric_fields=None, unique_fields=None):
+def handle_task_done(base, response_to_result_func=None, response_to_bonus=None, numeric_fields=None, unique_fields=None):
     """
     :param base: (str)
-    :param response2result_func: (func)
+    :param response_to_result_func: (func)
+    :param response_to_bonus: (func)
     :param numeric_fields: (None| '*' | list)  if '*' all fields are converted to float
     :param unique_fields: (str|list)
     """
-    if response2result_func is None:
-        response2result_func = response_to_result
-
+    worker_code_key = f"{base}_worker_code"
+    worker_bonus_key = f"{base}_worker_bonus"
+    if response_to_result_func is None:
+        response_to_result_func = response_to_result
     if not session.get(base, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
-    if not session.get("worker_code") or (app.config["DEBUG"] and False):
+    if response_to_bonus is None:
+        response_to_bonus = lambda args, **kwargs: 0
+    if not session.get(worker_code_key, None) or (app.config["DEBUG"] and False):
         job_id = session["job_id"]
         worker_code = generate_completion_code(base, job_id)
         response = session["response"]
@@ -186,18 +190,19 @@ def handle_task_done(base, response2result_func=None, numeric_fields=None, uniqu
                         app.log_exception(err)
 
         worker_id = session["worker_id"]
-        response_result = response2result_func(response, job_id=job_id, worker_id=worker_id)
+        response_result = response_to_result_func(response, job_id=job_id, worker_id=worker_id)
         try:
             save_result2file(get_output_filename(base, job_id), response_result)
         except Exception as err:
             app.log_exception(err)
         try:
-            save_result2db(base, response_result, job_id, unique_fields=unique_fields)
+            save_result2db(get_table(base, job_id=job_id), response_result, unique_fields=unique_fields)
         except Exception as err:
             app.log_exception(err)
         session.clear()
     
 
         session[base] = True
-        session[f"{base}worker_code"] = worker_code
-    return render_template("done.html", worker_code=session[f"{base}worker_code"])
+        session[worker_code_key] = worker_code
+        session[worker_bonus_key] = response_to_bonus(response)
+    return render_template("done.html", worker_code=session[worker_code_key], worker_bonus=cents_repr(session[worker_bonus_key]))

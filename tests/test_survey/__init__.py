@@ -2,15 +2,17 @@ import os
 import tempfile
 
 import pytest
-from survey._app import app
+from survey.app import app
 from survey import db
+
+BASE_DIR = os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0]
 
 # from survey import app
 # from survey import db
 @pytest.fixture
 def client():
     app.config["ADMIN_SECRET"] = "secret"
-    app.config["OUTPUT_DIR"] = os.path.join("..", "data", "output", "test")
+    app.config["OUTPUT_DIR"] = os.path.join(BASE_DIR, "data", "output", "test")
     os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)
     dbs = ["DATABASE", "DATABASE_RESULT", "DATABASE_DATA"]
     dbs_fds = []

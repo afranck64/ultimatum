@@ -1,5 +1,9 @@
-#TODO: check later (import from models.metrics?)
-MAX_GAIN = 200
+import pandas as pd
+import numpy as np
+
+from notebooks.models.metrics import MAX_GAIN
+# #TODO: check later (import from models.metrics?)
+# MAX_GAIN = 200
 
 def df_to_xy(df, normalize=True, centered=False, fuse_risk=False, drop_columns=None, select_columns=None, normalize_target=False, min_target=None, max_target=None, df_min=None, df_max=None):
     """
@@ -15,7 +19,6 @@ def df_to_xy(df, normalize=True, centered=False, fuse_risk=False, drop_columns=N
     :param df_min: DataFrame, if available will be used as min for data normalization
     :param df_max: DataFrame, if available will be used as max for data normalization
     """
-
     df_features, df_target = df_to_xydf(df=df, normalize=normalize, centered=centered, fuse_risk=fuse_risk, drop_columns=drop_columns, select_columns=select_columns, normalize_target=normalize_target, min_target=min_target, max_target=max_target, df_min=df_min, df_max=df_max)
     return df_features.values, df_target.values
         
@@ -34,6 +37,21 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
     :param df_min: DataFrame, if available will be used as min for data normalization
     :param df_max: DataFrame, if available will be used as max for data normalization
     """
+    if "min_offer" not in df.columns:
+        df["min_offer"] = np.nan
+    if df_min is None:
+        df_min = pd.Series(data={col:0 for col in df.columns})
+    if df_max is None:
+        df_max = pd.Series(data={col:0 for col in df.columns})
+        df_max["cells"] = 50
+        df_max["Honesty_Humility"] = 5.0
+        df_max["Extraversion"] = 5.0
+        df_max["Agreeableness"] = 5.0
+        df_max["selfish"] = 60
+        df_max["time_spent_risk"] = 152000.0
+        df_max["time_spent_prop"] = 269000.0
+        df_max["min_offer"] = 200
+        import warnings
 
     if fuse_risk:
         risk_cols = ['cells', 'time_spent_risk']
@@ -66,12 +84,12 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
         f_min = df_features.min()
         f_max = df_features.max()
         if df_min is not None and df_max is not None:
-            for col in f_min:
+            for col in f_min.index:
                 if col in df_min and col in df_max:
                     f_min[col] = df_min[col]
                     f_max[col] = df_max[col]
-
-            
+        # make sure we don't have to divide by zero
+        f_max[f_min==f_max] = 1.0
         df_features = (df_features - f_min) / (f_max - f_min)
     if centered:
         df_features -= df_features.mean()
@@ -84,5 +102,5 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
     
     if normalize_target:
         df_target /= MAX_GAIN
-    
+    print(df_features, df_target)
     return df_features, df_target

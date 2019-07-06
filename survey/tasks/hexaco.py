@@ -9,9 +9,9 @@ from survey.utils import handle_task_done, handle_task_index
 #### const
 bp = Blueprint("tasks.hexaco", __name__)
 
-FORM_FIELDS = {f"q{i}" for i in range(1, 31)}
+FIELDS = {f"q{i}" for i in range(1, 31)}
 def validate_response(response):
-    for field in FORM_FIELDS:
+    for field in FIELDS:
         if field not in response:
             return False
     return True

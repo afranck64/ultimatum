@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from . import *
 
 from notebooks.models.metrics import MAX_GAIN
@@ -81,7 +82,6 @@ class DACombine(object):
     
     def dist_resample(self, xTrain, yTrain, size=None, std_ratio=0.1):
         size = size or self.size or len(xTrain) * 4
-        xTrain_mean = xTrain.mean()
         xTrain_std = xTrain.std()
         xNew = []
         yNew = []
@@ -96,3 +96,29 @@ class DACombine(object):
 
     def fit_resample(self, xTrain, yTrain, size=None, distance=5, include_xy=True):
         return self.fit_predict(xTrain, yTrain, size=size, distance=distance, include_xy=include_xy)
+
+
+class DASampling(object):
+    def __init__(self, size=None):
+        """
+        Generate new data by randomly combining attributes of different features.
+        """
+        self.size = size
+    
+    def generate_data(self, xTrain, yTrain, size=None):
+        size = size or self.size or len(xTrain) * 4
+        xValues = []
+        yValues = []
+        for _ in range(size):
+            selected_rows = np.random.randint(0, xTrain.shape[0], xTrain.shape[1])
+            x_row = []
+            for colid, rowid in enumerate(selected_rows):
+                x_row.append(xTrain[rowid][colid])
+            y_row = yTrain[np.random.choice(selected_rows)]
+            xValues.append(x_row)
+            yValues.append(y_row)
+        return np.array(xValues), np.array(yValues)
+
+    
+    
+

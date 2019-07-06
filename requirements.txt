@@ -9,3 +9,13 @@ tensorflow
 imbalanced-learn
 mlxtend
 xlrd
+xlwt
+
+#### survey
+flask
+flask-wtf
+requests
+
+#### tests
+pytest
+pytest-cov

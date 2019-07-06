@@ -1,3 +1,4 @@
+import datetime
 from flask import (
     Blueprint, render_template
 )
@@ -40,10 +41,27 @@ def validate_response(response):
 
 def response_to_bonus(response):
     bonus = 0
-    for key, value in SOLUTIONS:
+    for key, value in SOLUTIONS.items():
         if response[key].lower() == value:
             bonus += 2
     return bonus
+
+def response_to_result(response, job_id=None, worker_id=None):
+    """
+    :returns: {
+        timestamp: server time when genererting the result
+        job_id: fig-8 job id
+        worker_id: fig-8 worker id
+        *: response's keys
+    }
+    """
+    result = dict(response)
+    result["count_effort"] = response_to_bonus(response) // 2
+    result["timestamp"] = str(datetime.datetime.now())
+    result["job_id"] = job_id
+    result["worker_id"] = worker_id
+    result["worker_bonus"] = response_to_bonus(response)
+    return result
 ############
 
 @csrf_protect.exempt
@@ -54,4 +72,4 @@ def index():
 
 @bp.route("/eff/done")
 def done():
-    return handle_task_done("eff", unique_fields=["worker_id"])
+    return handle_task_done("eff", unique_fields=["worker_id"], response_to_result_func=response_to_result, response_to_bonus=response_to_bonus)

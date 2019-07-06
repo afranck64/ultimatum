@@ -64,9 +64,7 @@
                 return;
             }
             user_value = user2ai.value;
-            console.log("User:value: " + user_value);
-            console.log("typeof_user_value: " + typeof(user_value))
-            url = "{{url_for('t10.prop.check')}}?offer=" + user_value;
+            url = "{{prop_check_url}}?offer=" + user_value
             request.open("GET", url, true);
             request.send(null);
             request.onload = function() {

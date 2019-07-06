@@ -1,4 +1,8 @@
+import os
 from flask import Blueprint
 from . import index, prop, resp
 
-bp = Blueprint("t10", __name__)
+
+TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
+
+bp = Blueprint(TREATMENT, __name__)

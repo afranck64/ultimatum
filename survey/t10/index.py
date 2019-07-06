@@ -15,6 +15,7 @@ from flask import (
 
 import random
 
+from notebooks.models.metrics import MAX_GAIN
 from survey._app import app
 from survey.db import get_db, table_exists
 from survey.figure_eight import RowState
@@ -81,3 +82,28 @@ def index():
 def webhook():
     app.logger.info(f"{request.form}")
     return "webhook"
+
+
+def finalize_resp_row():
+    # TODO: At this point, all features have been gathered
+    # generate prediction for the prop row
+    resp_worker_id = "na"
+    prop_worker_id = "na"
+    job_id = "na"
+    con = get_db("RESULT")
+    resp_bonus = 0
+    prop_bonus = 0
+    with con:
+        table = get_table("resp", job_id, treatment=TREATMENT)
+        res = con.execute(f"SELECT offer, min_offer, resp_worker_id from {table} WHERE resp_worker_id=? and prop_worker_id=?", (resp_worker_id, prop_worker_id)).fetchone()
+    offer, min_offer = res["offer"], res["min_offer"]
+    resp_worker_id = res["resp_worker_id"]
+    for task in ["cg", "crt", "eff", "hexaco", "risk"]:
+        table = get_table(task, job_id)
+        with con:
+            res = con.execute(f"SELECT worker_bonus FROM {table} WHERE worker_id=?", (resp_worker_id,)).fetchone()
+            resp_bonus += res["worker_bonus"]
+    if offer >= min_offer:
+        resp_bonus += offer
+        prop_bonus += (MAX_GAIN - min_offer)
+    print(resp_bonus, prop_bonus)
