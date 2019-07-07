@@ -15,7 +15,7 @@ from flask import (
 from survey._app import app
 from survey.db import get_db, insert
 from survey.admin import get_job_config
-from notebooks.utils import cents_repr
+from core.utils import cents_repr
 
 
 ######

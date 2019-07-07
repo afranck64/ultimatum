@@ -15,7 +15,7 @@ from flask import (
 
 import random
 
-from notebooks.models.metrics import MAX_GAIN
+from core.models.metrics import MAX_GAIN
 from survey._app import app
 from survey.db import get_db, table_exists
 from survey.figure_eight import RowState

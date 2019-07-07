@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from notebooks.models.metrics import MAX_GAIN
+from core.models.metrics import MAX_GAIN
 # #TODO: check later (import from models.metrics?)
 # MAX_GAIN = 200
 

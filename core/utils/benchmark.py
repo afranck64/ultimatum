@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from .data_augmentation import DACombine
-from notebooks.models.metrics import avg_loss, mse, rejection_ratio, avg_win_loss, avg_loss_ratio, loss_sum
+from core.models.metrics import avg_loss, mse, rejection_ratio, avg_win_loss, avg_loss_ratio, loss_sum
 
 
 benchmark_functions = [avg_loss, mse, rejection_ratio, avg_win_loss, avg_loss_ratio, loss_sum]

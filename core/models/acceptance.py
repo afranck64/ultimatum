@@ -86,7 +86,7 @@ class AcceptanceModel(object):
         # optimization for the decision_line
         top_decision_line = None
         top_score = float('-inf')
-        xVal_only_ext = self._transform_predict(xVal_only)
+        #xVal_only_ext = self._transform_predict(xVal_only)
         for decision_line in np.linspace(self.classes[0], self.classes[1]):
             yPred = self._predict(self.base_model, xVal_only, decision_line)
             score = self.metric(yVal_only, yPred)

@@ -24,9 +24,9 @@ from werkzeug.utils import secure_filename
 from survey._app import app, csrf_protect
 from survey.figure_eight import FigureEight, RowState
 #from survey.unit import HHI_Resp_ADM,  resp_to_resp_result, save_resp_result
-from notebooks.utils.explanation import get_acceptance_propability, get_best_offer_probability
-from notebooks.utils import cents_repr
-from notebooks.models.metrics import gain
+from core.utils.explanation import get_acceptance_propability, get_best_offer_probability
+from core.utils import cents_repr
+from core.models.metrics import gain
 
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists

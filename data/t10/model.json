@@ -1,6 +1,6 @@
 {
-    "test_gain_mean": 89.35,
-    "test_avg_loss_ratio": 0.2515748921923574,
+    "test_gain_mean": 89.3,
+    "test_avg_loss_ratio": 0.25227283269578993,
     "val_gain_mean": 93.125,
     "val_avg_loss_ratio": 0.18849425763388372,
     "top_columns": [
