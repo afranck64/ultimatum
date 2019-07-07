@@ -12,21 +12,21 @@ bp = Blueprint("tasks.eff", __name__)
 
 SOLUTIONS = {
     "img_1": "ydrn",
-    "img_2": None,
+    "img_2": "tbta",    #None?
     "img_3": "bawb",
     "img_4": "swfd",
     "img_5": "rrgq",
     "img_6": "rcnb",
     "img_7": "wwch",
     "img_8": "yqch",
-    "img_9": None,
+    "img_9": "ebqn",    #None?
     "img_10": "zzqp",
     "img_11": "dbhw",
     "img_12": "wqyw",
     "img_13": "cdmm",
     "img_14": "broi",
     "img_15": "rybs",
-    "img_16": None,
+    "img_16": "mcms",     #None?
     "img_17": "yfyo",
     "img_18": "pwbq",
     "img_19": "whqw",   #None?

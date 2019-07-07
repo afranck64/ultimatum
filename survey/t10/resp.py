@@ -145,7 +145,6 @@ def done():
             save_result2db(table=get_table(base=BASE, job_id=job_id, treatment=TREATMENT), response_result=resp_result, unique_fields=["worker_id"])
         except Exception as err:
             app.log_exception(err)
-        print("RESP_DONE")
         insert_row(job_id, resp_result)
         session.clear()
     

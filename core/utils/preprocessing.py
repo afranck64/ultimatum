@@ -102,5 +102,4 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
     
     if normalize_target:
         df_target /= MAX_GAIN
-    print(df_features, df_target)
     return df_features, df_target

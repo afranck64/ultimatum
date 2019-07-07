@@ -2,10 +2,11 @@ import numpy as np
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.linear_model import LogisticRegression
 
-from .metrics import MAX_GAIN, avg_loss_ratio
+from .metrics import MAX_GAIN, avg_gain_ratio, avg_loss_ratio
 
 def ultimatum_score(y_true, y_pred):
-    return 1 - avg_loss_ratio(y_true, y_pred)
+    #return 1 - avg_loss_ratio(y_true, y_pred)
+    return avg_gain_ratio(y_true, y_pred)
     
 
 class AcceptanceModel(object):

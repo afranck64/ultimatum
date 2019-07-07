@@ -2,21 +2,35 @@ import numpy as np
 
 MAX_GAIN = 200
 
+# def loss(min_offer, predicted):
+#     """
+#     Compute loss for the ultimatum game,
+#     as the difference between the possible gain and the actual one
+#     """
+#     min_offer = min_offer.ravel()
+#     predicted = predicted.ravel()
+#     rejected = min_offer > predicted
+#     accepted = min_offer <= predicted
+#     res = predicted - min_offer
+#     if rejected.sum() != 0:
+#         res[rejected] = 0
+#     if accepted.sum() != 0:
+#         res[accepted] = MAX_GAIN - min_offer[accepted]
+#     low_bad_predictions = (predicted < 0)
+#     if low_bad_predictions.sum() != 0:
+#         res[low_bad_predictions] = 0
+#     high_bad_prediction = (predicted > MAX_GAIN)
+#     if high_bad_prediction.sum() != 0:
+#         res[high_bad_prediction] = 0
+#     return res
+
+@np.vectorize
 def loss(min_offer, predicted):
     """
     Compute loss for the ultimatum game,
     as the difference between the possible gain and the actual one
     """
-    min_offer = min_offer.ravel()
-    predicted = predicted.ravel()
-    rejected = min_offer > predicted
-    res = predicted - min_offer
-    if rejected.sum() != 0:
-        res[rejected] = MAX_GAIN - min_offer[rejected]
-    bad_predictions = (predicted < 0) | (predicted > MAX_GAIN)
-    if bad_predictions.sum() != 0:
-        res[bad_predictions] = MAX_GAIN - min_offer[bad_predictions]
-    return res
+    return MAX_GAIN-min_offer if predicted < min_offer else predicted - min_offer
 
 def loss_sum(min_offer, predicted):
     return loss(min_offer, predicted).sum()
@@ -52,12 +66,12 @@ def avg_win_loss(min_offer, predicted):
     return avg_loss(min_offer[accepted], predicted[accepted])
 
 
-def gain(min_offer, predicted):
-    min_offer = min_offer.ravel()
-    predicted = predicted.ravel()    
-    res = MAX_GAIN - predicted
-    res[predicted < min_offer] = 0
-    return res
+# def gain(min_offer, predicted):
+#     min_offer = min_offer.ravel()
+#     predicted = predicted.ravel()    
+#     res = MAX_GAIN - predicted
+#     res[predicted < min_offer] = 0
+#     return res
 
 @np.vectorize
 def gain(min_offer, predicted):

@@ -77,11 +77,11 @@ def index():
 
 
 
-@bp.route("/risk/done")
+@bp.route("/risk/done/")
 def done():
     return handle_task_done("risk", unique_fields=["worker_id"], response_to_result_func=response_to_result, response_to_bonus=response_to_bonus)
 
-@bp.route("/risk/check")
+@bp.route("/risk/check/")
 def check():
     if not session.get("risk", None):
         flash("Sorry, you are not allowed to use this service. ^_^")

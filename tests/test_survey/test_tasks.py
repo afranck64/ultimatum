@@ -161,11 +161,10 @@ def _process_risk(client, worker_id="na", bonus_mode="random", clear_session=Tru
                 with client.session_transaction() as sess:
                     sess.clear()
         client.get(path)
-        with app.test_request_context(f"/tasks/risks/check/?woker_id={worker_id}"):
+        with app.test_request_context(f"/tasks/risk/check/?woker_id={worker_id}"):
             for key, value in data.items():
                 if value:
-                    client.get(f"/tasks/risks/check/?worker_id={worker_id}&cell={key}")
-        #raise Warning(f"sess: {dict(sess)}")
+                    client.get(f"/tasks/risk/check/?worker_id={worker_id}&cell={key}")
         return client.post(path, data=data, follow_redirects=True).data
 
 def test_risk(client):
@@ -175,7 +174,7 @@ def test_risk(client):
 def test_risk_bonus(client):
     res = _process_risk(client, worker_id="risk1", bonus_mode="full")
     assert b"risk:" in res
-    assert b"1.00 USD" in res
+    assert b"1.0 USD" in res
     res = _process_risk(client, worker_id="risk2", bonus_mode="random")
     assert b"risk:" in res
     res = _process_risk(client, worker_id="risk3", bonus_mode="none")

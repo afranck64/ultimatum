@@ -336,7 +336,6 @@ def index():
         job_id = request.args.get("job_id", "na")
         row_info = get_row(get_db("DATA"), job_id, worker_id)
 
-        print("ROW_INFO: ", row_info)
         session["worker_id"] = worker_id
         session["job_id"] = job_id
         session["row_info"] = row_info
