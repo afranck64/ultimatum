@@ -1,0 +1,19 @@
+[Unit]
+Description=ultimatum gunicorn daemon
+After=network.target
+
+[Service]
+PIDFile=/run/gunicorn/pid
+User=$USER
+Group=www-data
+WorkingDirectory=$PATH_TO_WORKING_DIRECTORY
+Environment="PATH=$PATH_TO_PYHTON_ENV/bin"
+Environment="ADMIN_SECRET=$ADMIN_SECRET"
+Environment="DEBUG="
+Environment="TXX=true"
+Environment="FAKE_MODEL=true"
+Restart=always
+ExecStart=$PATH_TO_GUNICORN --log-file out.log --reload --bind unix:$PATH_TO_THE_SERVICE_SOCKET survey.app:app
+
+[Install]
+WantedBy=multi-user.target

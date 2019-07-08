@@ -77,9 +77,7 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
     df_features = df_features[cols]
 
 
-    x = df.values[:, :-1]
-    y = df.values[:, -1:]
-
+    
     if normalize:
         f_min = df_features.min()
         f_max = df_features.max()

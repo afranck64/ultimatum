@@ -24,12 +24,15 @@ def _process_resp(client, job_id="test", worker_id=None, min_offer=100, clear_se
         client.get(path)
         return client.post(path, data={"min_offer":min_offer}, follow_redirects=True)
 
-def _process_resp_tasks(client, job_id="test", worker_id=None, min_offer=100, bonus_mode="random", clear_session=True):
+def _process_resp_tasks(client, job_id="test", worker_id=None, min_offer=100, bonus_mode="random", clear_session=True, synchron=True):
     if worker_id is None:
         worker_id = generate_worker_id("resp")
     process_tasks(client, job_id=job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     _process_resp(client, job_id=job_id, worker_id=worker_id, min_offer=min_offer, clear_session=clear_session)
-    emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id=job_id, worker_id=worker_id)
+    if synchron:
+        emit_webhook(client, url=f"/{TREATMENT}/webhook/?synchron=1", job_id=job_id, worker_id=worker_id)
+    else:
+        emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id=job_id, worker_id=worker_id)
 
 def test_index(client):
     worker_id = generate_worker_id("index")
@@ -67,6 +70,7 @@ def test_resp_done_both_models(client):
 def test_prop_index(client):
     _process_resp_tasks(client)
     res = client.get(f"/{TREATMENT}/resp/").data
+    print("TEST_PROP_INDEX: ", _process_resp_tasks)
     assert b"PROPOSER" in res
 
 def test_prop_check(client):
@@ -81,25 +85,32 @@ def test_prop_check(client):
         assert b"best_offer_probability" in res
 
 def _process_prop(client, job_id="test", worker_id=None, offer=100, clear_session=True, response_available=False):
-    print(0)
     if worker_id is None:
         worker_id = generate_worker_id("prop")
     path = f"/{TREATMENT}/prop/?job_id={job_id}&worker_id={worker_id}"
     if not response_available:
-        print(2)
         _process_resp_tasks(client, job_id=job_id)
-        print(3)
     with app.test_request_context(path):
-        app.logger.info("4")
         if clear_session:
             with client:
                 with client.session_transaction() as sess:
-                    app.logger.info("5")
                     sess.clear()
-        app.logger.info("5.0")
-        client.get(path)        
-        app.logger.info("6")
+        client.get(path)
         return client.post(path, data={"offer":offer}, follow_redirects=True).data
+
+def _process_prop_round(client, job_id="test", worker_id=None, offer=100, clear_session=True, response_available=False, synchron=False):
+    prop_worker_id = generate_worker_id("prop")
+    if synchron:
+        webhook_url = f"/{TREATMENT}/webhook/?synchron=1"
+    else:
+        webhook_url = f"/{TREATMENT}/webhook/"
+        
+    if not response_available:
+        _process_resp_tasks(client, worker_id=None, min_offer=100, bonus_mode="full")
+    _process_prop(client, worker_id=prop_worker_id, offer=offer, response_available=True)
+    emit_webhook(client, url=webhook_url, job_id=job_id, worker_id=prop_worker_id)
+
+
 
 def test_prop_done(client):
     res = _process_prop(client)
@@ -111,15 +122,17 @@ def test_prop_done(client):
     res = _process_prop(client)
     assert b"prop:" in res
 
+
 def test_bonus(client):
     resp_worker_id = generate_worker_id("resp")
     prop_worker_id = generate_worker_id("prop")
+    webhook_url = f"/{TREATMENT}/webhook/?synchron=1"
     job_id = "test"
     _process_resp_tasks(client, worker_id=resp_worker_id, min_offer=100, bonus_mode="full")
     _process_prop(client, worker_id=prop_worker_id, offer=100, response_available=True)
-    import time
-    time.sleep(1)
+    emit_webhook(client, url=webhook_url, job_id=job_id, worker_id=prop_worker_id)
     with app.app_context():
+        print("DONE WITH RISK", get_worker_bonus(job_id, resp_worker_id), get_worker_bonus(job_id, prop_worker_id))
         assert get_worker_bonus(job_id, resp_worker_id) == tasks.MAX_BONUS + 100
         assert get_worker_bonus(job_id, prop_worker_id) == 100
 
@@ -129,15 +142,33 @@ def test_bonus(client):
     job_id = "test"
     _process_resp_tasks(client, worker_id=resp_worker_id, min_offer=100, bonus_mode="none")
     _process_prop(client, worker_id=prop_worker_id, offer=150, response_available=True)
+    emit_webhook(client, url=webhook_url, job_id=job_id, worker_id=prop_worker_id)
     with app.app_context():
+        print("DONE WITH RISK", get_worker_bonus(job_id, resp_worker_id), get_worker_bonus(job_id, prop_worker_id))
         assert get_worker_bonus(job_id, resp_worker_id) == 0 + 0 + 0 + 0 + 0 +    150
         assert get_worker_bonus(job_id, prop_worker_id) == 50
 
-    resp_worker_id = generate_worker_id("resp3")
-    prop_worker_id = generate_worker_id("prop3")
-    job_id = "test"
-    _process_resp_tasks(client, worker_id=resp_worker_id, min_offer=101, bonus_mode="none")
-    _process_prop(client, worker_id=prop_worker_id, offer=100, response_available=True)
+        resp_worker_id = generate_worker_id("resp3")
+        prop_worker_id = generate_worker_id("prop3")
+        job_id = "test"
+        _process_resp_tasks(client, worker_id=resp_worker_id, min_offer=101, bonus_mode="none")
+        _process_prop(client, worker_id=prop_worker_id, offer=100, response_available=True)
+        emit_webhook(client, url=webhook_url, job_id=job_id, worker_id=prop_worker_id)
     with app.app_context():
+        pass
         assert get_worker_bonus(job_id, resp_worker_id) == 0 + 0 + 0 + 0 + 0 +    0
         assert get_worker_bonus(job_id, prop_worker_id) == 0 
+
+def test_bonus2(client, synchron=True):
+    job_id = "test"
+    resp_worker_id = generate_worker_id("resp")
+    prop_worker_id = generate_worker_id("prop")
+    _process_resp_tasks(client, worker_id=resp_worker_id, min_offer=100, bonus_mode="full", synchron=synchron)
+    _process_prop_round(client, worker_id=prop_worker_id, offer=100, response_available=True, synchron=synchron)
+    with app.app_context():
+        print("DONE WITH RISK", get_worker_bonus(job_id, resp_worker_id), get_worker_bonus(job_id, prop_worker_id))
+        assert get_worker_bonus(job_id, resp_worker_id) == tasks.MAX_BONUS + 100
+        assert get_worker_bonus(job_id, prop_worker_id) == 100
+
+
+    

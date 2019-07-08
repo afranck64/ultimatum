@@ -221,7 +221,7 @@ def increase_worker_bonus(job_id, worker_id, bonus_cents, con=None):
     :param con:
     """
     if con is None:
-        con = get_db()
+        con = get_db("DB")
     row_data = {'job_id':job_id, 'worker_id': worker_id, 'timestamp': str(datetime.datetime.now()), 'bonus_cents': bonus_cents, 'paid_bonus_cents': 0}
     table = _get_payment_table(job_id)
     worker_row_exists = False
@@ -229,7 +229,6 @@ def increase_worker_bonus(job_id, worker_id, bonus_cents, con=None):
         with con:
             row = con.execute(f'select *, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
             if row:
-                print("INCREASE_BONUS: ", job_id, worker_id, bonus_cents)
                 worker_row_exists = True
                 row_data["bonus_cents"] += row["bonus_cents"]
                 row_data["paid_bonus_cents"] += row["paid_bonus_cents"]
@@ -238,6 +237,8 @@ def increase_worker_bonus(job_id, worker_id, bonus_cents, con=None):
     if not worker_row_exists:
         df = pd.DataFrame(data=[row_data])
         insert(df, table, con, unique_fields=["worker_id"])
+    
+    print("ROW_BONUS??? INCREASE: ", worker_id, bonus_cents,  row_data, get_worker_bonus(job_id, worker_id))
 
 
 def get_worker_bonus(job_id, worker_id, con=None):
@@ -247,16 +248,33 @@ def get_worker_bonus(job_id, worker_id, con=None):
     :param con:
     """
     if con is None:
-        con = get_db()
+        con = get_db("DB")
     table = _get_payment_table(job_id)
     if table_exists(con, table):
         with con:
             row = con.execute(f'select *, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
             if row:
-                print(dict(row))
-                worker_bonus = row["bonus_cents"]
+                row_dict = dict(row)
+                print("BONUS_ROW: ", row_dict)
+                worker_bonus = row_dict["bonus_cents"]
                 return worker_bonus
+            else:
+                print("ERRORRRRRRRRRRRRR could find user bonus row: ", job_id, worker_id, row)
     return 0
+
+def get_resp_worker_id(base, job_id, prop_worker_id, treatment=None):
+    """
+    :param base:
+    :param job_id:
+    :param prop_worker_id:
+    :param treament:
+    """
+    con = get_db("RESULT")
+    with con:
+        table = get_table(base, job_id, treatment=treatment)
+        res = con.execute(f"SELECT resp_worker_id from {table} WHERE prop_worker_id=?", (prop_worker_id,)).fetchone()
+    resp_worker_id = res["resp_worker_id"]
+    return resp_worker_id
 
 
 def pay_worker_bonus(job_id, worker_id, fig8, con=None):
@@ -270,7 +288,7 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
     :returns True if payment was done, False otherwise
     """
     if con is None:
-        con = get_db()
+        con = get_db("DB")
     table = get_table("jobs", job_id, "payment")
 
     should_pay = False
