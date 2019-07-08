@@ -197,7 +197,7 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
         except Exception as err:
             app.log_exception(err)
         try:
-            print("WORKER_ID: ", worker_id, response_result)
+            #TODO: check later
             save_result2db(get_table(base, job_id=job_id), response_result, unique_fields=unique_fields)
             increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=worker_bonus)
         except Exception as err:
@@ -220,7 +220,6 @@ def increase_worker_bonus(job_id, worker_id, bonus_cents, con=None):
     :param bonus_cents: (int)
     :param con:
     """
-    print("INCREASE BONUS: ", job_id, worker_id, bonus_cents)
     if con is None:
         con = get_db()
     row_data = {'job_id':job_id, 'worker_id': worker_id, 'timestamp': str(datetime.datetime.now()), 'bonus_cents': bonus_cents, 'paid_bonus_cents': 0}
@@ -230,6 +229,7 @@ def increase_worker_bonus(job_id, worker_id, bonus_cents, con=None):
         with con:
             row = con.execute(f'select *, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
             if row:
+                print("INCREASE_BONUS: ", job_id, worker_id, bonus_cents)
                 worker_row_exists = True
                 row_data["bonus_cents"] += row["bonus_cents"]
                 row_data["paid_bonus_cents"] += row["paid_bonus_cents"]

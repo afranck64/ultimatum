@@ -6,7 +6,7 @@ from flask import jsonify
 from survey import tasks
 from survey.utils import get_worker_bonus
 
-from tests.test_survey import app, client, generate_worker_id
+from tests.test_survey import app, client, generate_worker_id, emit_webhook
 from tests.test_survey.test_tasks import process_tasks
 
 
@@ -29,6 +29,7 @@ def _process_resp_tasks(client, job_id="test", worker_id=None, min_offer=100, bo
         worker_id = generate_worker_id("resp")
     process_tasks(client, job_id=job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     _process_resp(client, job_id=job_id, worker_id=worker_id, min_offer=min_offer, clear_session=clear_session)
+    emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id=job_id, worker_id=worker_id)
 
 def test_index(client):
     worker_id = generate_worker_id("index")
@@ -70,7 +71,7 @@ def test_prop_index(client):
 
 def test_prop_check(client):
     worker_id = generate_worker_id("prop_check")
-    path = f"/{TREATMENT}/prop/?worker_id={worker_id}"
+    path = f"/{TREATMENT}/prop/?job_id=test&worker_id={worker_id}"
     print("PATH: ", path)
     _process_resp_tasks(client, worker_id=None)
     with app.test_request_context(path):
@@ -80,17 +81,24 @@ def test_prop_check(client):
         assert b"best_offer_probability" in res
 
 def _process_prop(client, job_id="test", worker_id=None, offer=100, clear_session=True, response_available=False):
-    path = f"/{TREATMENT}/prop/?job_id={job_id}&worker_id={worker_id}"
+    print(0)
     if worker_id is None:
-        worker_id = generate_worker_id()
+        worker_id = generate_worker_id("prop")
+    path = f"/{TREATMENT}/prop/?job_id={job_id}&worker_id={worker_id}"
     if not response_available:
-        _process_resp_tasks(client)
+        print(2)
+        _process_resp_tasks(client, job_id=job_id)
+        print(3)
     with app.test_request_context(path):
+        app.logger.info("4")
         if clear_session:
             with client:
                 with client.session_transaction() as sess:
+                    app.logger.info("5")
                     sess.clear()
-        client.get(path)
+        app.logger.info("5.0")
+        client.get(path)        
+        app.logger.info("6")
         return client.post(path, data={"offer":offer}, follow_redirects=True).data
 
 def test_prop_done(client):
@@ -107,10 +115,12 @@ def test_bonus(client):
     resp_worker_id = generate_worker_id("resp")
     prop_worker_id = generate_worker_id("prop")
     job_id = "test"
-    _process_resp_tasks(client, worker_id=resp_worker_id, min_offer=100, bonus_mode="random")
+    _process_resp_tasks(client, worker_id=resp_worker_id, min_offer=100, bonus_mode="full")
     _process_prop(client, worker_id=prop_worker_id, offer=100, response_available=True)
+    import time
+    time.sleep(1)
     with app.app_context():
-        assert get_worker_bonus(job_id, resp_worker_id) == tasks.MAX_BONUS +    100
+        assert get_worker_bonus(job_id, resp_worker_id) == tasks.MAX_BONUS + 100
         assert get_worker_bonus(job_id, prop_worker_id) == 100
 
 
@@ -130,4 +140,4 @@ def test_bonus(client):
     _process_prop(client, worker_id=prop_worker_id, offer=100, response_available=True)
     with app.app_context():
         assert get_worker_bonus(job_id, resp_worker_id) == 0 + 0 + 0 + 0 + 0 +    0
-        assert get_worker_bonus(job_id, prop_worker_id) == 0
+        assert get_worker_bonus(job_id, prop_worker_id) == 0 

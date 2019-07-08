@@ -416,9 +416,10 @@ def done():
         except Exception as err:
             app.log_exception(err)
         try:
+            #TODO: check later
             #save_prop_result2db(get_db("RESULT"), prop_result, job_id)
             save_result2db(table=get_table(base=BASE, job_id=job_id, treatment=TREATMENT), response_result=prop_result, unique_fields=["worker_id"])
-            finalize_round(job_id, prop_worker_id=worker_id)
+            #finalize_round(job_id, prop_worker_id=worker_id)
         except Exception as err:
             app.log_exception(err)
         session.clear()
@@ -429,51 +430,51 @@ def done():
     return render_template(f"{TREATMENT}/{BASE}.done.html", worker_code=session[worker_code_key], worker_bonus=session[worker_bonus_key])
 
 
-def _process_judgments(signal, payload, job_id, job_config):
-    """
-    :param signal: (str)
-    :param payload: (dict)
-    :param job_id: (int|str)
-    :param job_config: (JobConfig)
-    """
-    with app.app_context():
-        app.logger.info(f"Started part-payments..., with signal: {signal}")
-        if signal == "new_judgements":
-            try:
-                judgments_count = payload['judgments_count']
-                fig8 = FigureEight(job_id, job_config["api_key"])
-                con = get_db("RESULT")
-                for idx in range(judgments_count):
-                    worker_judgment = payload['results']['judgments'][idx]
-                    worker_id = worker_id = worker_judgment["worker_id"]
-                    worker_bonus = get_worker_bonus(con, job_id, worker_id)
-                    pay_worker_bonus(con, job_id, worker_id, worker_bonus, fig8)
-            except Exception as err:
-                app.logger.error(f"Error: {err}")
-        elif signal == "unit_complete":
-            #TODO: may process the whole unit here
-            pass
-        app.logger.info("Started part-payments..., with signal: %s ^_^ " % signal)
+# def _process_judgments(signal, payload, job_id, job_config):
+#     """
+#     :param signal: (str)
+#     :param payload: (dict)
+#     :param job_id: (int|str)
+#     :param job_config: (JobConfig)
+#     """
+#     with app.app_context():
+#         # app.logger.info(f"Started part-payments..., with signal: {signal}")
+#         if signal == "new_judgments":
+#             try:
+#                 judgments_count = payload['judgments_count']
+#                 fig8 = FigureEight(job_id, job_config["api_key"])
+#                 con = get_db("RESULT")
+#                 for idx in range(judgments_count):
+#                     worker_judgment = payload['results']['judgments'][idx]
+#                     worker_id = worker_id = worker_judgment["worker_id"]
+#                     worker_bonus = get_worker_bonus(con, job_id, worker_id)
+#                     pay_worker_bonus(con, job_id, worker_id, worker_bonus, fig8)
+#             except Exception as err:
+#                 app.logger.error(f"Error: {err}")
+#         elif signal == "unit_complete":
+#             #TODO: may process the whole unit here
+#             pass
+#         # app.logger.info("Started part-payments..., with signal: %s ^_^ " % signal)
 
-@csrf_protect.exempt
-@bp.route("/prop/webhook", methods=["GET", "POST"])
-def webhook():
-    form = request.form.to_dict()
-    signal = form['signal']
-    if signal in {'unit_complete', 'new_judgements'}:
-        app.logger.info(f"SIGNAL: {signal}")
-        payload_raw = form['payload']
-        signature = form['signature']
-        payload = json.loads(payload_raw)
-        job_id = payload['job_id']
+# @csrf_protect.exempt
+# @bp.route("/prop/webhook", methods=["GET", "POST"])
+# def webhook():
+#     form = request.form.to_dict()
+#     signal = form['signal']
+#     if signal in {'unit_complete', 'new_judgments'}:
+#         app.logger.info(f"SIGNAL: {signal}")
+#         payload_raw = form['payload']
+#         signature = form['signature']
+#         payload = json.loads(payload_raw)
+#         job_id = payload['job_id']
         
-        job_config = get_job_config(get_db("DB"), job_id)
-        payload_ext = payload_raw + job_config["api_key"]
-        verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
-        if signature == verif_signature:
-            args = (signal, job_id, job_config, payload)
-            app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
-    return Response(status=200)
+#         job_config = get_job_config(get_db("DB"), job_id)
+#         payload_ext = payload_raw + job_config["api_key"]
+#         verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
+#         if signature == verif_signature:
+#             args = (signal, job_id, job_config, payload)
+#             app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
+#     return Response(status=200)
 
 # @csrf_protect.exempt
 # @bp.route("/prop/upload", methods=["GET", "POST"])

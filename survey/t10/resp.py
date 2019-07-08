@@ -145,7 +145,6 @@ def done():
             save_result2db(table=get_table(base=BASE, job_id=job_id, treatment=TREATMENT), response_result=resp_result, unique_fields=["worker_id"])
         except Exception as err:
             app.log_exception(err)
-        insert_row(job_id, resp_result)
         session.clear()
     
 
@@ -153,3 +152,13 @@ def done():
         session[worker_code_key] = worker_code
     return render_template(f"{TREATMENT}/resp.done.html", worker_code=session[worker_code_key])
 
+
+def finalize_resp(job_id, worker_id):
+    app.logger.debug("INSERT NEW ROW")
+    table = get_table(base=BASE, job_id=job_id, treatment=TREATMENT)
+    con = get_db("RESULT")
+    with con:
+        res = con.execute(f"SELECT * from {table} where job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
+        if res:
+            resp_result = dict(res)
+    insert_row(job_id, resp_result)

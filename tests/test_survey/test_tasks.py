@@ -246,3 +246,20 @@ def test_tasks_bonus(client):
         _process_risk(client, worker_id=worker_id, bonus_mode="full")
         exp_bonus += risk.MAX_BONUS
         assert get_worker_bonus(job_id, worker_id) == exp_bonus
+    worker_id = generate_worker_id("tasks")
+    with app.app_context():
+        _process_cg(client, worker_id=worker_id, bonus_mode="full")
+        exp_bonus = cg.MAX_BONUS
+        assert get_worker_bonus(job_id, worker_id) == exp_bonus
+        _process_crt(client, worker_id=worker_id, bonus_mode="full")
+        exp_bonus += crt.MAX_BONUS
+        assert get_worker_bonus(job_id, worker_id) == exp_bonus
+        _process_eff(client, worker_id=worker_id, bonus_mode="full")
+        exp_bonus += eff.MAX_BONUS
+        assert get_worker_bonus(job_id, worker_id) == exp_bonus
+        _process_hexaco(client, worker_id=worker_id)
+        exp_bonus += 0  #NO bonus for hexaco actually
+        assert get_worker_bonus(job_id, worker_id) == exp_bonus
+        _process_risk(client, worker_id=worker_id, bonus_mode="full")
+        exp_bonus += risk.MAX_BONUS
+        assert get_worker_bonus(job_id, worker_id) == exp_bonus
