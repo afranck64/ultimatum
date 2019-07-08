@@ -33,6 +33,8 @@ SOLUTIONS = {
     "img_20": "tnrb"    #None?
 }
 
+MAX_BONUS = 40
+
 def validate_response(response):
     for key in SOLUTIONS:
         if key not in response:

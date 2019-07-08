@@ -10,6 +10,9 @@ from survey.utils import handle_task_done, handle_task_index
 bp = Blueprint("tasks.hexaco", __name__)
 
 FIELDS = {f"q{i}" for i in range(1, 31)}
+
+MAX_BONUS = 0
+
 def validate_response(response):
     for field in FIELDS:
         if field not in response:

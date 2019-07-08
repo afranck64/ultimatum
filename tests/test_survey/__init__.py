@@ -1,5 +1,7 @@
 import os
 import tempfile
+import random
+import string
 
 import pytest
 from survey.app import app
@@ -17,7 +19,8 @@ def client():
     dbs = ["DATABASE", "DATABASE_RESULT", "DATABASE_DATA"]
     dbs_fds = []
     for _db in dbs:
-        _fd, app.config[_db] = tempfile.mkstemp()
+        _fd, app.config[_db] = tempfile.mkstemp(dir=os.path.join(BASE_DIR, "data", "output", "test"))
+        #_fd, app.config[_db] = 0, os.path.join(BASE_DIR, "data", "output", "test", f"{_db.lower()}.sqlite3")
         dbs_fds.append(_fd)
     app.config['TESTING'] = True
     client = app.test_client()
@@ -31,3 +34,7 @@ def client():
         os.close(_fd)
     for _db in dbs:
         os.unlink(app.config[_db])
+
+
+def generate_worker_id(base="test"):
+    return f"{base}_" + "".join(random.choices(string.ascii_lowercase+string.digits, k=8))

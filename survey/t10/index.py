@@ -15,11 +15,14 @@ from flask import (
 
 import random
 
+from survey.figure_eight import FigureEight
+
 from core.models.metrics import MAX_GAIN
-from survey._app import app
+from survey._app import app, csrf_protect
+from survey.admin import get_job_config
 from survey.db import get_db, table_exists
 from survey.figure_eight import RowState
-from survey.utils import get_table
+from survey.utils import get_table, increase_worker_bonus
 from .prop import BASE as prop_BASE, JUDGING_TIMEOUT_SEC, LAST_MODIFIED_KEY, STATUS_KEY
 from .resp import BASE as resp_BASE
 
@@ -77,33 +80,53 @@ def index():
         return redirect(url_for(f"{TREATMENT}.resp.index", job_id=job_id, worker_id=worker_id))
 
 
+def _process_judgments(signal, payload, job_id, job_config):
+    """
+    :param signal: (str)
+    :param payload: (dict)
+    :param job_id: (int|str)
+    :param job_config: (JobConfig)
+    """
+    error_happened = False
+    with app.app_context():
+        app.logger.info(f"Started part-payments..., with signal: {signal}")
+        if signal == "new_judgements":
+            judgments_count = payload['judgments_count']
+            fig8 = FigureEight(job_id, job_config["api_key"])
+            con = get_db("RESULT")
+            for idx in range(judgments_count):
+                try:
+                    worker_judgment = payload['results']['judgments'][idx]
+                    #TODO: Not paying any bonus yet
+                    #TODO: may compute the next level here
+                    # worker_id = worker_id = worker_judgment["worker_id"]
+                    # worker_bonus = get_worker_bonus(con, job_id, worker_id)
+                    #pay_worker_bonus(con, job_id, worker_id, worker_bonus, fig8)
+                except Exception as err:
+                    if not error_happened:
+                        app.logger.error(f"Error: {err}")
+                        error_happened = True
+        elif signal == "unit_complete":
+            #TODO: may process the whole unit here
+            pass
+        app.logger.info("Started part-payments..., with signal: %s ^_^ " % signal)
 
-@bp.route("/webhook", methods=["GET", "POST"])
+@csrf_protect.exempt
+@bp.route("/resp/webhook", methods=["GET", "POST"])
 def webhook():
-    app.logger.info(f"{request.form}")
-    return "webhook"
-
-
-def finalize_resp_row():
-    # TODO: At this point, all features have been gathered
-    # generate prediction for the prop row
-    resp_worker_id = "na"
-    prop_worker_id = "na"
-    job_id = "na"
-    con = get_db("RESULT")
-    resp_bonus = 0
-    prop_bonus = 0
-    with con:
-        table = get_table("resp", job_id, treatment=TREATMENT)
-        res = con.execute(f"SELECT offer, min_offer, resp_worker_id from {table} WHERE resp_worker_id=? and prop_worker_id=?", (resp_worker_id, prop_worker_id)).fetchone()
-    offer, min_offer = res["offer"], res["min_offer"]
-    resp_worker_id = res["resp_worker_id"]
-    for task in ["cg", "crt", "eff", "hexaco", "risk"]:
-        table = get_table(task, job_id)
-        with con:
-            res = con.execute(f"SELECT worker_bonus FROM {table} WHERE worker_id=?", (resp_worker_id,)).fetchone()
-            resp_bonus += res["worker_bonus"]
-    if offer >= min_offer:
-        resp_bonus += offer
-        prop_bonus += (MAX_GAIN - min_offer)
-    print(resp_bonus, prop_bonus)
+    form = request.form.to_dict()
+    signal = form['signal']
+    if signal in {'unit_complete', 'new_judgements'}:
+        app.logger.info(f"SIGNAL: {signal}")
+        payload_raw = form['payload']
+        signature = form['signature']
+        payload = json.loads(payload_raw)
+        job_id = payload['job_id']
+        
+        job_config = get_job_config(get_db("DB"), job_id)
+        payload_ext = payload_raw + job_config["api_key"]
+        verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
+        if signature == verif_signature:
+            args = (signal, job_id, job_config, payload)
+            app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
+    return Response(status=200)

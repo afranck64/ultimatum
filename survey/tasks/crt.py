@@ -11,6 +11,8 @@ from survey.utils import handle_task_done, handle_task_index
 #### const
 bp = Blueprint("tasks.crt", __name__)
 
+MAX_BONUS = 45
+
 def validate_response(response):
     for field in ["q1", "q2", "q3"]:
         if field not in response:

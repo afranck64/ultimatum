@@ -13,6 +13,9 @@ bp = Blueprint("tasks.cg", __name__)
 
 FIELDS = {"donation_a", "donation_b", "donation_c"}
 
+MAX_BONUS = 60
+
+
 def validate_response(response):
     for key in FIELDS:
         if key not in response:

@@ -12,6 +12,8 @@ from survey.utils import handle_task_done, handle_task_index
 #### const
 bp = Blueprint("tasks.risk", __name__)
 
+MAX_BONUS = 100
+
 FIELDS = {f"cell{i}" for i in range(1, 51)}
 def validate_response(response):
     for field in FIELDS:

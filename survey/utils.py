@@ -13,7 +13,7 @@ from flask import (
 
 
 from survey._app import app
-from survey.db import get_db, insert
+from survey.db import get_db, insert, table_exists
 from survey.admin import get_job_config
 from core.utils import cents_repr
 
@@ -191,18 +191,110 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
 
         worker_id = session["worker_id"]
         response_result = response_to_result_func(response, job_id=job_id, worker_id=worker_id)
+        worker_bonus = response_to_bonus(response)
         try:
             save_result2file(get_output_filename(base, job_id), response_result)
         except Exception as err:
             app.log_exception(err)
         try:
+            print("WORKER_ID: ", worker_id, response_result)
             save_result2db(get_table(base, job_id=job_id), response_result, unique_fields=unique_fields)
+            increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=worker_bonus)
         except Exception as err:
             app.log_exception(err)
         session.clear()
-    
 
         session[base] = True
         session[worker_code_key] = worker_code
-        session[worker_bonus_key] = response_to_bonus(response)
+        session[worker_bonus_key] = worker_bonus
     return render_template("done.html", worker_code=session[worker_code_key], worker_bonus=cents_repr(session[worker_bonus_key]))
+
+
+def _get_payment_table(job_id):
+    return get_table("jobs", job_id, category="payment")
+
+def increase_worker_bonus(job_id, worker_id, bonus_cents, con=None):
+    """
+    :param job_id:
+    :param worker_id:
+    :param bonus_cents: (int)
+    :param con:
+    """
+    print("INCREASE BONUS: ", job_id, worker_id, bonus_cents)
+    if con is None:
+        con = get_db()
+    row_data = {'job_id':job_id, 'worker_id': worker_id, 'timestamp': str(datetime.datetime.now()), 'bonus_cents': bonus_cents, 'paid_bonus_cents': 0}
+    table = _get_payment_table(job_id)
+    worker_row_exists = False
+    if table_exists(con, table):
+        with con:
+            row = con.execute(f'select *, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
+            if row:
+                worker_row_exists = True
+                row_data["bonus_cents"] += row["bonus_cents"]
+                row_data["paid_bonus_cents"] += row["paid_bonus_cents"]
+                con.execute(f"UPDATE {table} SET bonus_cents=?, paid_bonus_cents=? WHERE rowid=?", (row_data["bonus_cents"], row_data["paid_bonus_cents"], row["rowid"]))
+            
+    if not worker_row_exists:
+        df = pd.DataFrame(data=[row_data])
+        insert(df, table, con, unique_fields=["worker_id"])
+
+
+def get_worker_bonus(job_id, worker_id, con=None):
+    """
+    :param job_id:
+    :param worker_id:
+    :param con:
+    """
+    if con is None:
+        con = get_db()
+    table = _get_payment_table(job_id)
+    if table_exists(con, table):
+        with con:
+            row = con.execute(f'select *, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
+            if row:
+                print(dict(row))
+                worker_bonus = row["bonus_cents"]
+                return worker_bonus
+    return 0
+
+
+def pay_worker_bonus(job_id, worker_id, fig8, con=None):
+    """
+    :param job_id:
+    :param worker_id:
+    :param bonus_cents:
+    :param fig8:
+    :param overwite:
+    :param con:
+    :returns True if payment was done, False otherwise
+    """
+    if con is None:
+        con = get_db()
+    table = get_table("jobs", job_id, "payment")
+
+    should_pay = False
+    bonus_cents = 0
+    new_paid_bonus_cents = 0
+    if table_exists(con, table):
+        with con:
+            row = con.execute(f'select bonus_cents, paid_bonus_cents, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
+            if row:
+                # TODO: PAY
+                should_pay = True
+                bonus_cents = row["bonus_cents"]
+                new_paid_bonus_cents = row["bonus_cents"] + row["paid_bonus_cents"]
+                
+    if should_pay:
+        #TODO: CHECK LATER FOR PAYMENT
+        print("SHOULD BE PAYING: ", )
+        #fig8.contributor_pay(worker_id, bonus_cents)
+        fig8.contributor_notify(worker_id, f"Thank you for your participation. You just received your total bonus of {cents_repr(bonus_cents)} ^_^")
+        with con:
+            con.execute(f"UPDATE {table} SET bonus_cents=?, paid_bonus_cents=? WHERE rowid=?", (0, new_paid_bonus_cents, row["rowid"]))
+        return True
+    else:
+        #fig8.contributor_notify(worker_id, f"Thank you for your participation. You seems to have already been paid. ^_^")
+        pass
+    return False
+############################################################

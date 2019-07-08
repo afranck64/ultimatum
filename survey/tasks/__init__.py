@@ -3,10 +3,4 @@ from survey.tasks import (cg, crt, eff, hexaco, risk)
 
 bp = Blueprint("tasks", __name__)
 
-
-
-# bp.register_blueprint(hexaco.bp)
-# bp.register_blueprint(cg.bp)
-# bp.register_blueprint(crt.bp)
-# bp.register_blueprint(eff.bp)
-# bp.register_blueprint(risk.bp)
+MAX_BONUS = cg.MAX_BONUS + crt.MAX_BONUS + eff.MAX_BONUS + hexaco.MAX_BONUS + risk.MAX_BONUS

@@ -21,17 +21,18 @@ from wtforms.widgets import html5
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
-from survey._app import app, csrf_protect
-from survey.figure_eight import FigureEight, RowState
 #from survey.unit import HHI_Prop_ADM,  prop_to_prop_result, save_prop_result
 from core.utils.explanation import get_acceptance_propability, get_best_offer_probability
 from core.utils.preprocessing import df_to_xy
 from core.utils import cents_repr
-from core.models.metrics import gain
+from core.models.metrics import gain, MAX_GAIN
 
+from survey._app import app, csrf_protect
+from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
-from survey.utils import save_result2db, save_result2file, get_output_filename, get_table, generate_completion_code, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY
+from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table,
+    generate_completion_code, increase_worker_bonus, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
 
 
 ############ Consts #################################
@@ -128,8 +129,12 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
     result["worker_id"] = worker_id
     result["prop_worker_id"] = worker_id
     result["resp_worker_id"] = row_data["resp_worker_id"]
-    for k, v in row_data.items():
-        result[f"data__{k}"] = v
+    result["min_offer"] = row_data["min_offer"]
+    #result["model_type"] = row_data["model_type"]
+    # for k, v in row_data.items():
+    #     result[f"data__{k}"] = v
+    #print("RESULT_ROW: ", result)
+    print("ROW_DATA: ", row_data)
     return result
 
 
@@ -413,6 +418,7 @@ def done():
         try:
             #save_prop_result2db(get_db("RESULT"), prop_result, job_id)
             save_result2db(table=get_table(base=BASE, job_id=job_id, treatment=TREATMENT), response_result=prop_result, unique_fields=["worker_id"])
+            finalize_round(job_id, prop_worker_id=worker_id)
         except Exception as err:
             app.log_exception(err)
         session.clear()
@@ -469,40 +475,61 @@ def webhook():
             app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
     return Response(status=200)
 
-@csrf_protect.exempt
-@bp.route("/prop/upload", methods=["GET", "POST"])
-def upload():
-    if request.method == 'POST':
-        print("rrequest.data:", request.form)
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        up_file = request.files['file']
-        # if user does not select file, browser also
-        # submit an empty part without filename
-        if up_file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        job_id = request.form['job_id']
-        if not job_id:
-            flash('No job id')
-            return redirect(request.url)
-        secret = request.form.get('secret')
-        if secret != app.config['ADMIN_SECRET']:
-            flash('Incorrect secret, please try again!!!')
-            return redirect(request.url)
-        if up_file and allowed_file(up_file.filename):
-            filename = secure_filename(up_file.filename)
-            overwrite = bool(request.form.get('overwrite'))
-            df = pd.read_csv(io.BytesIO(up_file.read()))
-            df[STATUS_KEY] = RowState.JUDGEABLE
-            df[LAST_MODIFIED_KEY] = time.time()
-            df[WORKER_KEY] = None
-            table = get_table(BASE, job_id, treatment=TREATMENT)
-            # TODO should use g instead
-            con = get_db("DATA")
-            insert(df, table, con=con, overwrite=overwrite)
-            return redirect(url_for('prop.upload',
-                                    filename=filename))
-    return render_template('upload.html')
+# @csrf_protect.exempt
+# @bp.route("/prop/upload", methods=["GET", "POST"])
+# def upload():
+#     if request.method == 'POST':
+#         print("rrequest.data:", request.form)
+#         # check if the post request has the file part
+#         if 'file' not in request.files:
+#             flash('No file part')
+#             return redirect(request.url)
+#         up_file = request.files['file']
+#         # if user does not select file, browser also
+#         # submit an empty part without filename
+#         if up_file.filename == '':
+#             flash('No selected file')
+#             return redirect(request.url)
+#         job_id = request.form['job_id']
+#         if not job_id:
+#             flash('No job id')
+#             return redirect(request.url)
+#         secret = request.form.get('secret')
+#         if secret != app.config['ADMIN_SECRET']:
+#             flash('Incorrect secret, please try again!!!')
+#             return redirect(request.url)
+#         if up_file and allowed_file(up_file.filename):
+#             filename = secure_filename(up_file.filename)
+#             overwrite = bool(request.form.get('overwrite'))
+#             df = pd.read_csv(io.BytesIO(up_file.read()))
+#             df[STATUS_KEY] = RowState.JUDGEABLE
+#             df[LAST_MODIFIED_KEY] = time.time()
+#             df[WORKER_KEY] = None
+#             table = get_table(BASE, job_id, treatment=TREATMENT)
+#             # TODO should use g instead
+#             con = get_db("DATA")
+#             insert(df, table, con=con, overwrite=overwrite)
+#             return redirect(url_for('prop.upload',
+#                                     filename=filename))
+#     return render_template('upload.html')
+
+
+def finalize_round(job_id, prop_worker_id):
+    # TODO: At this point, all features have been gathered
+    resp_worker_id = "na"
+    con = get_db("RESULT")
+    resp_bonus = 0
+    prop_bonus = 0
+    offer, min_offer = 0, 0
+    with con:
+        table = get_table(BASE, job_id, treatment=TREATMENT)
+        res = con.execute(f"SELECT offer, min_offer, resp_worker_id from {table} WHERE prop_worker_id=?", (prop_worker_id,)).fetchone()
+    offer, min_offer = res["offer"], res["min_offer"]
+    resp_worker_id = res["resp_worker_id"]
+
+    if offer >= min_offer:
+        resp_bonus += offer
+        prop_bonus += (MAX_GAIN - offer)
+    increase_worker_bonus(job_id, resp_worker_id, resp_bonus)
+    increase_worker_bonus(job_id, prop_worker_id, prop_bonus)
+    print(resp_bonus, prop_bonus)
