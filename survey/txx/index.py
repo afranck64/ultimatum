@@ -132,21 +132,43 @@ def handle_webhook(treatment):
     sync_process = False
     sync_process = request.args.get("synchron", False)
     form = request.form.to_dict()
-    signal = form['signal']
-    if signal in {'unit_complete', 'new_judgments'}:
-        # app.logger.info(f"SIGNAL: {signal}")
-        payload_raw = form['payload']
-        signature = form['signature']
-        payload = json.loads(payload_raw)
-        job_id = payload['job_id']
-        
+    if "signal" in form:
+        signal = form['signal']
+        if signal in {'unit_complete', 'new_judgments'}:
+            # app.logger.info(f"SIGNAL: {signal}")
+            payload_raw = form['payload']
+            signature = form['signature']
+            payload = json.loads(payload_raw)
+            job_id = payload['job_id']
+            
+            job_config = get_job_config(get_db("DB"), job_id)
+            payload_ext = payload_raw + job_config["api_key"]
+            verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
+            if signature == verif_signature:
+                args = (signal, payload, job_id, job_config, treatment)
+                if sync_process:
+                    _process_judgments(*args)
+                else:
+                    app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
+    else:
+        job_id = request.args.get("job_id")
+        worker_id = request.args.get("worker_id")
         job_config = get_job_config(get_db("DB"), job_id)
-        payload_ext = payload_raw + job_config["api_key"]
-        verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
-        if signature == verif_signature:
-            args = (signal, payload, job_id, job_config, treatment)
-            if sync_process:
-                _process_judgments(*args)
-            else:
-                app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
+        payload = {
+            "judgments_count": 1,
+            "job_id": job_id,
+            "results": {
+                "judgments": [
+                        {
+                        "job_id": job_id,
+                        "worker_id": worker_id
+                    }
+                ]
+            }
+        }
+        args = ("new_judgments", payload, job_id, job_config, treatment)
+        if sync_process:
+            _process_judgments(*args)
+        else:
+            app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
     return Response(status=200)

@@ -14,8 +14,8 @@ from survey.admin import get_job_config
 
 BASE_DIR = os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0]
 
-# from survey import app
-# from survey import db
+KEEP_TESTS_RESULTS = False
+
 @pytest.fixture
 def client():
     app.config["ADMIN_SECRET"] = "secret"
@@ -24,8 +24,10 @@ def client():
     dbs = ["DATABASE", "DATABASE_RESULT", "DATABASE_DATA"]
     dbs_fds = []
     for _db in dbs:
-        _fd, app.config[_db] = tempfile.mkstemp(dir=os.path.join(BASE_DIR, "data", "output", "test"))
-        #_fd, app.config[_db] = 0, os.path.join(BASE_DIR, "data", "output", "test", f"{_db.lower()}.sqlite3")
+        if KEEP_TESTS_RESULTS:
+            _fd, app.config[_db] = 0, os.path.join(BASE_DIR, "data", "output", "test", f"{_db.lower()}.sqlite3")
+        else:
+            _fd, app.config[_db] = tempfile.mkstemp(dir=os.path.join(BASE_DIR, "data", "output", "test"))
         dbs_fds.append(_fd)
     app.config['TESTING'] = True
     client = app.test_client()
@@ -35,10 +37,11 @@ def client():
 
     yield client
 
-    for _fd in dbs_fds:
-        os.close(_fd)
-    for _db in dbs:
-        os.unlink(app.config[_db])
+    if not KEEP_TESTS_RESULTS:
+        for _fd in dbs_fds:
+            os.close(_fd)
+        for _db in dbs:
+            os.unlink(app.config[_db])
 
 
 webhook_data_template =  {
@@ -115,7 +118,7 @@ webhook_data_template =  {
     "signature": ""
 }
 
-def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgments", unit_state="finalized", treatment="t10"):
+def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgments", unit_state="finalized", treatment="t10", by_get=False):
     """
     :param client:
     :param url: (str) relative path to target api
@@ -123,6 +126,7 @@ def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgmen
     :param worker_id: (str)
     :param signal: (new_judgments|unit_complete)
     :param unit_state: (finalized|new|judging|judgeable?)
+    :param by_get: (True|False) simulate a setup were each user triggers the webhook using a get request
     """
     import time
     proceed = False
@@ -153,6 +157,13 @@ def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgmen
             "payload": payload,
             "signature": signature
         }
+        if by_get:
+            # An empty form is submitted when triggering the webhook by click
+            data = {}
+            if "?" in url:
+                url += f"&job_id={job_id}&worker_id={worker_id}"
+            else:
+                url += f"?job_id={job_id}&worker_id={worker_id}"
         res = client.post(url, data=data, follow_redirects=True).status
         return res
 

@@ -174,3 +174,22 @@ def test_bonus_nodelay(client, synchron=True):
             assert bonus_resp == tasks.MAX_BONUS + 100
             bonus_prop = get_worker_bonus(job_id, prop_worker_id)
             assert bonus_prop == 100
+
+def test_webhook(client):
+    #TODO: include form/payload based webhook trigger
+    job_id = "test"
+    resp_worker_id = generate_worker_id("resp")
+    prop_worker_id = generate_worker_id("prop")
+    process_tasks(client, job_id, resp_worker_id, bonus_mode="full")
+    _process_resp(client, job_id, resp_worker_id, min_offer=100)
+    emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=resp_worker_id, by_get=True)
+    time.sleep(0.25)
+    _process_prop(client, worker_id=prop_worker_id, offer=100, response_available=True)
+    emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=prop_worker_id, by_get=True)
+    time.sleep(0.25)
+    with app.app_context():
+        bonus_resp = get_worker_bonus(job_id, resp_worker_id)
+        assert bonus_resp == tasks.MAX_BONUS + 100
+        bonus_prop = get_worker_bonus(job_id, prop_worker_id)
+        assert bonus_prop == 100
+
