@@ -40,29 +40,65 @@
     </script>
 
 
-    <h1>You have been assigned the task of a RESPONDER. What is the minimum share of 2 USD you are willing to accept from the PROPOSER?</h1>
+    
     <!-- <form method="GET" action=""> -->
     <!-- </form> -->
 
     <form action="" method="post">
-        <div class="min_offer">
+            <h1 align="center">You have been assigned the task of a RESPONDER. What is the minimum share of 2 USD you are willing to accept from the PROPOSER?</h1>
             {{ form.hidden_tag() }}
-            <label> Final Offer
-                <select name="min_offer" required onchange="drawChart()" id="min_offer">
+            <div align="center">
+                <select name="min_offer" required id="min_offer">
                     <option value="" selected disabled hidden>Select a value</option>
                     {% for value, label in offer_values.items() %}
                         <option value={{value}}>{{label}}</option>
                     {% endfor %}
                 </select>
-            </label>
-            <p> {{form.submit()}}</p>
+            </div>
+
+            <br> <br> <br> <br> <br> <br> <br>
+
+            <hr>
+
+            <br> <br>
+             <h2 align="center" style="color:#800080">
+                On average what do you think is the MINIMUM OFFER that other RESPONDERS would accept?
+            </h2>
+             <!-- <br>PLEASE SELECT YOUR EXPECTATION.  -->
+            
+            <br>
+            <div align="center">
+                <select name="other_resp" required id="other_resp">
+                    <option value="" selected disabled hidden>Select a value</option>
+                    {% for value, label in offer_values.items() %}
+                        <option value={{value}}>{{label}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <br> <br>
+
+            <hr>
+            
+            <h2 align="center" style="color:#800080">
+                On average what do you think is the minimum OFFER that other PROPOSERS make?
+            </h2>
+            <!-- <br>PLEASE SELECT YOUR EXPECTATION. -->
+
+            <br>
+            <div align="center">
+                <select name="other_prop" required id="other_prop">
+                    <option value="" selected disabled hidden>Select a value</option>
+                    {% for value, label in offer_values.items() %}
+                        <option value={{value}}>{{label}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <br>
+            <br> <br>
+            <div align="center"> 
+                    {{form.submit()}}
+            </div>
         </div>
     </form>
-
-
-    <div class="min_offer">
-        <div align="center"> 
-                <div class="chart" id="piechart" style="opacity: 1;" ></div>
-        </div>
-    </div>
 {% endblock %}

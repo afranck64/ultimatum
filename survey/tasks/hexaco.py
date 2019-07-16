@@ -1,7 +1,7 @@
 from flask import (
     Blueprint, render_template
 )
-
+import datetime
 from survey._app import csrf_protect
 from survey.utils import handle_task_done, handle_task_index
 
@@ -19,6 +19,35 @@ def validate_response(response):
             return False
     return True
 
+Honesty_Humility_qxx = {"q6", "q12", "q15", "q21", "q24"}
+Honesty_Humility_qxx = {"q3", "q9", "q18", "q6", "q12", "q15", "q21", "q24", "q27", "q30"}
+Extraversion_qxx = {"q5", "q28", "q46", "q26"}
+Extraversion_qxx = {"q2", "q8", "q11", "q17", "q20", "q5", "q14", "q23", "q29"}
+Agreeableness_qxx = {"q4", "q7", "q10", "q28"}
+Agreeableness_qxx = {"q1", "q4", "q7", "q10", "q13", "q16", "q19", "q22", "q25", "q28"}
+
+def response_to_result(response, job_id=None, worker_id=None):
+    """
+    :returns: {
+        Honesty_Humility:
+        Extraversion:
+        Agreeableness:
+        timestamp: server time when genererting the result
+        job_id: fig-8 job id
+        worker_id: fig-8 worker id
+        *: response's keys
+    }
+    """
+    result = dict(response)
+    result["Honesty_Humility"] = sum(response[key] for key in Honesty_Humility_qxx)/10
+    result["Extraversion"] = sum(response[key] for key in Extraversion_qxx)/10
+    result["Agreeableness"] = sum(response[key] for key in Agreeableness_qxx)/10
+    result["timestamp"] = str(datetime.datetime.now())
+    result["job_id"] = job_id
+    result["worker_id"] = worker_id
+    result["worker_bonus"] = response_to_bonus(response)
+    return result
+
 def response_to_bonus(response):
     bonus = 0
     return bonus
@@ -32,4 +61,4 @@ def index():
 
 @bp.route("/hexaco/done")
 def done():
-    return handle_task_done("hexaco", unique_fields=["worker_id"])
+    return handle_task_done("hexaco", unique_fields=["worker_id"], response_to_result_func=response_to_result, numeric_fields="*")

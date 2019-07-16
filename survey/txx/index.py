@@ -31,8 +31,9 @@ from .resp import BASE as resp_BASE, finalize_resp
 def handle_index(treatment):
     job_id = request.args.get("job_id", "na")
     worker_id = request.args.get("worker_id", "na")
-    resp_table = get_table(base=resp_BASE, job_id=job_id, treatment=treatment)
-    prop_table = get_table(base=prop_BASE, job_id=job_id, treatment=treatment)
+    app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
+    resp_table = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
+    prop_table = get_table(prop_BASE, job_id=job_id, schema="data", treatment=treatment)
 
     con = get_db("DATA")
     nb_resp = 0
@@ -79,6 +80,7 @@ def _process_judgments(signal, payload, job_id, job_config, treatment):
     :param job_config: (JobConfig)
     """
     error_happened = False
+    app.logger.debug(f"_process_judgments: {signal}, job_id: {job_id}")
     with app.app_context():
         try:
             # app.logger.info(f"Started part-payments..., with signal: {signal}")
@@ -90,12 +92,13 @@ def _process_judgments(signal, payload, job_id, job_config, treatment):
                         con = get_db("RESULT")
                         worker_judgment = payload['results']['judgments'][idx]
                         worker_id = worker_judgment["worker_id"]
+                        app.logger.debug(f"_process_judgments: {signal}, job_id: {job_id}, worker_id: {worker_id}")
                         #TODO: Not paying any bonus yet
                         #TODO: may compute the next level here
                         is_responder = False
                         is_proposer = False
-                        table_resp = get_table(resp_BASE, job_id, treatment=treatment)
-                        table_prop = get_table(prop_BASE, job_id, treatment=treatment)
+                        table_resp = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
+                        table_prop = get_table(prop_BASE, job_id=job_id, schema="result", treatment=treatment)
                         with con:
                             if table_exists(con, table_resp):
                                 res = con.execute(f"SELECT * from {table_resp} WHERE job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
@@ -108,28 +111,24 @@ def _process_judgments(signal, payload, job_id, job_config, treatment):
                         if is_responder:
                             finalize_resp(job_id=job_id, worker_id=worker_id, treatment=treatment)
                         elif is_proposer:
-                            print("TRY END  ROUND", worker_id)
                             finalize_round(job_id=job_id, prop_worker_id=worker_id, treatment=treatment)
-                            #worker_bonus = get_worker_bonus(con, job_id, worker_id)
-                            #pay_worker_bonus(con, job_id, worker_id, worker_bonus, fig8)
-                            print("FINALIZED ROUND")
                         else:
                             app.logger.error(f"Error: unknown worker_id: {worker_id} for job_id: {job_id}")
                     except Exception as err:
                         if not error_happened:
-                            app.logger.error(f"Error: {err}")
+                            app.log_exception(err)
                             error_happened = True
             elif signal == "unit_complete":
                 #TODO: may process the whole unit here
                 pass
         except Exception as err:
             app.log_exception(err)
-        app.logger.info("Done dispatching tasks..., with signal: %s ^_^ " % signal)
+    app.logger.debug(f"_process_judgments: {signal}, job_id: {job_id} - done")
 
 
 
 def handle_webhook(treatment):
-    print("ARGS: ", request.args)
+    app.logger.debug("handle_webhook")
     sync_process = False
     sync_process = request.args.get("synchron", False)
     form = request.form.to_dict()

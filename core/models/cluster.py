@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.cluster import KMeans, MeanShift, DBSCAN, SpectralClustering, Birch, MiniBatchKMeans, AffinityPropagation
 from sklearn.mixture import BayesianGaussianMixture
 
-from .featureless import FeaturelessModel
+from .featureless import EMModel
 
 
 class ClusterModel(object):
@@ -73,7 +73,7 @@ class ClusterExtModel(object):
         if "sub_model" in kwargs:
             self.sub_model = kwargs.pop("sub_model")
         else:
-            self.sub_model = FeaturelessModel()
+            self.sub_model = EMModel()
         if "base_model" in kwargs:
             base_model_ = kwargs.pop("base_model")
             if isinstance(base_model_, str):

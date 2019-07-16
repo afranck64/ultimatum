@@ -1,5 +1,6 @@
 import unittest
 import random
+import string
 
 from flask import session
 
@@ -33,7 +34,7 @@ def _process_cg(client, job_id="test", worker_id=None, bonus_mode="random", clea
         worker_id = generate_worker_id("cg")
     path = f"/tasks/cg/?job_id={job_id}&worker_id={worker_id}"
     if bonus_mode=="random":
-        data = {field:random.choice([0, 5, 10, 15, 20]) for field in cg.FIELDS}
+        data = {field:random.choice([0, 5, 10, 15, 20]) if random.random()>0.6 else 0 for field in cg.FIELDS}
     elif bonus_mode=="none":
         data = {field:20 for field in cg.FIELDS}
     elif bonus_mode=="full":
@@ -76,7 +77,7 @@ def _process_crt(client, job_id="test", worker_id=None, bonus_mode="random", cle
         worker_id = generate_worker_id("crt")
     path = f"/tasks/crt/?job_id={job_id}&worker_id={worker_id}"
     if bonus_mode=="random":
-        data = {field:random.randint(0, 100) for field in crt.SOLUTIONS}
+        data = {field:random.randint(0, 100) if random.random() > 0.6 else crt.SOLUTIONS[field] for field in crt.SOLUTIONS}
     elif bonus_mode=="none":
         data = {field:0 for field in crt.SOLUTIONS}
     else:
@@ -119,9 +120,9 @@ def _process_eff(client, job_id="test", worker_id=None, bonus_mode="random", cle
     #worker_id = generate_worker_id("eff_FORCED")
     path = f"/tasks/eff/?job_id={job_id}&worker_id={worker_id}"
     if bonus_mode=="random":
-        data = {field:random.randint(0, 100) for field in eff.SOLUTIONS}
+        data = {field:"".join(random.choices(string.ascii_lowercase, k=4)) if random.random()>0.6 else eff.SOLUTIONS[field] for field in eff.SOLUTIONS}
     elif bonus_mode=="none":
-        data = {field:0 for field in eff.SOLUTIONS}
+        data = {field: "----" for field in eff.SOLUTIONS}
     else:
         data = {field: str(solution) for field, solution in eff.SOLUTIONS.items()}
     with app.test_request_context(path):

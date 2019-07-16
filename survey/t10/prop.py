@@ -115,7 +115,7 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
         for idx in range(1, ai_nb_calls):
             ai_times.append(proposal["ai_calls_time"][idx] - proposal["ai_calls_time"][idx-1])
         #result["ai_mean_time"] = sum(ai_times) / ai_nb_calls
-    result["ai_calls_between_times"] = ":".join(str(int(value)) for value in ai_times)
+    result["ai_calls_pauses"] = ":".join(str(int(value)) for value in ai_times)
     result["ai_call_offers"] = ":".join(str(val) for val in proposal["ai_calls_offer"])
     result["job_id"] = job_id
     result["worker_id"] = worker_id

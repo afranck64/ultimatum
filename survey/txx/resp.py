@@ -30,7 +30,7 @@ from core.models.metrics import gain
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
 from .prop import insert_row
-from survey.utils import save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY
+from survey.utils import save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus
 
 
 ############ Consts #################################
@@ -90,28 +90,29 @@ def resp_to_resp_result(response, job_id=None, worker_id=None):
 
 
 class ProposerForm(FlaskForm):
-    min_offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
+    min_offer = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
+    other_prop = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
+    other_resp = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
 def handle_index(treatment, template=None):
+    app.logger.debug("handle_index")
     if template is None:
         template = f"{treatment}/resp.html"
     if request.method == "GET":
-        session['response'] = HHI_Resp_ADM()
         worker_id = request.args.get("worker_id", "na")
         job_id = request.args.get("job_id", "na")
+        app.logger.debug(f"handle_index: job_id:{job_id}, worker_id:{worker_id} ")
+        session['response'] = HHI_Resp_ADM()
         session["worker_id"] = worker_id
         session["job_id"] = job_id
 
     if request.method == "POST":
         response = session["response"]
         response["time_stop"] = time.time()
-        min_offer = request.form["min_offer"]
-        try:
-            min_offer = int(min_offer)
-        except ValueError:
-            min_offer = None
-        response["min_offer"] = min_offer
+        response["min_offer"] = int(request.form["min_offer"])
+        response["other_resp"] = int(request.form["other_resp"])
+        response["other_prop"] = int(request.form["other_prop"])
         ##TODO return redirect
         session['response'] = response
         return redirect(url_for(f"{treatment}.resp.done"))
@@ -120,6 +121,7 @@ def handle_index(treatment, template=None):
     return render_template(template, offer_values=OFFER_VALUES, form=ProposerForm())
 
 def handle_done(treatment, template=None):
+    app.logger.debug("handle_done")
     if template is None:
         template = f"{treatment}/resp.done.html"
 
@@ -140,7 +142,8 @@ def handle_done(treatment, template=None):
             app.log_exception(err)
         try:
             #save_resp_result2db(get_db("RESULT"), resp_result, job_id)
-            save_result2db(table=get_table(base=BASE, job_id=job_id, treatment=treatment), response_result=resp_result, unique_fields=["worker_id"])
+            save_result2db(table=get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment), response_result=resp_result, unique_fields=["worker_id"])
+            increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=0)
         except Exception as err:
             app.log_exception(err)
         session.clear()
@@ -152,11 +155,13 @@ def handle_done(treatment, template=None):
 
 
 def finalize_resp(job_id, worker_id, treatment):
-    app.logger.debug("INSERT NEW PROP ROW")
-    table = get_table(base=BASE, job_id=job_id, treatment=treatment)
+    app.logger.debug("finalize_resp")
+    table = get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment)
     con = get_db("RESULT")
     with con:
         res = con.execute(f"SELECT * from {table} where job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
         if res:
             resp_result = dict(res)
             insert_row(job_id, resp_result, treatment)
+        else:
+            app.logger.warnings(f"finalize_resp: worker_id {worker_id} not found - job_id: {job_id}")

@@ -1,3 +1,5 @@
+#import sqlite3
+#import apsw
 import sqlite3
 
 import click
@@ -5,19 +7,24 @@ from flask import current_app, g
 from flask.cli import with_appcontext
 
 
+
 def get_db(name='db'):
     """
     :param name: (db|data|result)
     :returns: an open database (connection)
     """
-    if name.lower() =='db':
+    current_app.logger.debug("get_db")
+    name = "db"
+    if name.lower() =='db' or True:
         if name not in g:
+            current_app.logger.debug("get_db: open db")
             g.db = sqlite3.connect(
                 current_app.config['DATABASE'],
                 detect_types=sqlite3.PARSE_DECLTYPES
             )
             g.db.row_factory = sqlite3.Row
         return g.db
+            
     name = name.upper()
     if name not in g:
         db = sqlite3.connect(
@@ -29,6 +36,7 @@ def get_db(name='db'):
 
 
 def close_db(e=None):
+    current_app.logger.debug("close_db")
     db = g.pop('db', None)
 
     if db is not None:
@@ -37,8 +45,6 @@ def close_db(e=None):
 
 def init_db():
     get_db()
-    # get_db('DATA')
-    # get_db('RESULT')
 
 
 @click.command('init-db')
@@ -59,6 +65,7 @@ def insert(df, table, con=None, overwrite=False, unique_worker=False, unique_fie
     :param unique_worker: (bool) if True, an unique index is add to the table
     :param unique_fiedls: (str|list[str]) create unique index for the grouped fields
     """
+    current_app.logger.debug(f"insert: {table}")
     
     con = con or g.db
     table_already_created = table_exists(con, table)
@@ -80,6 +87,13 @@ def insert(df, table, con=None, overwrite=False, unique_worker=False, unique_fie
             if unique_fields:
                 with con:
                     con.execute(sql_unique_fields)
+
+def update(sql, args, con=None):
+    current_app.logger.debug(f"update: {sql}")
+    if con is None:
+        con = get_db()
+    with con:
+        con.execute(sql, args)
 
 
 

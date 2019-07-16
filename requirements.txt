@@ -10,6 +10,8 @@ imbalanced-learn
 mlxtend
 xlrd
 xlwt
+##conda install -c conda-forge xgboost
+#shap
 
 #### survey
 flask

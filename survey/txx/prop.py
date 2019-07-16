@@ -30,8 +30,8 @@ from core.models.metrics import gain, MAX_GAIN
 from survey._app import app, csrf_protect
 from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
-from survey.db import insert, get_db, table_exists
-from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table,
+from survey.db import insert, get_db, table_exists, update
+from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table, predict_weak, predict_strong,
     generate_completion_code, increase_worker_bonus, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
 
 
@@ -118,7 +118,7 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
         for idx in range(1, ai_nb_calls):
             ai_times.append(proposal["ai_calls_time"][idx] - proposal["ai_calls_time"][idx-1])
         #result["ai_mean_time"] = sum(ai_times) / ai_nb_calls
-    result["ai_calls_between_times"] = ":".join(str(int(value)) for value in ai_times)
+    result["ai_calls_pauses"] = ":".join(str(int(value)) for value in ai_times)
     result["ai_call_offers"] = ":".join(str(val) for val in proposal["ai_calls_offer"])
     result["job_id"] = job_id
     result["worker_id"] = worker_id
@@ -163,6 +163,7 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None):
     :returns: (numpy.array) features
     :returns: (dict) features_rows untransformed
     """
+    app.logger.debug("get_features")
     MODEL_INFOS_KEY = f"{treatment.upper()}_MODEL_INFOS"
     tasks = tasks or ["cg", "crt", "eff", "hexaco", "risk"]
     con = get_db("RESULT")
@@ -170,18 +171,20 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None):
         "cg":["selfish"],
         #"crt":["*"],        #TODO: check
         "eff":["count_effort"],
-        #"hexaco": ["Honesty_Humility", "Extraversion", "Agreeableness"],     #TODO: check conversion
+        "hexaco": ["Honesty_Humility", "Extraversion", "Agreeableness"],     #TODO: check conversion
         "risk":["cells", "time_spent_risk"]
     }
-    row_features = {"Honesty_Humility":2.5, "Extraversion":2.5, "Agreeableness":2.5}
+    #row_features = {"Honesty_Humility":2.5, "Extraversion":2.5, "Agreeableness":2.5}
+    row_features = dict()
     for name, features in tasks_features.items():
-        task_table = get_table(name, job_id)
+        task_table = get_table(name, job_id=job_id, schema="result")
         with con:
             sql = f"SELECT {','.join(features)} FROM {task_table} WHERE worker_id=?"
             res = con.execute(sql, (resp_worker_id,)).fetchone()
             row_features.update(dict(res))
     tmp_df = pd.DataFrame(data=[row_features])
     x, _ = df_to_xy(tmp_df, select_columns=app.config[MODEL_INFOS_KEY]["top_columns"])
+    app.logger.debug("get_features - done")
     return x, row_features
 
         
@@ -200,7 +203,8 @@ def get_row(con, job_id, worker_id, treatment):
     :param worker_id: worker's id
     :param treatment:
     """
-    table = get_table(base=BASE, job_id=job_id, treatment=treatment)
+    app.logger.debug("get_row")
+    table = get_table(base=BASE, job_id=job_id, schema="data", treatment=treatment)
     if not table_exists(con, table):
         return None
     free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==?', (RowState.JUDGEABLE,)).fetchone()
@@ -210,9 +214,8 @@ def get_row(con, job_id, worker_id, treatment):
         ## let's search for a rowid that hasn't been processed yetf
         res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid,)).fetchone())
         with con:
-            con.execute(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid))
-        return res
-
+            update(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
+            return res
     else:
         dep_change_time = time.time() - JUDGING_TIMEOUT_SEC
         # Let's check if the same worker is looking for a row (then give him the one he is working on back)
@@ -221,22 +224,26 @@ def get_row(con, job_id, worker_id, treatment):
             ## let's search for a row that remained too long in the 'judging' state
             free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {LAST_MODIFIED_KEY} < ?', (RowState.JUDGING, dep_change_time)).fetchone()
     if free_rowid:
-        print("FREE_ROWID: ", dict(free_rowid))
         free_rowid = free_rowid[PK_KEY]
         res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid, )).fetchone())
         with con:
-            con.execute(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid))
-    return res
+            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
+    else:
+        app.logger.warning(f"no row available! job_id: {job_id}, worker_id: {worker_id}")
+    return free_rowid
 
 def close_row(con, job_id, row_id, treatment):
-    
-    table = get_table(BASE, job_id, treatment=treatment)
+    app.logger.debug("close_row")
+    table = get_table(BASE, job_id=job_id, schema="data", treatment=treatment)
     if not table_exists(con, table):
-        return
-    with con:
-        con.execute(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING))
+        app.logger.warning(f"table missing: <{table}>")
+    else:
+        with con:
+            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING), con=con)
+    app.logger.debug("close_row - done")
 
 def insert_row(job_id, resp_row, treatment, overwrite=False):
+    app.logger.debug("insert_row")
     MODEL_KEY = f"{treatment.upper()}_MODEL"
     MODEL_TYPES = [REAL_MODEL, WEAK_FAKE_MODEL, STRONG_FAKE_MODEL]
     model_type = "none"
@@ -253,7 +260,7 @@ def insert_row(job_id, resp_row, treatment, overwrite=False):
     df["model_type"] = model_type
 
 
-    table = get_table(BASE, job_id, treatment=treatment)
+    table = get_table(BASE, job_id=job_id, schema="data", treatment=treatment)
     con = get_db("DATA")
     insert(df, table, con=con, overwrite=overwrite, unique_fields=["resp_worker_id"])
 
@@ -261,74 +268,33 @@ def insert_row(job_id, resp_row, treatment, overwrite=False):
         with con:
             rowid = con.execute(f"SELECT {PK_KEY} FROM {table} where resp_worker_id=?", (resp_row[WORKER_KEY], )).fetchone()[PK_KEY]
         if rowid:
-            if rowid % 4 < 2:
+            if rowid % 3 == 0:
                 model_type = MODEL_TYPES[0]
-            elif rowid % 4 == 2:
+            elif rowid % 3 == 1:
                 model_type = MODEL_TYPES[1]
             else:
                 model_type = MODEL_TYPES[2]
     else:
         model_type = 0
     if model_type == WEAK_FAKE_MODEL:
-            ai_offer = max(resp_row["min_offer"]-10, 0)
+            ai_offer = predict_weak(resp_row["min_offer"])
     elif model_type == STRONG_FAKE_MODEL:
-            ai_offer = min(resp_row["min_offer"]+10, 200)
+            ai_offer = predict_strong(resp_row["min_offer"])
     else:
         # Models predict a vector
         ai_offer = app.config[MODEL_KEY].predict(features)[0]
+    ai_offer = int(ai_offer)
     with con:
-        sql = f"UPDATE {table} SET ai_offer=?, model_type=? where rowid=?"
-        con.execute(sql, (ai_offer, model_type, rowid))
-
-        
+        update(sql=f"UPDATE {table} SET ai_offer=?, model_type=? where rowid=?", args=(ai_offer, model_type, rowid), con=con)
+    app.logger.debug("insert_row - done")
 
 
 
 def save_prop_result2db(con, proposal_result, job_id, overwrite=False, treatment=None):
-    table = get_table(BASE, job_id, treatment=treatment)
+    table = get_table(BASE, job_id=job_id, schema="result", treatment=treatment)
     df = pd.DataFrame(data=[proposal_result])
     insert(df, table=table, con=con, overwrite=overwrite)
 
-def get_worker_bonus(con, job_id, worker_id, treatment=None):
-    table = get_table(BASE, job_id, treatment=treatment)
-    if table_exists(con, table):
-        row = con.execute(f"SELECT * from {table} WHERE worker_id=?", (worker_id,)).fetchone()
-        if row:
-            print("ROW: ", row)
-            return gain(row["data__min_offer"], row["offer"])
-    return 0
-
-def pay_worker_bonus(con, job_id, worker_id, bonus_cents, fig8, base=None, overwrite=False, treatment=None):
-    """
-    :param con:
-    :param job_id:
-    :param worker_id:
-    :param bonus_cents:
-    :param fig8:
-    :param overwite:
-    :returns True if payment was done, False otherwise
-    """
-    df = pd.DataFrame(data=[{'job_id':job_id, 'worker_id': worker_id, 'timestamp': str(datetime.datetime.now()), 'bonus_cents': bonus_cents}])
-    table = get_table(BASE, job_id, category="payment", treatment=treatment)
-
-    should_pay = False
-    if table_exists(con, table):
-        with con:
-            row = con.execute(f'select worker_id from {table} WHERE job_id==? and worker_id==? and base==?', (job_id, worker_id, base)).fetchone()
-            if not row:
-                #The user wasn't paid yet
-                should_pay = True
-    else:
-        should_pay = True
-    
-    if should_pay:
-        fig8.contributor_pay(worker_id, bonus_cents)
-        insert(df, table=table, con=con, overwrite=overwrite)
-        fig8.contributor_notify(worker_id, f"Thank you for your participation. You just received your bonus of {cents_repr(bonus_cents)} ^_^")
-        return True
-    else:
-        #fig8.contributor_notify(worker_id, f"Thank you for your participation. You seems to have already been paid. ^_^")
-        pass
 ############################################################
 
 class ProposerForm(FlaskForm):
@@ -336,6 +302,7 @@ class ProposerForm(FlaskForm):
     submit = SubmitField("Submit")
 
 def handle_index(treatment, template=None, proposal_class=None):
+    app.logger.debug("handle_index")
     if proposal_class is None:
         proposal_class = HHI_Prop_ADM
     if template is None:
@@ -344,6 +311,7 @@ def handle_index(treatment, template=None, proposal_class=None):
         session['proposal'] = proposal_class()
         worker_id = request.args.get("worker_id", "na")
         job_id = request.args.get("job_id", "na")
+        app.logger.debug(f"handle_index: job_id:{job_id}, worker_id:{worker_id} ")
         row_info = get_row(get_db("DATA"), job_id, worker_id, treatment=treatment)
 
         session["worker_id"] = worker_id
@@ -355,8 +323,10 @@ def handle_index(treatment, template=None, proposal_class=None):
             warnings.warn(f"ERROR: The row can no longer be processed. job_id: {job_id} - worker_id: {worker_id}")
 
             flash(f"There are either no more rows available or you already took part on this survey. Thank you for your participation")
+            return render_template("error.html")
             if not app.config["DEBUG"]:
-                return render_template("error.html")
+                if app.config.get("TESTING"):
+                    return render_template("error.html")
     if request.method == "POST":
         proposal = session["proposal"]
         proposal["time_stop"] = time.time()
@@ -367,7 +337,7 @@ def handle_index(treatment, template=None, proposal_class=None):
             offer = None
         proposal["offer"] = offer
         session['proposal'] = proposal
-        return redirect(url_for(f"{treatment}.prop.done"))
+        return redirect(url_for(f"{treatment}.prop.done", **request.args))
 
     session[BASE] = True
     prop_check_url = url_for(f"{treatment}.prop.check")
@@ -375,6 +345,7 @@ def handle_index(treatment, template=None, proposal_class=None):
 
 
 def handle_check(treatment):
+    app.logger.debug("handle_check")
     MODEL_INFOS_KEY = f"{treatment.upper()}_MODEL_INFOS"
     if not session.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
@@ -392,12 +363,12 @@ def handle_check(treatment):
     #TODO: use the model predictions, data distribution to generate the ai_calls_response
     proposal["ai_calls_response"].append([acceptance_probability, best_offer_probability])
     session["proposal"] = proposal
-    print("proposal: ", proposal)
     return jsonify({"offer": offer, "acceptance_probability": acceptance_probability, "best_offer_probability": best_offer_probability})
     #return "checked %s - acceptance: %s, best_offer: %s" % (offer, acceptance_probability, best_offer_probability)
 
 
 def handle_done(treatment, template=None, response_to_result_func=None):
+    app.logger.debug("handle_done")
     if template is None:
         template = f"{treatment}/{BASE}.done.html"
     if response_to_result_func is None:
@@ -421,7 +392,8 @@ def handle_done(treatment, template=None, response_to_result_func=None):
         except Exception as err:
             app.log_exception(err)
         try:
-            save_result2db(table=get_table(base=BASE, job_id=job_id, treatment=treatment), response_result=prop_result, unique_fields=["worker_id"])
+            save_result2db(table=get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment), response_result=prop_result, unique_fields=["worker_id"])
+            increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=0, con=get_db("DB"))
         except Exception as err:
             app.log_exception(err)
         session.clear()
@@ -431,93 +403,8 @@ def handle_done(treatment, template=None, response_to_result_func=None):
         session[worker_code_key] = worker_code
     return render_template(template, worker_code=session[worker_code_key], worker_bonus=session[worker_bonus_key])
 
-
-# def _process_judgments(signal, payload, job_id, job_config):
-#     """
-#     :param signal: (str)
-#     :param payload: (dict)
-#     :param job_id: (int|str)
-#     :param job_config: (JobConfig)
-#     """
-#     with app.app_context():
-#         # app.logger.info(f"Started part-payments..., with signal: {signal}")
-#         if signal == "new_judgments":
-#             try:
-#                 judgments_count = payload['judgments_count']
-#                 fig8 = FigureEight(job_id, job_config["api_key"])
-#                 con = get_db("RESULT")
-#                 for idx in range(judgments_count):
-#                     worker_judgment = payload['results']['judgments'][idx]
-#                     worker_id = worker_id = worker_judgment["worker_id"]
-#                     worker_bonus = get_worker_bonus(con, job_id, worker_id)
-#                     pay_worker_bonus(con, job_id, worker_id, worker_bonus, fig8)
-#             except Exception as err:
-#                 app.logger.error(f"Error: {err}")
-#         elif signal == "unit_complete":
-#             #TODO: may process the whole unit here
-#             pass
-#         # app.logger.info("Started part-payments..., with signal: %s ^_^ " % signal)
-
-# @csrf_protect.exempt
-# @bp.route("/prop/webhook", methods=["GET", "POST"])
-# def webhook():
-#     form = request.form.to_dict()
-#     signal = form['signal']
-#     if signal in {'unit_complete', 'new_judgments'}:
-#         app.logger.info(f"SIGNAL: {signal}")
-#         payload_raw = form['payload']
-#         signature = form['signature']
-#         payload = json.loads(payload_raw)
-#         job_id = payload['job_id']
-        
-#         job_config = get_job_config(get_db("DB"), job_id)
-#         payload_ext = payload_raw + job_config["api_key"]
-#         verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
-#         if signature == verif_signature:
-#             args = (signal, job_id, job_config, payload)
-#             app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
-#     return Response(status=200)
-
-# @csrf_protect.exempt
-# @bp.route("/prop/upload", methods=["GET", "POST"])
-# def upload():
-#     if request.method == 'POST':
-#         print("rrequest.data:", request.form)
-#         # check if the post request has the file part
-#         if 'file' not in request.files:
-#             flash('No file part')
-#             return redirect(request.url)
-#         up_file = request.files['file']
-#         # if user does not select file, browser also
-#         # submit an empty part without filename
-#         if up_file.filename == '':
-#             flash('No selected file')
-#             return redirect(request.url)
-#         job_id = request.form['job_id']
-#         if not job_id:
-#             flash('No job id')
-#             return redirect(request.url)
-#         secret = request.form.get('secret')
-#         if secret != app.config['ADMIN_SECRET']:
-#             flash('Incorrect secret, please try again!!!')
-#             return redirect(request.url)
-#         if up_file and allowed_file(up_file.filename):
-#             filename = secure_filename(up_file.filename)
-#             overwrite = bool(request.form.get('overwrite'))
-#             df = pd.read_csv(io.BytesIO(up_file.read()))
-#             df[STATUS_KEY] = RowState.JUDGEABLE
-#             df[LAST_MODIFIED_KEY] = time.time()
-#             df[WORKER_KEY] = None
-#             table = get_table(BASE, job_id, treatment=TREATMENT)
-#             # TODO should use g instead
-#             con = get_db("DATA")
-#             insert(df, table, con=con, overwrite=overwrite)
-#             return redirect(url_for('prop.upload',
-#                                     filename=filename))
-#     return render_template('upload.html')
-
-
 def finalize_round(job_id, prop_worker_id, treatment):
+    app.logger.debug("finalize_round")
     # TODO: At this point, all features have been gathered
     resp_worker_id = "na"
     con = get_db("RESULT")
@@ -525,7 +412,7 @@ def finalize_round(job_id, prop_worker_id, treatment):
     prop_bonus = 0
     offer, min_offer = 0, 0
     with con:
-        table = get_table(BASE, job_id, treatment=treatment)
+        table = get_table(BASE, job_id, schema="result", treatment=treatment)
         res = con.execute(f"SELECT offer, min_offer, resp_worker_id from {table} WHERE prop_worker_id=?", (prop_worker_id,)).fetchone()
     offer, min_offer = res["offer"], res["min_offer"]
     resp_worker_id = res["resp_worker_id"]
@@ -535,6 +422,8 @@ def finalize_round(job_id, prop_worker_id, treatment):
     if offer >= min_offer:
         resp_bonus += offer
         prop_bonus += (MAX_GAIN - offer)
-    assert resp_bonus + prop_bonus == MAX_GAIN
-    increase_worker_bonus(job_id, resp_worker_id, resp_bonus)
-    increase_worker_bonus(job_id, prop_worker_id, prop_bonus)
+    assert (resp_bonus+prop_bonus)==0 or (resp_bonus + prop_bonus)== MAX_GAIN
+    con2 = get_db("DB")
+    with con2:
+        increase_worker_bonus(job_id, resp_worker_id, resp_bonus, con2)
+        increase_worker_bonus(job_id, prop_worker_id, prop_bonus, con2)

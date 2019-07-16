@@ -278,7 +278,6 @@ class FigureEight(object):
         :amount_in_cents: USD amount in cents
         """
         url = self.get_url(worker_id=worker_id, endpoint="bonus")
-        print("PAY url: ", url)
         #return requests.post(url=url, json={"amount":amout_in_cents})
 
     def contributor_notify(self, worker_id, message):

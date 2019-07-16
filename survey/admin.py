@@ -21,7 +21,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
 from survey._app import app, csrf_protect
-from survey.db import get_db, table_exists, insert
+from survey.db import get_db, table_exists, insert, update
 
 
 bp = Blueprint("admin", __name__)
@@ -64,22 +64,11 @@ def update_job(con, job_id, job_config, table="jobs"):
         insert(pd.DataFrame(data=[job_config]), table=table, con=con)
     else:
         with con:
-            ## requires sqlite 3.24+
-            # sql = f"""
-            # INSERT INTO {table}(job_id, api_key) 
-            #     VALUES('{job_config['job_id']}', '{job_config['api_key']}')
-            #     ON CONFLICT(job_id) DO UPDATE SET
-            #         job_id=excluded.job_id,
-            #         api_key=excluded.api_key
-            #     WHERE excluded.job_id={table}.job_id;
-            # """
-            # con.execute(sql)
             check = con.execute(f"SELECT job_id from jobs where job_id==?", (job_id,)).fetchone()
             if check:
-                # apply an update
-                con.execute(f"UPDATE {table} SET api_key=?, base_code=?, expected_judgments=?", (job_config['api_key'], job_config['base_code'], job_config['expected_judgments']))
+                update(f"UPDATE {table} SET api_key=?, base_code=?, expected_judgments=?", args=(job_config['api_key'], job_config['base_code'], job_config['expected_judgments']), con=con)
             else:
-                con.execute(f"INSERT INTO {table} (job_id, api_key, base_code) VALUES (?, ?)", (job_id, job_config['api_key'], job_config['base_code']))
+                insert(pd.DataFrame(data=[job_config]), table=table, con=con)
 
             
     

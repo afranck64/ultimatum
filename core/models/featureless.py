@@ -1,7 +1,7 @@
 import numpy as np
 from .metrics import avg_loss_ratio, MAX_GAIN
 
-class FeaturelessModel(object):
+class EMModel(object):
     def __init__(self, max_value=MAX_GAIN, loss=None):
         self.value = None
         self.max_value = max_value

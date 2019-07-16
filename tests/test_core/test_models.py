@@ -6,7 +6,7 @@ import numpy as np
 from core.models.acceptance import AcceptanceModel
 from core.models.cluster import ClusterModel, ClusterExtModel
 from core.models.deep import KerasModel
-from core.models.featureless import ConservativeModel, FeaturelessModel, RandomModel
+from core.models.featureless import ConservativeModel, EMModel, RandomModel
 
 def get_xy(N=100, M=8):
     X = np.random.random((N, M))
@@ -41,9 +41,9 @@ class Test_deep(unittest.TestCase):
         model.predict(X)
 
 class Test_featureless(unittest.TestCase):
-    def test_featureless(self):
+    def test_em(self):
         X, y = get_xy()
-        model = FeaturelessModel()
+        model = EMModel()
         model.fit(X, y)
         model.predict(X)
     
