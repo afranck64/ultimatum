@@ -3,6 +3,7 @@ import pandas as pd
 from . import *
 
 from core.models.metrics import MAX_GAIN
+from core.utils import randn_skew_fast
 import sys
 
 class DACombine(object):
@@ -105,19 +106,44 @@ class DASampling(object):
         """
         self.size = size
     
-    def generate_data(self, xTrain, yTrain, size=None):
+    def fit_transform(self, *args, **kwargs):
+        return self.generate_data(*args, **kwargs)
+
+    def generate_data(self, xTrain, yTrain, size=None, pseudo_random_values=True, skewed=True):
         size = size or self.size or len(xTrain) * 4
-        xValues = []
-        yValues = []
-        for _ in range(size):
+        size += size % 2
+        xMean = xTrain.mean(axis=0)
+        xStd = xTrain.std(axis=0)
+        yMean = yTrain.mean()
+        yStd = yTrain.std()
+        xValues = np.empty((size, xTrain.shape[1]))
+        yValues = np.empty((size, ) + yTrain.shape[1:])
+        if pseudo_random_values:
+            loopsize = size//2
+        else:
+            loopsize = size
+        
+        for idx in range(loopsize):
             selected_rows = np.random.randint(0, xTrain.shape[0], xTrain.shape[1])
             x_row = []
             for colid, rowid in enumerate(selected_rows):
                 x_row.append(xTrain[rowid][colid])
-            y_row = yTrain[np.random.choice(selected_rows)]
-            xValues.append(x_row)
-            yValues.append(y_row)
-        return np.array(xValues), np.array(yValues)
+            y_row = [yTrain[np.random.choice(selected_rows)]]
+            xValues[idx, :] = x_row
+            yValues[idx, :] = y_row
+        if pseudo_random_values:
+            if skewed:
+                xSkew = pd.DataFrame(data=xTrain).skew()[0]
+                ySkew = pd.DataFrame(data=yTrain).skew()[0]
+                xVals = randn_skew_fast((loopsize, xTrain.shape[1]), xSkew, xMean, xStd)
+                yVals = randn_skew_fast((loopsize, yTrain.shape[1]), ySkew, yMean, yStd)
+            else:
+                xVals = np.random.normal(xMean, xStd, (loopsize, xTrain.shape[1]))
+                yVals = np.random.normal(yMean, yStd, (loopsize, 1))
+            yVals += 5 - yVals % 5
+            xValues[loopsize:2*loopsize+1, :] = xVals
+            yValues[loopsize:2*loopsize+1, :] = np.clip(yVals, 0, MAX_GAIN)
+        return xValues, yValues.astype(int)
 
     
     
