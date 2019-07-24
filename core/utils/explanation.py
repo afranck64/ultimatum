@@ -81,26 +81,34 @@ def get_acceptance_propability(offer, train_pdf):
     
     return n_cum_train_pdf[idx]
 
-def get_best_offer_probability(ai_offer, offer, accuracy, train_err_pdf, step=None):
+def get_best_offer_probability(ai_offer, offer, accuracy, train_err_pdf, step=None, uncertainty=None):
     """
     :param ai_offer: (int 0..MAX_GAIN) AI's offer to a given responder
     :param offer: (int 0..MAX_GAIN) Human's offer to a given responder
     :param accuracy: (float: 0..1) Model's accuracy
     :param train_err_pdf: (array) Model's training error pdf [from -MAX_GAIN to MAX_GAIN with steps 5]
     :param step: (int) step for bins values, default: 5
+    :param uncertainty: (array|list<float>) 
     :returns: probability of the human's offer being the best one
     """
     if step is None:
         step = 5
-    #train_err_pdf = np.array(train_err_pdf)
+    if uncertainty is None:
+        uncertainty = [0.1, 0.02, 0.03, 0.9, 0.01, 0.01, 0.1]
     #NOTE: TODO: check ai_offer - offer vs offer - ai_offer + comment
     # Scale values from
+    train_err_pdf = np.array(train_err_pdf)
+    # redistribute the probabilities to the neighbours as they are
+    train_err_pdf = np.convolve(train_err_pdf, uncertainty, mode="same")
+    train_err_pdf /= train_err_pdf.sum()
     n_train_err_pdf = np.array(train_err_pdf) / np.max(train_err_pdf)
     # the uncertainty is equi-probabily shared between all values
     n_train_err_pdf += (1 - accuracy) / (MAX_GAIN * 2)
     n_train_err_pdf /= np.max(n_train_err_pdf)
-    estimated_err = ai_offer - offer
+    estimated_err = (offer - ai_offer)
     idx = int((estimated_err + MAX_GAIN)/step)
+    idx = min(max(idx, 0), n_train_err_pdf.shape[0]-1)
+    print(idx, n_train_err_pdf.shape)
     return accuracy * n_train_err_pdf[idx]
     
 
