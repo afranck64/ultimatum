@@ -91,7 +91,7 @@ def _keras_hiddenless_model(nb_features, loss=None, metrics=None, nb_outputs=1):
     if loss is None:
         loss = loss_tf
     if metrics is None:
-        metrics = [gain_tf]
+        metrics = [gain_tf] 
     model = Sequential()
     model.add(Dense(1, input_dim=nb_features, kernel_initializer='normal', activation='relu'))
     if nb_outputs <= 1:
@@ -133,7 +133,7 @@ class KerasModel(object):
             model_builder = keras_hiddenless_model
         if not self.as_regression:
             nb_outputs = np.unique(yTrain).shape[0]
-        self.model = keras_model(nb_features=xTrain.shape[1], loss=self.loss, metrics=self.metrics, epochs=self.epochs,
+        self.model = model_builder(nb_features=xTrain.shape[1], loss=self.loss, metrics=self.metrics, epochs=self.epochs,
                                  batch_size=self.batch_size, nb_outputs=nb_outputs, verbose=self.verbose)
         return self.model.fit(xTrain, yTrain, **kwargs)
     
