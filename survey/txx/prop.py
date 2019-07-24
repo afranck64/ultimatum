@@ -230,7 +230,7 @@ def get_row(con, job_id, worker_id, treatment):
             update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
     else:
         app.logger.warning(f"no row available! job_id: {job_id}, worker_id: {worker_id}")
-    return free_rowid
+    return res
 
 def close_row(con, job_id, row_id, treatment):
     app.logger.debug("close_row")
