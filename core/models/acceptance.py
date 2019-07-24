@@ -47,30 +47,26 @@ class AcceptanceModel(object):
         """
         xNew = []
         yNew = []
+        xRes = np.empty((x.shape[0]*self.offers.shape[0], x.shape[1]+1))
+        yRes = np.empty((y.shape[0]*self.offers.shape[0], 1))
         for idx in np.arange(0, x.shape[0]):
-            base = np.zeros((self.offers.shape[0], x.shape[1] + 1))
-            base[:, :-1] = x[idx]
-            base[:, -1] = self.offers / self.max_gain
-            xNew.extend(base)
-            base_y = (base[:, -1] >= (y[idx] / self.max_gain)).astype(int) #TODO #NOTE check
-            if self.zero_one:
-                base_y[base_y < 1] = -1
-            yNew.extend(base_y)
-        xNew = np.array(xNew)
-        yNew = np.array(yNew)
-        return xNew, yNew
+            row_start = idx * self.offers.shape[0]
+            row_end = (idx+1) * self.offers.shape[0]
+            xRes[row_start:row_end, :x.shape[1]] = x[idx]
+            xRes[row_start:row_end, -1] = self.offers / self.max_gain
+            yRes[row_start:row_end, 0] = ((self.offers / self.max_gain) >= (y[idx] / self.max_gain)).astype(int)
+        return xRes, yRes
     
     def _transform_predict(self, x):
-        xNew = []
+        xRes = np.empty((x.shape[0]*self.offers.shape[0], x.shape[1]+1))
         for idx in np.arange(0, x.shape[0]):
-            base = np.zeros((self.offers.shape[0], x.shape[1] + 1))
-            base[:, :-1] = x[idx]
-            base[:, -1] = self.offers / self.max_gain
-            xNew.extend(base)
-        xNew = np.array(xNew)
-        return xNew        
+            row_start = idx * self.offers.shape[0]
+            row_end = (idx+1) * self.offers.shape[0]
+            xRes[row_start:row_end, :x.shape[1]] = x[idx]
+            xRes[row_start:row_end, -1] = self.offers / self.max_gain
+        return xRes
     
-    def fit(self, xTrain, yTrain, shuffle_data=False, fit_kwargs=None):
+    def fit(self, xTrain, yTrain, shuffle_data=False, fit_kwargs=None, partial_fit=False, classes=None):
         if shuffle_data:
             indices = np.arange(xTrain.shape[0])
             np.random.shuffle(indices)
@@ -82,14 +78,18 @@ class AcceptanceModel(object):
         xVal_only, yVal_only = xTrain, yTrain
         
         xTrain_only, yTrain_only = self._transform_train(xTrain_only, yTrain_only)
-        self.base_model.fit(xTrain_only, yTrain_only, **fit_kwargs)
+        if partial_fit:
+            self.base_model.partial_fit(xTrain_only, yTrain_only, **fit_kwargs)
+        else:
+            self.base_model.fit(xTrain_only, yTrain_only, **fit_kwargs)
 
         # optimization for the decision_line
         top_decision_line = None
         top_score = float('-inf')
-        #xVal_only_ext = self._transform_predict(xVal_only)
+        xVal_transformed = self._transform_predict(xVal_only)
+        rawYPred = self.base_model.predict(xVal_transformed)
         for decision_line in np.linspace(self.classes[0], self.classes[1]):
-            yPred = self._predict(self.base_model, xVal_only, decision_line)
+            yPred = self._predict(self.base_model, xVal_only, decision_line, rawYPred=rawYPred, xTestTransformed=xVal_transformed)
             score = self.metric(yVal_only, yPred)
             if score > top_score:
                 top_score = score
@@ -97,15 +97,29 @@ class AcceptanceModel(object):
         self.decision_line = top_decision_line
             
         self._trained = True
+
+    def partial_fit2(self, xTrain, yTrain, shuffle_data=False, fit_kwargs=None, classes=None):
+        self.fit(xTrain=xTrain, yTrain=yTrain, shuffle_data=shuffle_data, partial_fit=True, classes=classes)
     
-    def _predict(self, model, xTest, decision_line, predict_kwargs=None):
+    def _predict(self, model, xTest, decision_line, predict_kwargs=None, rawYPred=None, xTestTransformed=None):
         if predict_kwargs is None:
             predict_kwargs = {}
         xShape = xTest.shape
-        xTest = self._transform_predict(xTest)
+        if xTestTransformed is None:
+            xTest = self._transform_predict(xTest)
+        else:
+            xTest = xTestTransformed
         
-        y_pred = model.predict(xTest, **predict_kwargs)
+        if rawYPred is None:
+            y_pred = model.predict(xTest, **predict_kwargs)
+        else:
+            y_pred = rawYPred
+        
         res = []
+        # nRes = np.empty(xTest.shape[0]*self.offers.shape[0], 1)
+        # row_step = self.offers.shape[0]
+        # nRes[::row_step, :-1] = self.offers
+        # nRes[::row_step, :]
         for idx in np.arange(0, xShape[0]):
             mask = np.arange(idx*self.offers.shape[0], (idx+1)*self.offers.shape[0])
             group_y = y_pred[mask]
