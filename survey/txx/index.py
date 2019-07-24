@@ -171,4 +171,6 @@ def handle_webhook(treatment):
             _process_judgments(*args)
         else:
             app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
+        flash("You may close this tab now.")
+        return render_template("info.html")
     return Response(status=200)

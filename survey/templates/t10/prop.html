@@ -4,7 +4,7 @@
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script> -->
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<title>Proposer - ADM</title>
+<title>Proposer</title>
 {% endblock %}
 {% block content %}
 
@@ -13,7 +13,6 @@
         google.charts.setOnLoadCallback(drawChart);
        
         function drawChart() {
-         //console.log("Function Called!");
             responder = parseInt(document.getElementById('user2ai').value);
             proposer = 200-responder;
             
@@ -88,9 +87,9 @@
 
         var options = {
           width: 200, height: 160,
-          redFrom: 0, redTo: 45,
-          yellowFrom:45, yellowTo: 70,
-          greenFrom:70, greenTo: 100,
+          redFrom: 0, redTo: 35,
+          yellowFrom:35, yellowTo: 65,
+          greenFrom:65, greenTo: 100,
           minorTicks: 5
         };
 
@@ -110,8 +109,10 @@
       }
     </script>
 
+    <h1 style="text-align: center">You have been assigned the role of a PROPOSER. Please make an offer to the RESPONDER</h1>
 
-    <h1>You have been assigned the task of a PROPOSER. Please make an offer to the RESPONDER</h1>
+    <!-- <h2>In this tasks, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER</h2>
+    <h2>The RESPONDER doesn't know about the existence of the Artificial intelligence</h2> -->
     <!-- <form method="GET" action=""> -->
         <div class="offer">
             <label> Offer
@@ -122,22 +123,29 @@
                     {% endfor %}
                 </select>
             </label>
-            <button type="button" id="submit2ai" onclick="update_ai_response()" >Submit to ADM</button> <br>
+            <button type="button" id="submit2ai" onclick="update_ai_response()" >Submit to the AI-System</button> <br>
 
             <div align="center"> 
                     <div class="chart" id="piechart" style="opacity: 1;" ></div>
                     <div id="ai_response">
-                        <table style="width: max-content">
-                            <tr style="width: max-content">
-                                <td style="width: 50%" align="center" style="display: inline-block">
+                        <table>
+                            <tr>
+                                <td style="width: 50% display: inline-block" align="center">
                                     <div id="ai_response_accepted"></div>
                                 </td>
-                                <td style="width: 50%" align="center" style="display: inline-block">
+                                <td style="width:200px"></td>
+                                <td style="width: 50% display: inline-block" align="center">
                                     <div id="ai_response_best"></div>
                                 </td>
                             </tr>
-                            <tr>
-                                <td>Chances of your offer beeing accepted</td><td>Chances of your offer bringing your the highest gain</td>
+                            <tr">
+                                <td style="width: 50% display: table-cell" align="center">
+                                    <div style="max-width: 240px">Chances of your offer being accepted by a RANDOM RESPONDER</div>
+                                </td>
+                                <td style="width:200px"></td>
+                                <td style="width: 50% display: table-cell" align="center">
+                                    <div style="max-width: 240px">Chances of your offer being the minimal offer accepted by THIS RESPONDER</div>
+                                </td>
                             </tr>
                         </table>
                     </div>

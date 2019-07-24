@@ -32,7 +32,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     """
     :returns: {
         cells: number of opened cells
-        time_spent_risk: time (ms) spent on these task
+        time_spent_risk: time (ms) spent on this task
         timestamp: server time when genererting the result
         job_id: fig-8 job id
         worker_id: fig-8 worker id

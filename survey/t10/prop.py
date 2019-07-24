@@ -132,7 +132,12 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
 @csrf_protect.exempt
 @bp.route("/prop/", methods=["GET", "POST"])
 def index():
-    return handle_index(TREATMENT)
+    # flash("""In this task, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER""")
+    messages = [
+        """An artificial intelligence system (AI-System) is available to gain some insight about the RESPONDER. There is no restriction to the use of the AI-System.""",
+        """The RESPONDER doesn't know about the existence of the AI-System."""
+    ]
+    return handle_index(TREATMENT, messages=messages)
 
 @bp.route("/prop/check/")
 def check():

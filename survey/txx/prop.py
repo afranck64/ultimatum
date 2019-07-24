@@ -301,7 +301,7 @@ class ProposerForm(FlaskForm):
     offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
-def handle_index(treatment, template=None, proposal_class=None):
+def handle_index(treatment, template=None, proposal_class=None, messages=None):
     app.logger.debug("handle_index")
     if proposal_class is None:
         proposal_class = HHI_Prop_ADM
@@ -327,6 +327,8 @@ def handle_index(treatment, template=None, proposal_class=None):
             if not app.config["DEBUG"]:
                 if app.config.get("TESTING"):
                     return render_template("error.html")
+        for message in messages:
+            flash(message)
     if request.method == "POST":
         proposal = session["proposal"]
         proposal["time_stop"] = time.time()
