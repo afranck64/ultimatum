@@ -21,7 +21,7 @@ from wtforms.widgets import html5
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
-from core.utils.explanation import get_acceptance_propability, get_best_offer_probability
+from core.utils.explanation import get_acceptance_probability, get_best_offer_probability
 from core.utils.preprocessing import df_to_xy
 from core.utils import cents_repr
 from core.models.metrics import gain, MAX_GAIN

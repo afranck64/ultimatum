@@ -23,7 +23,7 @@ from werkzeug.utils import secure_filename
 
 from survey._app import app, csrf_protect
 from survey.figure_eight import FigureEight, RowState
-from core.utils.explanation import get_acceptance_propability, get_best_offer_probability
+from core.utils.explanation import get_acceptance_probability, get_best_offer_probability
 from core.utils import cents_repr
 from core.models.metrics import gain
 

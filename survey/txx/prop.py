@@ -22,7 +22,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
 #from survey.unit import HHI_Prop_ADM,  prop_to_prop_result, save_prop_result
-from core.utils.explanation import get_acceptance_propability, get_best_offer_probability
+from core.utils.explanation import get_acceptance_probability, get_best_offer_probability
 from core.utils.preprocessing import df_to_xy
 from core.utils import cents_repr
 from core.models.metrics import gain, MAX_GAIN
@@ -359,7 +359,7 @@ def handle_check(treatment):
 
     proposal["ai_calls_time"].append(time.time())
     ai_offer = int(session["row_info"]["ai_offer"])
-    acceptance_probability = get_acceptance_propability(offer, app.config[MODEL_INFOS_KEY]["pdf"])
+    acceptance_probability = get_acceptance_probability(offer, app.config[MODEL_INFOS_KEY]["pdf"])
     best_offer_probability = get_best_offer_probability(ai_offer=ai_offer, offer=offer, accuracy=app.config[MODEL_INFOS_KEY]["acc"], train_err_pdf=app.config[MODEL_INFOS_KEY]["train_err_pdf"])
 
     #TODO: use the model predictions, data distribution to generate the ai_calls_response
