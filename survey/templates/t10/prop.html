@@ -109,13 +109,14 @@
       }
     </script>
 
-    <h1 style="text-align: center">You have been assigned the role of a PROPOSER. Please make an offer to the RESPONDER</h1>
+    <h1 style="text-align: center" style="color:#2e48a5">You have been randomly assigned the role of a PROPOSER</h1>
+    <h2 align="center">Select Your Proposal From the Dropdown Menu Below</h2>
 
     <!-- <h2>In this tasks, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER</h2>
     <h2>The RESPONDER doesn't know about the existence of the Artificial intelligence</h2> -->
     <!-- <form method="GET" action=""> -->
-        <div class="offer">
-            <label> Offer
+        <div class="offer" align="center">
+            <label align="center"> (test) Offer
                 <select name="offer" id="user2ai" onchange="drawChart()" required>
                     <option value="" selected disabled hidden>Select a value</option>
                     {% for value, label in offer_values.items() %}
@@ -123,7 +124,7 @@
                     {% endfor %}
                 </select>
             </label>
-            <button type="button" id="submit2ai" onclick="update_ai_response()" >Submit to the AI-System</button> <br>
+            <button type="button" id="submit2ai" onclick="update_ai_response()" align="center" >Submit to the AI-System</button> <br>
 
             <div align="center"> 
                     <div class="chart" id="piechart" style="opacity: 1;" ></div>
@@ -153,10 +154,10 @@
         </div>
     <!-- </form> -->
 
-    <form action="" method="post">
+    <form action="" method="post" align="center">
         <div class="offer">
             {{ form.hidden_tag() }}
-            <label> Final Offer
+            <label align="center"> Offer
                 <select name="offer" required>
                     <option value="" selected disabled hidden>Select a value</option>
                     {% for value, label in offer_values.items() %}
@@ -164,7 +165,7 @@
                     {% endfor %}
                 </select>
             </label>
-            <p> {{form.submit()}}</p>
+            <p align="center"> {{form.submit()}}</p>
         </div>
     </form>
 {% endblock %}
