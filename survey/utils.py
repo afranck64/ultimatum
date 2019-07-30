@@ -307,6 +307,7 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
     if con is None:
         con = get_db("DB")
     table = get_table("jobs", job_id=job_id, schema=None, category="payment")
+    job_config = get_job_config(con, job_id)
 
     should_pay = False
     bonus_cents = 0
@@ -315,7 +316,6 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
         with con:
             row = con.execute(f'select bonus_cents, paid_bonus_cents, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
             if row:
-                # TODO: PAY
                 should_pay = True
                 bonus_cents = row["bonus_cents"]
                 new_paid_bonus_cents = row["bonus_cents"] + row["paid_bonus_cents"]
@@ -325,6 +325,8 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
     if should_pay:
         #TODO: CHECK LATER FOR PAYMENT
         app.logger.info(f"SHOULD BE PAYING: {bonus_cents} cents")
+        if job_config["payment_max_cents"] > 0 and job_config["payment_max_cents"] > bonus_cents:
+            app.logger.warning(f"Attempted payment over max allowed payment to worker {worker_id} on job {job_id}")
         #fig8.contributor_pay(worker_id, bonus_cents)
         fig8.contributor_notify(worker_id, f"Thank you for your participation. You just received your total bonus of {cents_repr(bonus_cents)} ^_^")
         with con:

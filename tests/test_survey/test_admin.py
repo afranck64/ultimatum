@@ -20,7 +20,8 @@ def test_get_job_config():
         assert "unique_worker" in job_config
         assert "base_code" in job_config
         assert "expected_judgments" in job_config
-        assert len(job_config) == 6
+        assert "payment_max_cents" in job_config
+        assert len(job_config) == 7
 
 
 def test_index(client):

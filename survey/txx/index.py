@@ -23,7 +23,7 @@ from survey.admin import get_job_config
 from survey.db import get_db, table_exists
 from survey.figure_eight import RowState
 from survey.utils import get_table, increase_worker_bonus
-from .prop import BASE as prop_BASE, finalize_round, JUDGING_TIMEOUT_SEC, LAST_MODIFIED_KEY, STATUS_KEY
+from .prop import BASE as prop_BASE, finalize_round, JUDGING_TIMEOUT_SEC, LAST_MODIFIED_KEY, STATUS_KEY, WORKER_KEY
 from .resp import BASE as resp_BASE, finalize_resp
 
 
@@ -34,6 +34,7 @@ def handle_index(treatment):
     app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
     resp_table = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
     prop_table = get_table(prop_BASE, job_id=job_id, schema="data", treatment=treatment)
+    job_config = get_job_config(get_db("DB"), job_id)
 
     con = get_db("DATA")
     nb_resp = 0
@@ -47,7 +48,7 @@ def handle_index(treatment):
     if table_exists(con, prop_table):
         with con:
             judging_timeout = time.time() - JUDGING_TIMEOUT_SEC
-            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table} where {STATUS_KEY}=? OR ({STATUS_KEY}=? and {LAST_MODIFIED_KEY}>?)", (RowState.JUDGEABLE, RowState.JUDGING, judging_timeout)).fetchone()
+            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table} where {STATUS_KEY}=? OR ({STATUS_KEY}=? and {LAST_MODIFIED_KEY}<?) OR ({WORKER_KEY}=?)", (RowState.JUDGEABLE, RowState.JUDGING, judging_timeout, worker_id)).fetchone()
             if tmp:
                 nb_prop_open = tmp["count"]
     if table_exists(con, prop_table):
@@ -57,14 +58,17 @@ def handle_index(treatment):
                 nb_prop = tmp["count"]
     
     #TODO: if nb_resp >= expected row/2, should only take props
-    if nb_prop_open > 0:
+    max_judgements = job_config["expected_judgments"]
+    if max_judgements > 0 and max_judgements // 2 >= nb_resp and max_judgements // 2 < nb_prop:
+        is_proposer = True
+    elif nb_prop_open > 0:
         is_proposer = True
     else:
         if nb_resp > nb_prop:
             is_proposer = True
         else:
             is_proposer = False
-
+    print(nb_prop, nb_resp, nb_prop_open)
 
     if is_proposer:
         return redirect(url_for(f"{treatment}.prop.index", job_id=job_id, worker_id=worker_id))

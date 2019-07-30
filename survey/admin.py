@@ -29,7 +29,7 @@ bp = Blueprint("admin", __name__)
 
 ###### helpers #####
 class JobConfig(dict):
-    def __init__(self, job_id, api_key, nb_rows=0, unique_worker=True, base_code="", expected_judgments=0):
+    def __init__(self, job_id, api_key, nb_rows=0, unique_worker=True, base_code="", expected_judgments=0, payment_max_cents=0):
         super().__init__()
         self["job_id"] = job_id
         self["api_key"] = api_key
@@ -37,6 +37,7 @@ class JobConfig(dict):
         self["unique_worker"] = unique_worker
         self["base_code"] = base_code
         self["expected_judgments"] = expected_judgments
+        self["payment_max_cents"] = payment_max_cents
         self.__dict__ = self
 
 
@@ -66,7 +67,11 @@ def update_job(con, job_id, job_config, table="jobs"):
         with con:
             check = con.execute(f"SELECT job_id from jobs where job_id==?", (job_id,)).fetchone()
             if check:
-                update(f"UPDATE {table} SET api_key=?, base_code=?, expected_judgments=?", args=(job_config['api_key'], job_config['base_code'], job_config['expected_judgments']), con=con)
+                update(
+                    f"UPDATE {table} SET api_key=?, base_code=?, expected_judgments=?, payment_max_cents=?",
+                    args=(job_config['api_key'], job_config['base_code'], job_config['expected_judgments'], job_config['payment_max_cents']),
+                    con=con
+                )
             else:
                 insert(pd.DataFrame(data=[job_config]), table=table, con=con)
 
