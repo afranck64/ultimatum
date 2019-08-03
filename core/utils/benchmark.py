@@ -1,3 +1,4 @@
+from copy import deepcopy
 from sklearn.model_selection import KFold
 import numpy as np
 import pandas as pd
@@ -40,7 +41,7 @@ def process_benchmark_cv(model, X, y, cv=5, fit_kwargs=None, predict_kwargs=None
             upsample = augment_data==2
             xTrain, yTrain = DACombine().fit_predict(xTrain, yTrain, upsample=upsample)
         xTest, yTest = X[test_index], y[test_index]
-        benchmark_result = process_model(model, xTrain, yTrain, xTest, yTest, fit_kwargs, predict_kwargs, metrics)
+        benchmark_result = process_model(deepcopy(model), xTrain, yTrain, xTest, yTest, fit_kwargs, predict_kwargs, metrics)
         results.append(benchmark_result)
     return pd.DataFrame(results)
 
@@ -76,7 +77,7 @@ def process_benchmarks(models_dict, X, y, cv=5, fit_kwargs=None, predict_kwargs=
                 xTrain, yTrain = DACombine().fit_predict(xTrain, yTrain, upsample=upsample)
             xTest, yTest = X[test_index], y[test_index]
             for key, model in models_dict.items():
-                benchmark_result = process_model(model, xTrain, yTrain, xTest, yTest, fit_kwargs, predict_kwargs, metrics)
+                benchmark_result = process_model(deepcopy(model), xTrain, yTrain, xTest, yTest, fit_kwargs, predict_kwargs, metrics)
                 nKey = key
                 if augment_data_step:
                     nKey += "_da" + str(augment_data_step)
