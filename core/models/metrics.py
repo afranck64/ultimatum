@@ -33,19 +33,19 @@ def loss(min_offer, predicted):
     return MAX_GAIN-min_offer if predicted < min_offer else predicted - min_offer
 
 def loss_sum(min_offer, predicted):
-    return loss(min_offer, predicted).sum()
+    return loss(min_offer.ravel(), predicted.ravel()).sum()
 
 def avg_loss(min_offer, predicted):
     """
     Compute avg loss for the ultimatum game
     """
-    return np.mean(loss(min_offer, predicted))
+    return np.mean(loss(min_offer.ravel(), predicted.ravel()))
 
 def mse(min_offer, predicted):
     """
     Compute mse using the loss as error
     """
-    return np.mean(np.square(loss(min_offer, predicted)))
+    return np.mean(np.square(loss(min_offer.ravel(), predicted.ravel())))
 
 def rejection_ratio(min_offer, predicted):
     """
@@ -102,4 +102,4 @@ def cross_compute(min_offer, predicted, metric):
     return res/predicted.shape[0]
 
 
-__all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN', 'gain_mean', 'avg_gain_mean', "cross_compute"]
+__all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN', 'gain_mean', "cross_compute"]
