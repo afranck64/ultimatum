@@ -97,18 +97,18 @@ class ClusterExtModel(object):
             sub_models.append(sub_model)
         # We use an array instead of a list for better indexing
         #self.clustersClasses = [sub_model.value for sub_model in sub_models]
-        self.sub_models = np.array(sub_models)
+        self.sub_models = sub_models
         self._trained = True
     
     def predict(self, xTest, **kwargs):
         if self._trained is None:
             raise ValueError("Model not trained yet")
         predClusters = self.base_model.predict(xTest)
-        sub_models = self.sub_models[predClusters]
         preds = []
         dummy_x = np.array([0])
         for idx in range(xTest.shape[0]):
-            preds.append(sub_models[idx].predict(np.array([xTest[idx]])))
+            pred = self.sub_models[predClusters[idx]].predict(np.array([xTest[idx]]))
+            preds.append(pred)
         res = np.array(preds).ravel()
         return res
         #return self.clustersClasses[predClusters]
