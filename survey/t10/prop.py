@@ -1,49 +1,20 @@
 import json
 import os
-import warnings
-import random
-import string
-import csv
 import time
 import datetime
-import io
-import hashlib
-
-import pandas as pd
 
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
+    Blueprint
 )
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField
-from wtforms.validators import DataRequired, NumberRange, InputRequired
-from wtforms.widgets import html5
-from flask_wtf.csrf import CSRFProtect
-from werkzeug.utils import secure_filename
 
-from core.utils.explanation import get_acceptance_probability, get_best_offer_probability
-from core.utils.preprocessing import df_to_xy
 from core.utils import cents_repr
-from core.models.metrics import gain, MAX_GAIN
 
 from survey._app import app, csrf_protect
-from survey.figure_eight import FigureEight, RowState
-from survey.admin import get_job_config
-from survey.db import insert, get_db, table_exists
-from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table,
-    generate_completion_code, increase_worker_bonus, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
 from survey.txx.prop import handle_check, handle_done, handle_index, insert_row
 
 ############ Consts #################################
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
-
-TUBE_RES_FILENAME = os.getenv("TUBE_RES_FILENAME", f"./data/{TREATMENT}/output/prop.csv")
-
-SURVEY_INFOS_FILENAME = os.getenv("MODEL_INFOS_PATH", f"./data/{TREATMENT}/model.json")
-MODEL_INFOS_FILENAME = f"./data/{TREATMENT}/model.json"
-
-BASE_COMPLETION_CODE = os.getenv("COMPLETION_CODE", "tTkEnH5A4syJ6N4t")
 
 REAL_MODEL = "real"
 WEAK_FAKE_MODEL = "weak_fake"
@@ -58,9 +29,6 @@ if app.config["DEBUG"]:
     JUDGING_TIMEOUT_SEC = 10
 
 ALLOWED_EXTENSIONS = {"csv", "xls", "xlsx", "tsv", "xml"}
-
-with open(MODEL_INFOS_FILENAME) as inp_f:
-    MODEL_INFOS = json.load(inp_f)
 
 bp = Blueprint(f"{TREATMENT}.{BASE}", __name__)
 ######################################################
