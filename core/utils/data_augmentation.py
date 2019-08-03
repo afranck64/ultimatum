@@ -130,19 +130,28 @@ class DASampling(object):
                 x_row.append(xTrain[rowid][colid])
             y_row = [yTrain[np.random.choice(selected_rows)]]
             xValues[idx, :] = x_row
-            yValues[idx, :] = y_row
+            if len(yValues.shape) > 1:
+                yValues[idx, :] = y_row
+            else:
+                yValues[:] = y_row
         if pseudo_random_values:
             if skewed:
                 xSkew = pd.DataFrame(data=xTrain).skew()[0]
                 ySkew = pd.DataFrame(data=yTrain).skew()[0]
                 xVals = randn_skew_fast((loopsize, xTrain.shape[1]), xSkew, xMean, xStd)
-                yVals = randn_skew_fast((loopsize, yTrain.shape[1]), ySkew, yMean, yStd)
+                if len(yTrain.shape) > 1:
+                    yVals = randn_skew_fast((loopsize, yTrain.shape[1]), ySkew, yMean, yStd)
+                else:
+                    yVals = randn_skew_fast((loopsize, 1), ySkew, yMean, yStd)
             else:
                 xVals = np.random.normal(xMean, xStd, (loopsize, xTrain.shape[1]))
                 yVals = np.random.normal(yMean, yStd, (loopsize, 1))
             yVals += 5 - yVals % 5
             xValues[loopsize:2*loopsize+1, :] = xVals
-            yValues[loopsize:2*loopsize+1, :] = np.clip(yVals, 0, MAX_GAIN)
+            if len(yValues.shape) > 1:
+                yValues[loopsize:2*loopsize+1, :] = np.clip(yVals, 0, MAX_GAIN)
+            else:
+                yValues[loopsize:2*loopsize+1] = np.clip(yVals, 0, MAX_GAIN).ravel()
         return xValues, yValues.astype(int)
 
     
