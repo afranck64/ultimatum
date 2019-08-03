@@ -104,17 +104,20 @@ def offer_to_bin(offer, is_symmetric=False, max_gain=None, step=None):
         return idx
 
 
-def get_acceptance_probability(offer, train_pdf):
+def get_acceptance_probability(offer, train_pdf, bias=None):
     """
     :param offer: Human's offer to a given responder
     :param train_pdf: pdf of the training's target for the bins [0, 5, 10, ..., MAX_GAIN]
+    :param bias: (float) a bias to add in each cell of the histogram prior to cumulative computation
     :returns: probability of the human's offer to be accepted
     """
+    if bias is None:
+        bias = 1e-3
     n_train_df = np.array(train_pdf) / np.max(train_pdf)
 
     # We enforce increasing probability with increasing offer, taking into consideration
     # the fact that the data may be sparse
-    corrected_pdf = n_train_df + 1e-3
+    corrected_pdf = n_train_df + bias
     cum_train_pdf = np.cumsum(corrected_pdf)
     idx = offer_to_bin(offer)
     n_cum_train_pdf = cum_train_pdf / cum_train_pdf.max()
