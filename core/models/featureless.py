@@ -31,7 +31,7 @@ class EMModel(object):
 
 class RandomModel(object):
     def __init__(self, max_value=MAX_GAIN):
-        self.value = max_value
+        self.max_value = max_value
         self._trained = False
         self.mean = 0
         self.std = 0
@@ -40,24 +40,23 @@ class RandomModel(object):
     def fit(self, xTrain, yTrain, **kwargs):
         self.mean = np.mean(yTrain)
         self.std = np.std(yTrain)
-        self.skew = pd.DataFrame(data=xTrain).skew()[0]
+        self.skew = pd.DataFrame(data=yTrain).skew()[0]
         self._trained = True
     
     def predict(self, xTest, **kwargs):
         if not self._trained:
             raise ValueError("The model should first be trained")
         res = randn_skew_fast(xTest.shape[0], self.skew, self.mean, self.std)
-        return res
+        return np.clip(0, res, self.max_value)
 
 
 class ConservativeModel(object):
-    def __init__(self, max_value=MAX_GAIN):
-        self.value = None
+    def __init__(self, max_value=MAX_GAIN, step=5):
+        self.value = MAX_GAIN - step
         self.max_value = max_value
         self._trained = False
 
     def fit(self, xTrain, yTrain, **kwargs):
-        self.value = self.max_value - 1
         self._trained = True
     
     def predict(self, xTest, **kwargs):
