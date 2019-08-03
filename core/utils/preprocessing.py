@@ -51,14 +51,15 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
         df_max["time_spent_risk"] = 152000.0
         df_max["time_spent_prop"] = 269000.0
         df_max["min_offer"] = 200
+        df_max["count_effort"] = 20
         import warnings
 
-    if fuse_risk:
+    if fuse_risk or "risk" in select_columns:
         risk_cols = ['cells', 'time_spent_risk']
         df_risk = df[risk_cols]
         df_risk = (df_risk - df_risk.min()) / (df_risk.max() - df_risk.min())
         df_risk['risk'] = df_risk['cells'] * df_risk['time_spent_risk']
-        df = df[[col for col in df if col not in risk_cols]]    
+        #df = df[[col for col in df if col not in risk_cols]]    
 
         df_features = df[[col for col in df if col != 'min_offer']].copy()
         df_features['risk'] = df_risk['risk']
