@@ -101,5 +101,7 @@ def cross_compute(min_offer, predicted, metric):
         res += metric(min_offer, predicted)
     return res/predicted.shape[0]
 
+def invariance(min_offer, predicted):
+    return 1 / (1 + np.std(predicted)**.5)
 
-__all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN', 'gain_mean', "cross_compute"]
+__all__ = ['avg_loss', 'mse', 'rejection_ratio', 'avg_win_loss', 'avg_loss_ratio', 'loss_sum', 'MAX_GAIN', 'gain_mean', "cross_compute", "invariance"]
