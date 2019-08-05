@@ -7,7 +7,7 @@ from survey import t10
 from survey.txx import handle_survey
 from survey import admin
 
-from survey._app import app
+from survey._app import app, csrf_protect
 
 app.register_blueprint(tasks.cg.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.crt.bp, url_prefix='/tasks')
@@ -34,6 +34,7 @@ app.register_blueprint(admin.bp)
 def index():
     return render_template("home.html")
 
+@csrf_protect.exempt
 @app.route("/survey", methods=["GET", "POST"])
 def survey():
     return handle_survey()
