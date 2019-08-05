@@ -2,6 +2,8 @@
 
 {% block content %}
 Thank you for taking part in our experiment.
-Your bonus will be transfered to you soon.
+{% if job_id != "home" %}
+    Your bonus will be transfered to you soon.
+{% endif %}
 {{message}}
 {% endblock %}

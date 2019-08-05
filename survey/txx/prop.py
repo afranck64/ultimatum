@@ -177,9 +177,18 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None):
     #row_features = {"Honesty_Humility":2.5, "Extraversion":2.5, "Agreeableness":2.5}
     row_features = dict()
     for name, features in tasks_features.items():
-        task_table = get_table(name, job_id=job_id, schema="result")
+        task_table = get_table(name, job_id=job_id, schema="result", is_task=True)
         with con:
             sql = f"SELECT {','.join(features)} FROM {task_table} WHERE worker_id=?"
+            res = con.execute(sql, (resp_worker_id,)).fetchone()
+            row_features.update(dict(res))
+    resp_features = {
+        "resp": ["time_spent_prop"]
+    }
+    for name, features in resp_features.items():
+        table = get_table(name, job_id=job_id, treatment=treatment, schema="result", is_task=False)
+        with con:
+            sql = f"SELECT {','.join(features)} FROM {table} WHERE worker_id=?"
             res = con.execute(sql, (resp_worker_id,)).fetchone()
             row_features.update(dict(res))
     tmp_df = pd.DataFrame(data=[row_features])

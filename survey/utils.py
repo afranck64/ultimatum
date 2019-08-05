@@ -51,14 +51,17 @@ def generate_completion_code(base, job_id):
     part3 = "".join(random.choices(string.ascii_letters + string.digits, k=5))
     return "".join([part1, part2, part3])
 
-def get_table(base, job_id, schema, category=None, treatment=None):
+def get_table(base, job_id, schema, category=None, treatment=None, is_task=False):
     """
     Generate a table name based on the job_id
     :param base:
     :param job_id:
     :param schema:
     :param category:
+    :param is_task: (bool) if True, get a table for a feature task, without 'task' instead of job_id
     """
+    if is_task:
+        job_id = "task"
     if category is None:
         res = f"{base}_{job_id}"
     else:
@@ -74,15 +77,17 @@ def get_table(base, job_id, schema, category=None, treatment=None):
     return res
 
 
-def get_output_filename(base, job_id, category=None, treatment=None):
+def get_output_filename(base, job_id, category=None, treatment=None, is_task=False):
     """
     Generate a table name based on the job_id
     :param base:
     :param job_id:
     :param category:
     :param treatment:
+    :param is_task: (bool) if True, get a table for a feature task, without 'task' instead of job_id
     """
-
+    if is_task:
+        job_id = "task"
     if category is None:
         basename = f"{base}__{job_id}"
     else:
@@ -208,12 +213,12 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
         response_result = response_to_result_func(response, job_id=job_id, worker_id=worker_id)
         worker_bonus = response_to_bonus(response)
         try:
-            save_result2file(get_output_filename(base, job_id), response_result)
+            save_result2file(get_output_filename(base, job_id, is_task=True), response_result)
         except Exception as err:
             app.log_exception(err)
         try:
             #TODO: check later
-            save_result2db(get_table(base, job_id=job_id, schema="result"), response_result, unique_fields=unique_fields)
+            save_result2db(get_table(base, job_id=job_id, schema="result", is_task=True), response_result, unique_fields=unique_fields)
             increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=worker_bonus)
         except Exception as err:
             app.log_exception(err)

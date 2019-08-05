@@ -27,11 +27,7 @@ from .prop import BASE as prop_BASE, finalize_round, JUDGING_TIMEOUT_SEC, LAST_M
 from .resp import BASE as resp_BASE, finalize_resp
 
 
-
-def handle_index(treatment):
-    job_id = request.args.get("job_id", "na")
-    worker_id = request.args.get("worker_id", "na")
-    app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
+def check_is_proposer_next(job_id, worker_id, treatment):
     resp_table = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
     prop_table = get_table(prop_BASE, job_id=job_id, schema="data", treatment=treatment)
     job_config = get_job_config(get_db("DB"), job_id)
@@ -60,15 +56,64 @@ def handle_index(treatment):
     #TODO: if nb_resp >= expected row/2, should only take props
     max_judgements = job_config["expected_judgments"]
     if max_judgements > 0 and max_judgements // 2 >= nb_resp and max_judgements // 2 < nb_prop:
+        print("decided on max_judgements")
         is_proposer = True
     elif nb_prop_open > 0:
+        print("decided on nb_prop_open")
         is_proposer = True
     else:
-        if nb_resp > nb_prop:
-            is_proposer = True
-        else:
-            is_proposer = False
-    print(nb_prop, nb_resp, nb_prop_open)
+        is_proposer = False
+        # if nb_resp > nb_prop:
+        #     print("decided on nb_resp > nb_prop")
+        #     is_proposer = True
+        # else:
+        #     print("decided on nb_resp < nb_prop")
+        #     is_proposer = False
+    
+    return is_proposer
+
+def handle_index(treatment):
+    job_id = request.args.get("job_id", "na")
+    worker_id = request.args.get("worker_id", "na")
+    app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
+    # resp_table = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
+    # prop_table = get_table(prop_BASE, job_id=job_id, schema="data", treatment=treatment)
+    # job_config = get_job_config(get_db("DB"), job_id)
+
+    # con = get_db("DATA")
+    # nb_resp = 0
+    # nb_prop = 0
+    # nb_prop_open = 0
+    # if table_exists(con, resp_table):
+    #     with con:
+    #         tmp = con.execute(f"SELECT COUNT(*) as count from {resp_table}").fetchone()
+    #         if tmp:
+    #             nb_resp = tmp["count"]
+    # if table_exists(con, prop_table):
+    #     with con:
+    #         judging_timeout = time.time() - JUDGING_TIMEOUT_SEC
+    #         tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table} where {STATUS_KEY}=? OR ({STATUS_KEY}=? and {LAST_MODIFIED_KEY}<?) OR ({WORKER_KEY}=?)", (RowState.JUDGEABLE, RowState.JUDGING, judging_timeout, worker_id)).fetchone()
+    #         if tmp:
+    #             nb_prop_open = tmp["count"]
+    # if table_exists(con, prop_table):
+    #     with con:
+    #         tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table}").fetchone()
+    #         if tmp:
+    #             nb_prop = tmp["count"]
+    
+    # #TODO: if nb_resp >= expected row/2, should only take props
+    # max_judgements = job_config["expected_judgments"]
+    # if max_judgements > 0 and max_judgements // 2 >= nb_resp and max_judgements // 2 < nb_prop:
+    #     is_proposer = True
+    # elif nb_prop_open > 0:
+    #     is_proposer = True
+    # else:
+    #     if nb_resp > nb_prop:
+    #         is_proposer = True
+    #     else:
+    #         is_proposer = False
+    # print(nb_prop, nb_resp, nb_prop_open)
+    is_proposer = check_is_proposer_next(job_id, worker_id, treatment)
 
     if is_proposer:
         return redirect(url_for(f"{treatment}.prop.index", job_id=job_id, worker_id=worker_id))

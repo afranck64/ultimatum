@@ -3,7 +3,7 @@ import logging
 import random
 import warnings
 import json
-from sklearn.externals import joblib
+import joblib
 from multiprocessing import pool
 from flask import (
     Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify
@@ -15,6 +15,19 @@ CODE_DIR = os.path.split(os.path.split(__file__)[0])[0]
 app = Flask(__name__)
 
 csrf_protect = CSRFProtect(app)
+
+TREATMENTS = ["T00", "T10", "T11", "T12", "T13", "T20", "T21", "T22"]
+
+TREATMENTS_MODEL_REFS= {
+    "T00": None,
+    "T10": "T00",
+    "T11": "T00",
+    "T12": "T00",
+    "T13": "T00",
+    "T20": "T00",
+    "T21": "T10",
+    "T22": "T10",    
+}
 
 class FakeModel(object):
     _warned = False
@@ -44,11 +57,15 @@ app.config["FAKE_MODEL"] = _env2bool(os.getenv("FAKE_MODEL", 'yes'))
 _treatments = []
 for treatment in ["T10", "T11", "T12", "T13", "T20", "T21", "T22"]:
     app.config[treatment] = _env2bool(os.getenv(treatment)) or _env2bool(os.getenv("TXX"))
-    treatment_dir = f"{CODE_DIR}/data/{treatment.lower()}/"
+    model_treatment = TREATMENTS_MODEL_REFS[treatment]
+    treatment_dir = f"{CODE_DIR}/data/{model_treatment.lower()}/"
     if app.config[treatment] and os.path.exists(treatment_dir):
-        app.config[f"{treatment}_MODEL"] = joblib.load(os.path.join(treatment_dir, "model.pkl"))
-        with open(os.path.join(treatment_dir, "model.json")) as inp_f:
-            app.config[f"{treatment}_MODEL_INFOS"] = json.load(inp_f)
+        model_key = f"{model_treatment}_MODEL"
+        model_infos_key = f"{model_treatment}_MODEL_INFOS"
+        if app.config.get(model_key) is None or app.config.get(model_infos_key) is None:
+            app.config[model_key] = joblib.load(os.path.join(treatment_dir, "model.pkl"))
+            with open(os.path.join(treatment_dir, "model.json")) as inp_f:
+                app.config[model_infos_key] = json.load(inp_f)
         _treatments.append(treatment)
 app.config["TREATMENTS"] = _treatments
 app.config["OUTPUT_DIR"] = os.getenv("OUTPUT_DIR", "./data/output")

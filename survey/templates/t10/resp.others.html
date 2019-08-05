@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block head%}
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script> -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<title>Responder - The Ultimatum Bargaining</title>
+{% endblock %}
+{% block content %}
+    <form action="" method="post">
+        <h1 align="center" style="color:#800080">You have been randomly assigned the task of a RESPONDER. Please make a proposal to the responder</h1>
+        
+        <br> <br>
+            <h2 align="center" style="color:#800080">
+            On average what do you think is the MINIMUM OFFER that other RESPONDERS would accept?
+        </h2>
+            <!-- <br>PLEASE SELECT YOUR EXPECTATION.  -->
+        
+        <br>
+        <div align="center">
+            <select name="other_resp" required id="other_resp">
+                <option value="" selected disabled hidden>Select a value</option>
+                {% for value, label in offer_values.items() %}
+                    <option value={{value}}>{{label}}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <br> <br>
+
+        <hr>
+        
+        <h2 align="center" style="color:#800080">
+            On average what do you think is the minimum OFFER that other PROPOSERS make?
+        </h2>
+        <!-- <br>PLEASE SELECT YOUR EXPECTATION. -->
+
+        <br>
+        <div align="center">
+            <select name="other_prop" required id="other_prop">
+                <option value="" selected disabled hidden>Select a value</option>
+                {% for value, label in offer_values.items() %}
+                    <option value={{value}}>{{label}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <br>
+        <br> <br>
+        <div align="center"> 
+                {{form.submit()}}
+        </div>
+    </form>
+{% endblock %}

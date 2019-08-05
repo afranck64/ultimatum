@@ -4,6 +4,7 @@ import importlib
 
 from survey import tasks
 from survey import t10
+from survey.txx import handle_survey
 from survey import admin
 
 from survey._app import app
@@ -28,9 +29,18 @@ for treatment in app.config["TREATMENTS"]:
 
 app.register_blueprint(admin.bp)
 
+
 @app.route("/")
 def index():
-    return render_template("index.html")    
+    return render_template("home.html")
+
+@app.route("/survey", methods=["GET", "POST"])
+def survey():
+    return handle_survey()
+
+@app.route("/survey/overview")
+def overview():
+    return render_template("overview.html")
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)

@@ -83,7 +83,8 @@ def resp_to_resp_result(response, job_id=None, worker_id=None):
     """
     result = dict(response)
     result["timestamp"] = str(datetime.datetime.now())
-    
+    #TODO: clarify this!!!
+    result["time_spent_prop"] = response["time_stop"] - response["time_start"]
     result["job_id"] = job_id
     result["worker_id"] = worker_id
     return result
