@@ -96,7 +96,7 @@ def handle_survey_done():
 
     response = session["response"]
     response["worker_id"] = worker_id
-    result = {k:v for k,v in response if k not in {'csrf_token'}}
+    result = {k:v for k,v in response.items() if k not in {'csrf_token'}}
     try:
         save_result2file(get_output_filename(base="survey", job_id=job_id, treatment=treatment), result)
     except Exception as err:
