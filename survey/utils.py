@@ -87,7 +87,7 @@ def save_worker_id(job_id, worker_id, base=None):
         base = "txx"
     table_all = get_table("txx", "all", schema=None)
     try:
-        insert(pd.DataFrame({"worker_id": worker_id, "job_id": job_id}), table=table_all, unique_fields=["worker_id"])
+        insert(pd.DataFrame(data=[{"job_id": job_id, "worker_id": worker_id}]), table=table_all, unique_fields=["worker_id"])
     except Exception as err:
         app.log_exception(err)
 

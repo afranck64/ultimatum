@@ -62,11 +62,14 @@ for treatment in ["T10", "T11", "T12", "T13", "T20", "T21", "T22"]:
     if app.config[treatment] and os.path.exists(treatment_dir):
         model_key = f"{model_treatment}_MODEL"
         model_infos_key = f"{model_treatment}_MODEL_INFOS"
-        if app.config.get(model_key) is None or app.config.get(model_infos_key) is None:
-            app.config[model_key] = joblib.load(os.path.join(treatment_dir, "model.pkl"))
-            with open(os.path.join(treatment_dir, "model.json")) as inp_f:
-                app.config[model_infos_key] = json.load(inp_f)
-        _treatments.append(treatment)
+        try:
+            if app.config.get(model_key) is None or app.config.get(model_infos_key) is None:
+                app.config[model_key] = joblib.load(os.path.join(treatment_dir, "model.pkl"))
+                with open(os.path.join(treatment_dir, "model.json")) as inp_f:
+                    app.config[model_infos_key] = json.load(inp_f)
+            _treatments.append(treatment)
+        except Exception as err:
+            app.logger.warning(err)
 app.config["TREATMENTS"] = _treatments
 app.config["OUTPUT_DIR"] = os.getenv("OUTPUT_DIR", "./data/output")
 os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)

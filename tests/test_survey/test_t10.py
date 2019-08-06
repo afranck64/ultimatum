@@ -40,30 +40,18 @@ def _process_resp_tasks(client, job_id="test", worker_id=None, min_offer=100, bo
 def test_index(client):
     for _ in range(3):
         worker_id = generate_worker_id("index_resp")
-        path = f"/{TREATMENT}/?worker_id={worker_id}"
+        path = f"/{TREATMENT}/?worker_id={worker_id}_resp"
         with app.test_request_context(path):
             res = client.get(path, follow_redirects=True).data
             assert b"RESPONDER" in res
             res = _process_resp_tasks(client, worker_id=worker_id)
             assert b"resp:" in res.data
+        path = f"/{TREATMENT}/?worker_id={worker_id}_prop"
+        with app.test_request_context(path):
             res = client.get(path, follow_redirects=True).data
             assert b"PROPOSER" in res
             res = _process_prop_round(client, worker_id=worker_id)
             assert b"prop:" in res.data
-    
-    # worker_id = generate_worker_id("index_resp")
-    # path = f"/{TREATMENT}/?worker_id={worker_id}"
-    # with app.test_request_context(path):
-    #     res = client.get(path, follow_redirects=True).data
-    #     assert b"RESPONDER" in res
-    #     _process_resp_tasks(client, worker_id=worker_id)
-    #     worker_id = generate_worker_id("index_prop")
-    #     path = f"/{TREATMENT}/?worker_id={worker_id}"
-    #     res = client.get(path, follow_redirects=True).data
-    #     assert b"PROPOSER" in res
-    #     _process_prop_round(client, worker_id=worker_id, path=path)
-    
-        
 
 
 def test_resp_index(client):

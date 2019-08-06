@@ -27,7 +27,7 @@ from core.utils.preprocessing import df_to_xy
 from core.utils import cents_repr
 from core.models.metrics import gain, MAX_GAIN
 
-from survey._app import app, csrf_protect
+from survey._app import app, csrf_protect, TREATMENTS_MODEL_REFS
 from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists, update
@@ -164,7 +164,7 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None):
     :returns: (dict) features_rows untransformed
     """
     app.logger.debug("get_features")
-    MODEL_INFOS_KEY = f"{treatment.upper()}_MODEL_INFOS"
+    MODEL_INFOS_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL_INFOS"
     tasks = tasks or ["cg", "crt", "eff", "hexaco", "risk"]
     con = get_db("RESULT")
     tasks_features = {
@@ -357,7 +357,7 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None):
 
 def handle_check(treatment):
     app.logger.debug("handle_check")
-    MODEL_INFOS_KEY = f"{treatment.upper()}_MODEL_INFOS"
+    MODEL_INFOS_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL_INFOS"
     if not session.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
