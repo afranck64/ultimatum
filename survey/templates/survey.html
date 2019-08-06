@@ -1,6 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+<script>
+    window.onload=function() {
+      document.getElementById("features").style.display="none";
+    }
+    function update_tasks() {
+      var code_resp_prop = document.getElementById("{{form.code_resp_prop.id}}").value;
+      
+      if (code_resp_prop.startsWith("resp")) {
+        document.getElementById("features").style.display='block';
+      } else {
+        document.getElementById("features").style.display='none';
+      }
+    }
+  </script>
+
   <iframe src="{{url_for('overview')}}" width="100%" height="400px"></iframe>
   <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -34,49 +50,59 @@
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.proposer_responder.errors)}}</div>
         {{form.proposer_responder.label}}<br>
         {{form.proposer_responder}}<br>
-
-        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to continue...</button></a><br>
+        
+        <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here start the main task</button></a><br>
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_resp_prop.errors)}}</div>
         {{form.code_resp_prop.label}}<br>
-        {{form.code_resp_prop}}<br>
+        <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.valule}}" onchange="update_tasks()"><br>
 
-        {% if is_responder %}
+        <div id="features">
+            <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
           <a href="{{url_for('tasks.eff.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click start the effort task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_effort.errors)}}</div>
           {{form.code_effort.label}}<br>
           {{form.code_effort}}<br>
 
+          <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
           <a href="{{url_for('tasks.risk.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the risk task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_risk.errors)}}</div>
           {{form.code_risk.label}}<br>
           {{form.code_risk}}<br>
 
+          <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
           <a href="{{url_for('tasks.cg.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the charity giving task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_charitable_giving.errors)}}</div>
           {{form.code_charitable_giving.label}}<br>
           {{form.code_charitable_giving}}<br>
 
-          <a href="{{url_for('tasks.crt.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the crt task...</button></a><br>
+          <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+          <a href="{{url_for('tasks.crt.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the calculus task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_crt.errors)}}</div>
           {{form.code_crt.label}}<br>
           {{form.code_crt}}<br>
-        {% endif %}
 
-        <a href="{{url_for('tasks.hexaco.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the hexaco task...</button></a><br>
-        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_hexaco.errors)}}</div>
-        {{form.code_hexaco.label}}<br>
-        {{form.code_hexaco}}<br>
+          <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+          <a href="{{url_for('tasks.hexaco.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the hexaco task...</button></a><br>
+          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_hexaco.errors)}}</div>
+          {{form.code_hexaco.label}}<br>
+          {{form.code_hexaco}}<br>
+        </div>
 
-        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.attention.errors)}}</div>
-        {{form.attention.label}}<br>
-        {{form.attention}}<br>
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.test.errors)}}</div>
+        {{form.test.label}}<br>
+        {{form.test}}<br>
 
-        {{form.comment.label}}<br>
-        {{form.comment}}<br>
+        {{form.please_enter_your_comments_feedback_or_suggestions_below.label}}<br>
+        <textarea rows="3" cols="100" id="{{form.please_enter_your_comments_feedback_or_suggestions_below.id}}" value={{form.please_enter_your_comments_feedback_or_suggestions_below.value}}></textarea>
 
+        <div>Follow the link to continue.</div><br>
         <a href="{{url_for(treatment+'.webhook')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to continue...</button></a><br>
       </div>
     </fieldset>
-    <input type="submit" value="Submit">
+    <br>
+    <div align="center">
+        <input type="submit" value="Submit">
+    </div>
   </form>
 {% endblock %}

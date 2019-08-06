@@ -6,10 +6,11 @@ from flask_wtf.form import FlaskForm
 from wtforms.validators import DataRequired
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField, RadioField, TextAreaField
 
-from .index import check_is_proposer_next
 from survey.utils import get_table, save_result2db, save_result2file, get_output_filename
 from survey.db import insert, get_db
 from survey._app import app
+
+BASE = "home"
 
 class MainForm(FlaskForm):
     gender = RadioField("What is your gender?", choices=[
@@ -24,7 +25,7 @@ class MainForm(FlaskForm):
         ("3645_years", "36-45 Years"),
         ("4655_years", "46-55 Years"),
         ("5665_years", "56-65 Years"),
-        ("65+_years", "Older than 65 Years")],
+        ("older_than_65_years", "Older than 65 Years")],
         validators=[DataRequired("Please choose a value")]
     )
     ethnicity = RadioField("What is your ethnicity?", choices=[
@@ -59,17 +60,17 @@ class MainForm(FlaskForm):
         ("incorrect2", "Your decisions do not affect another worker.")],
         validators=[DataRequired()]
     )
-    code_resp_prop = StringField("Completion Code", )
-    code_effort = StringField("Completion Code", )
-    code_risk = StringField("Completion Code", )
-    code_charitable_giving = StringField("Completion Code", )
-    code_crt = StringField("Completion Code", )
-    code_hexaco = StringField("Completion Code", )
-    attention = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
-    comment = TextAreaField("Please enter your comments, feedback or suggestions below.")
+    code_resp_prop = StringField("Completion Code: main task", )
+    code_effort = StringField("Completion Code: effort task", )
+    code_risk = StringField("Completion Code: risk task", )
+    code_charitable_giving = StringField("Completion Code: charitable giving", )
+    code_crt = StringField("Completion Code: calculus task", )
+    code_hexaco = StringField("Completion Code: hexaco task", )
+    test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
+    please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
 def handle_survey():
-    job_id = "home"
+    job_id = BASE
     worker_id = str(uuid.uuid4())
     treatment = "t10"
     session["job_id"] = job_id
@@ -78,13 +79,10 @@ def handle_survey():
     session["txx"] = True
     form = MainForm(request.form)
     if request.method == "POST" and form.validate_on_submit():
-        print("SUBMITED BACK", request.form)
-        #TODO: process and save form data
         form = MainForm(request.form)
         session["response"] = request.form.to_dict()
         return handle_survey_done()
-    is_responder = not check_is_proposer_next(job_id, worker_id, treatment)
-    return render_template("survey.html", job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, is_responder=is_responder)
+    return render_template("survey.html", job_id=job_id, worker_id=worker_id, treatment=treatment, form=form)
 
 def handle_survey_done():
     if not session.get("txx"):
@@ -105,6 +103,4 @@ def handle_survey_done():
         save_result2db(table=get_table(base="survey", job_id=job_id, schema="result", treatment=treatment), response_result=result, unique_fields=["worker_id"])
     except Exception as err:
         app.log_exception(err)
-    # webhook_url = url_for(f"{treatment}.webhook", job_id=job_id, worker_id=worker_id)
-    # requests.get(webhook_url)
     return render_template("info.html", job_id=job_id)
