@@ -19,15 +19,14 @@ def validate_response(response):
             return False
     return True
 
-Honesty_Humility_qxx = {"q6", "q12", "q15", "q21", "q24"}
+REVERSE_SCORED_QUESTIONS = {"q6", "q12", "q15", "q21", "q24", "q30", "q5", "q14", "q23", "q26", "q4", "q7", "q10", "q28"}
 Honesty_Humility_qxx = {"q3", "q9", "q18", "q6", "q12", "q15", "q21", "q24", "q27", "q30"}
-Extraversion_qxx = {"q5", "q28", "q46", "q26"}
 Extraversion_qxx = {"q2", "q8", "q11", "q17", "q20", "q5", "q14", "q23", "q29"}
-Agreeableness_qxx = {"q4", "q7", "q10", "q28"}
 Agreeableness_qxx = {"q1", "q4", "q7", "q10", "q13", "q16", "q19", "q22", "q25", "q28"}
 
 def response_to_result(response, job_id=None, worker_id=None):
     """
+    The questions are saved "as-it" prior to reverserving questions scores to compute emotional traits
     :returns: {
         Honesty_Humility:
         Extraversion:
@@ -39,6 +38,8 @@ def response_to_result(response, job_id=None, worker_id=None):
     }
     """
     result = dict(response)
+    for key in REVERSE_SCORED_QUESTIONS:
+        response[key] = 6 - response[key]
     result["Honesty_Humility"] = sum(response[key] for key in Honesty_Humility_qxx)/10
     result["Extraversion"] = sum(response[key] for key in Extraversion_qxx)/10
     result["Agreeableness"] = sum(response[key] for key in Agreeableness_qxx)/10
