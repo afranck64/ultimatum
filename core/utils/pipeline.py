@@ -44,15 +44,16 @@ def train_and_save(data_dir, output_dir, model=None, top_columns=None, shuffle=T
     if shuffle:
         df = df.sample(frac=1.0, random_state=random_state)
     df_max = {}
-    df_max["cells"] = 50
+    df_max["cells"] = 50.0
     df_max["Honesty_Humility"] = 5.0
     df_max["Extraversion"] = 5.0
     df_max["Agreeableness"] = 5.0
-    df_max["selfish"] = 60
+    df_max["selfish"] = 60.0
     df_max["time_spent_risk"] = 152000.0
     df_max["time_spent_prop"] = 269000.0
-    df_max["min_offer"] = 200
-    df_max["count_effort"] = 20
+    df_max["min_offer"] = 200.0
+    df_max["count_effort"] = 20.0
+    df_max["crf_performance"] = 3.0
     df_max = pd.Series(df_max)
     df_min = pd.Series({k: 0 for k in df_max})
     x, y = df_to_xy(df, centered=True, select_columns=top_columns, df_min=df_min, df_max=df_max)

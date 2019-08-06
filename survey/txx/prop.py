@@ -169,12 +169,12 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None):
     con = get_db("RESULT")
     tasks_features = {
         "cg":["selfish"],
-        #"crt":["*"],        #TODO: check
+        "crt":["crt_performance"],
         "eff":["count_effort"],
-        "hexaco": ["Honesty_Humility", "Extraversion", "Agreeableness"],     #TODO: check conversion
+        "hexaco": ["Honesty_Humility", "Extraversion", "Agreeableness"],
         "risk":["cells", "time_spent_risk"]
     }
-    #row_features = {"Honesty_Humility":2.5, "Extraversion":2.5, "Agreeableness":2.5}
+
     row_features = dict()
     for name, features in tasks_features.items():
         task_table = get_table(name, job_id=job_id, schema="result", is_task=True)
@@ -183,7 +183,7 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None):
             res = con.execute(sql, (resp_worker_id,)).fetchone()
             row_features.update(dict(res))
     resp_features = {
-        "resp": ["time_spent_prop"]
+        "resp": ["time_spent_prop"]     #Ambiguous feature!!!
     }
     for name, features in resp_features.items():
         table = get_table(name, job_id=job_id, treatment=treatment, schema="result", is_task=False)
