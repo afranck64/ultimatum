@@ -30,7 +30,7 @@ from core.models.metrics import gain
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
 from .prop import insert_row
-from survey.utils import save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus
+from survey.utils import save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus, save_worker_id
 
 
 ############ Consts #################################
@@ -152,6 +152,8 @@ def handle_done(treatment, template=None):
 
         session[BASE] = True
         session[worker_code_key] = worker_code
+
+        save_worker_id(job_id=job_id, worker_id=worker_id)
     return render_template(template, worker_code=session[worker_code_key])
 
 

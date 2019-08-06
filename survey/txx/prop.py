@@ -32,7 +32,7 @@ from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists, update
 from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table, predict_weak, predict_strong,
-    generate_completion_code, increase_worker_bonus, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
+    generate_completion_code, increase_worker_bonus, save_worker_id, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
 
 
 ############ Consts #################################
@@ -412,6 +412,7 @@ def handle_done(treatment, template=None, response_to_result_func=None):
         session[BASE] = True
         session[worker_bonus_key] = cents_repr(worker_bonus)
         session[worker_code_key] = worker_code
+        save_worker_id(job_id=job_id, worker_id=worker_id)
     return render_template(template, worker_code=session[worker_code_key], worker_bonus=session[worker_bonus_key])
 
 def finalize_round(job_id, prop_worker_id, treatment):

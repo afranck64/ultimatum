@@ -13,8 +13,6 @@ from flask import (
     Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
 )
 
-import random
-
 from survey.figure_eight import FigureEight
 
 from core.models.metrics import MAX_GAIN
@@ -26,6 +24,7 @@ from survey.utils import get_table, increase_worker_bonus
 from .prop import BASE as prop_BASE, finalize_round, JUDGING_TIMEOUT_SEC, LAST_MODIFIED_KEY, STATUS_KEY, WORKER_KEY
 from .resp import BASE as resp_BASE, finalize_resp
 
+BASE = "txx"
 
 def check_is_proposer_next(job_id, worker_id, treatment):
     app.logger.debug("check_is_proposer_next")
@@ -69,6 +68,16 @@ def handle_index(treatment):
     worker_id = request.args.get("worker_id", "na")
     app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
     is_proposer = check_is_proposer_next(job_id, worker_id, treatment)
+
+    table_all = get_table(BASE, "all", schema=None)
+    con = get_db()
+    if table_exists(con, table_all):
+        with con:
+            res = con.execute(f"SELECT * from {table_all} WHERE worker_id=?", (worker_id,)).fetchone()
+            if res:
+                flash(f"You already took part on this survey. Thank you for your participation")
+                return render_template("error.html")
+    
 
     if is_proposer:
         return redirect(url_for(f"{treatment}.prop.index", job_id=job_id, worker_id=worker_id))
@@ -139,7 +148,6 @@ def handle_webhook(treatment):
     if "signal" in form:
         signal = form['signal']
         if signal in {'unit_complete', 'new_judgments'}:
-            # app.logger.info(f"SIGNAL: {signal}")
             payload_raw = form['payload']
             signature = form['signature']
             payload = json.loads(payload_raw)
