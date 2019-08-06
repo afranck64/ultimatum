@@ -52,14 +52,14 @@
         {{form.proposer_responder}}<br>
         
         <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here start the main task</button></a><br>
+        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the main task</button></a><br>
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_resp_prop.errors)}}</div>
         {{form.code_resp_prop.label}}<br>
         <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.valule}}" onchange="update_tasks()"><br>
 
         <div id="features">
             <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.eff.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click start the effort task...</button></a><br>
+          <a href="{{url_for('tasks.eff.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click start to the effort task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_effort.errors)}}</div>
           {{form.code_effort.label}}<br>
           {{form.code_effort}}<br>
