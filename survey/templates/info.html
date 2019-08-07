@@ -1,9 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-Thank you for taking part in our experiment.
-{% if job_id != "home" %}
-    Your bonus will be transfered to you soon.
+{% if job_id == "home" %}
+    <!-- <div align="center">You can now continue with the survey</div> -->
+{% else %}
+    <div align="center">
+        Thank you for taking part in our experiment.
+    </div>
+    <div align="center">Your bonus will be transfered to you soon.</div>
 {% endif %}
-{{message}}
+
+<div align="center">
+    <br>
+    {{message}}
+</div>
 {% endblock %}

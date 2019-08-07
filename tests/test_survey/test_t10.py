@@ -40,13 +40,14 @@ def _process_resp_tasks(client, job_id="test", worker_id=None, min_offer=100, bo
 def test_index(client):
     for _ in range(3):
         worker_id = generate_worker_id("index_resp")
-        path = f"/{TREATMENT}/?worker_id={worker_id}_resp"
+        path = f"/{TREATMENT}/?worker_id={worker_id}"
         with app.test_request_context(path):
             res = client.get(path, follow_redirects=True).data
             assert b"RESPONDER" in res
             res = _process_resp_tasks(client, worker_id=worker_id)
             assert b"resp:" in res.data
-        path = f"/{TREATMENT}/?worker_id={worker_id}_prop"
+        worker_id = generate_worker_id("index_prop")
+        path = f"/{TREATMENT}/?worker_id={worker_id}"
         with app.test_request_context(path):
             res = client.get(path, follow_redirects=True).data
             assert b"PROPOSER" in res

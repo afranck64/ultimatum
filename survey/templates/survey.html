@@ -1,11 +1,44 @@
 {% extends "base.html" %}
 
 {% block content %}
-
+<style>
+  .button {
+    background-color: #49afcd; /* Green */
+    border: none;
+    color: white;
+    padding: 7px 8px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 4px;
+  }
+</style>
 <script>
     window.onload=function() {
       document.getElementById("features").style.display="none";
     }
+    
+    function getDocHeight(doc) {
+      doc = doc || document;
+      // stackoverflow.com/questions/1145850/
+      var body = doc.body, html = doc.documentElement;
+      var height = Math.max( body.scrollHeight, body.offsetHeight, 
+          html.clientHeight, html.scrollHeight, html.offsetHeight );
+      return height;
+    }
+
+    function setIframeHeight(id) {
+      var ifrm = document.getElementById(id);
+      var doc = ifrm.contentDocument? ifrm.contentDocument: 
+          ifrm.contentWindow.document;
+      ifrm.style.visibility = 'hidden';
+      ifrm.style.height = "10px"; // reset to minimal height ...
+      // IE opt. for bing/msn needs a bit added or scrollbar appears
+      ifrm.style.height = getDocHeight( doc ) + 4 + "px";
+      ifrm.style.visibility = 'visible';
+    }
+
     function update_tasks() {
       var code_resp_prop = document.getElementById("{{form.code_resp_prop.id}}").value;
       
@@ -15,9 +48,20 @@
         document.getElementById("features").style.display='none';
       }
     }
+
+    function toggle_overview() {
+      console.log(document.getElementById("overview").style.display=="none")
+      if (document.getElementById("overview").style.display=="none") {
+        document.getElementById("overview").style.display="block";
+      } else {
+        document.getElementById("overview").style.display="none";
+      }
+    }
   </script>
 
-  <iframe src="{{url_for('overview')}}" width="100%" height="400px"></iframe>
+  <br>
+  <input type="button" onclick="toggle_overview()" value="Toggle Instructions" width="100px">
+  <iframe onload="setIframeHeight(this.id)" id="overview" src="{{url_for('overview')}}"  width="100%" height="1200px" style="display: block;" frameborder="1"></iframe>
   <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
@@ -52,38 +96,38 @@
         {{form.proposer_responder}}<br>
         
         <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the main task</button></a><br>
+        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button" type="button">Click here to start the main task</button></a><br>
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_resp_prop.errors)}}</div>
         {{form.code_resp_prop.label}}<br>
         <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.valule}}" onchange="update_tasks()"><br>
 
         <div id="features">
             <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.eff.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click start to the effort task...</button></a><br>
+          <a href="{{url_for('tasks.eff.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click start to the effort task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_effort.errors)}}</div>
           {{form.code_effort.label}}<br>
           {{form.code_effort}}<br>
 
           <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.risk.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the risk task...</button></a><br>
+          <a href="{{url_for('tasks.risk.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button"">Click here to start the risk task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_risk.errors)}}</div>
           {{form.code_risk.label}}<br>
           {{form.code_risk}}<br>
 
           <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.cg.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the charity giving task...</button></a><br>
+          <a href="{{url_for('tasks.cg.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the charity giving task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_charitable_giving.errors)}}</div>
           {{form.code_charitable_giving.label}}<br>
           {{form.code_charitable_giving}}<br>
 
           <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.crt.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the calculus task...</button></a><br>
+          <a href="{{url_for('tasks.crt.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the calculus task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_crt.errors)}}</div>
           {{form.code_crt.label}}<br>
           {{form.code_crt}}<br>
 
           <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.hexaco.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to start the hexaco task...</button></a><br>
+          <a href="{{url_for('tasks.hexaco.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the hexaco task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_hexaco.errors)}}</div>
           {{form.code_hexaco.label}}<br>
           {{form.code_hexaco}}<br>
@@ -97,12 +141,12 @@
         <textarea rows="3" cols="100" id="{{form.please_enter_your_comments_feedback_or_suggestions_below.id}}" value={{form.please_enter_your_comments_feedback_or_suggestions_below.value}}></textarea>
 
         <div>Follow the link to continue.</div><br>
-        <a href="{{url_for(treatment+'.webhook')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button type="button">Click here to continue...</button></a><br>
+        <a href="{{url_for(treatment+'.webhook')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to continue...</button></a><br>
       </div>
     </fieldset>
     <br>
     <div align="center">
-        <input type="submit" value="Submit">
+        <input type="submit" class="button"  type="button" value="Submit">
     </div>
   </form>
 {% endblock %}
