@@ -253,9 +253,9 @@ def close_row(con, job_id, row_id, treatment):
 
 def insert_row(job_id, resp_row, treatment, overwrite=False):
     app.logger.debug("insert_row")
-    MODEL_KEY = f"{treatment.upper()}_MODEL"
+    MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
     MODEL_TYPES = [REAL_MODEL, WEAK_FAKE_MODEL, STRONG_FAKE_MODEL]
-    model_type = "none"
+    model_type = None
     ai_offer = 0
     features, features_dict = get_features(job_id, resp_worker_id=resp_row[WORKER_KEY], treatment=treatment)
     resp_row = dict(resp_row)
@@ -276,15 +276,12 @@ def insert_row(job_id, resp_row, treatment, overwrite=False):
     if app.config["FAKE_MODEL"]:
         with con:
             rowid = con.execute(f"SELECT {PK_KEY} FROM {table} where resp_worker_id=?", (resp_row[WORKER_KEY], )).fetchone()[PK_KEY]
-        if rowid:
-            if rowid % 3 == 0:
-                model_type = MODEL_TYPES[0]
-            elif rowid % 3 == 1:
-                model_type = MODEL_TYPES[1]
-            else:
-                model_type = MODEL_TYPES[2]
+        if rowid is not None:
+            model_type = MODEL_TYPES[rowid % len(MODEL_TYPES)]
+        else:
+            model_type = REAL_MODEL
     else:
-        model_type = 0
+        model_type = REAL_MODEL
     if model_type == WEAK_FAKE_MODEL:
             ai_offer = predict_weak(resp_row["min_offer"])
     elif model_type == STRONG_FAKE_MODEL:
@@ -295,7 +292,7 @@ def insert_row(job_id, resp_row, treatment, overwrite=False):
     ai_offer = int(ai_offer)
     with con:
         update(sql=f"UPDATE {table} SET ai_offer=?, model_type=? where rowid=?", args=(ai_offer, model_type, rowid), con=con)
-    app.logger.debug("insert_row - done")
+    app.logger.debug("insert_row - done" + "MODEL_TYPE: " + str(rowid % len(MODEL_TYPES)) + "  " + str(rowid))
 
 
 
