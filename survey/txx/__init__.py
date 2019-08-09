@@ -1,7 +1,7 @@
 import uuid
 
 import requests
-from flask import render_template, request, session, flash, url_for
+from flask import render_template, request, session, flash, url_for, redirect
 from flask_wtf.form import FlaskForm
 from wtforms.validators import DataRequired
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField, RadioField, TextAreaField
@@ -11,6 +11,11 @@ from survey.db import insert, get_db
 from survey._app import app
 
 BASE = "home"
+TREATMENT = None 
+for _treatment in app.config["TREATMENTS"][::-1]:
+    if app.config[_treatment]:
+        TREATMENT = _treatment.lower()
+        break
 
 class MainForm(FlaskForm):
     gender = RadioField("What is your gender?", choices=[
@@ -72,17 +77,16 @@ class MainForm(FlaskForm):
 def handle_survey():
     job_id = BASE
     worker_id = str(uuid.uuid4())
-    treatment = "t10"
     session["job_id"] = job_id
     session["worker_id"] = worker_id
-    session["treatment"] = treatment
+    session["treatment"] = TREATMENT
     session["txx"] = True
     form = MainForm(request.form)
     if request.method == "POST" and form.validate_on_submit():
         form = MainForm(request.form)
         session["response"] = request.form.to_dict()
-        return handle_survey_done()
-    return render_template("survey.html", job_id=job_id, worker_id=worker_id, treatment=treatment, form=form)
+        return redirect(url_for("survey_done"))
+    return render_template("survey.html", job_id=job_id, worker_id=worker_id, treatment=TREATMENT, form=form)
 
 def handle_survey_done():
     if not session.get("txx"):

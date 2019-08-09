@@ -4,7 +4,7 @@ import importlib
 
 from survey import tasks
 from survey import t10
-from survey.txx import handle_survey
+from survey.txx import handle_survey, handle_survey_done
 from survey import admin
 
 from survey._app import app, csrf_protect
@@ -35,9 +35,13 @@ def index():
     return render_template("home.html")
 
 @csrf_protect.exempt
-@app.route("/survey", methods=["GET", "POST"])
+@app.route("/survey/", methods=["GET", "POST"])
 def survey():
     return handle_survey()
+
+@app.route("/survey/done")
+def survey_done():
+    return handle_survey_done()
 
 @app.route("/survey/overview")
 def overview():
