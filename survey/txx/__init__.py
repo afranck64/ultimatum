@@ -78,7 +78,7 @@ def handle_survey():
     session["treatment"] = treatment
     session["txx"] = True
     form = MainForm(request.form)
-    if request.method == "POST" and form.validate():
+    if request.method == "POST" and form.validate_on_submit():
         form = MainForm(request.form)
         session["response"] = request.form.to_dict()
         return handle_survey_done()
