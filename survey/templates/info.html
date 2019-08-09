@@ -2,8 +2,13 @@
 
 {% block content %}
 {% if job_id == "home" %}
-    <!-- <div align="center">You can now continue with the survey</div> -->
+    {% if webhook %}
+    {% else %}
+        <br>
+        <div align="center">Thank you for taking part in our experiment.</div>
+    {% endif %}
 {% else %}
+    <br>
     <div align="center">
         Thank you for taking part in our experiment.
     </div>
