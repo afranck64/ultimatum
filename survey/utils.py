@@ -32,6 +32,17 @@ JOB_KEY = 'job_id'
 PK_KEY = 'rowid'
 
 ######
+def get_latest_treatment():
+    """
+    Returns the highest enabled treatment
+    """
+    print(app.config["TREATMENTS"])
+    for _treatment in app.config["TREATMENTS"][::-1]:
+        if app.config[_treatment]:
+            return _treatment.lower()
+
+
+
 def predict_weak(min_offer):
     return max(min(min_offer-10, MAX_GAIN), 0)
 

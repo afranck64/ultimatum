@@ -4,6 +4,7 @@ import random
 import warnings
 import json
 import joblib
+import importlib
 from multiprocessing import pool
 from flask import (
     Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify
@@ -67,7 +68,11 @@ for treatment in ["T10", "T11", "T12", "T13", "T20", "T21", "T22"]:
                 app.config[model_key] = joblib.load(os.path.join(treatment_dir, "model.pkl"))
                 with open(os.path.join(treatment_dir, "model.json")) as inp_f:
                     app.config[model_infos_key] = json.load(inp_f)
-            _treatments.append(treatment)
+            try:
+                importlib.import_module(f"survey.{treatment.lower()}")
+                _treatments.append(treatment)
+            except Exception as err:
+                app.log_exception(err)
         except Exception as err:
             app.logger.warning(err)
 app.config["TREATMENTS"] = _treatments
