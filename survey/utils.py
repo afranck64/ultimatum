@@ -296,13 +296,14 @@ def increase_worker_bonus(job_id, worker_id, bonus_cents, con=None):
     con.commit()
 
 
-def get_worker_bonus(job_id, worker_id, con=None):
+
+def _get_worker_bonus_row(job_id, worker_id, con=None):
     """
     :param job_id:
     :param worker_id:
     :param con:
     """
-    app.logger.debug(f"get_worker_bonus: job_id: {job_id}, worker_id: {worker_id}")
+    app.logger.debug(f"_get_worker_bonus_row: job_id: {job_id}, worker_id: {worker_id}")
     if con is None:
         con = get_db("DB")
     table = _get_payment_table(job_id)
@@ -311,11 +312,43 @@ def get_worker_bonus(job_id, worker_id, con=None):
             row = con.execute(f'select *, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
             if row:
                 row_dict = dict(row)
-                worker_bonus = row_dict["bonus_cents"]
-                return worker_bonus
+                return row_dict
             else:
-                app.logger.error(f"get_worker_bonus: worker not found! job_id: {job_id}, worker_id: {worker_id}")
+                app.logger.error(f"_get_worker_bonus_row: worker not found! job_id: {job_id}, worker_id: {worker_id}")
+    return None
+
+def get_worker_bonus(job_id, worker_id, con=None):
+    """
+    :param job_id:
+    :param worker_id:
+    :param con:
+    """
+    bonus_row = _get_worker_bonus_row(job_id, worker_id, con)
+    if bonus_row is None:
+        return 0
+    return bonus_row["bonus_cents"]
+
+def get_worker_paid_bonus(job_id, worker_id, con=None):
+    """
+    :param job_id:
+    :param worker_id:
+    :param con:
+    """
+    bonus_row = _get_worker_bonus_row(job_id, worker_id, con)
+    if bonus_row is None:
+        return 0
+    return bonus_row["paid_bonus_cents"]
+
+def get_total_worker_bonus(job_id, worker_id, con=None):
+    """
+    :param job_id:
+    :param worker_id:
+    :param con:
+    """
+    bonus_row = _get_worker_bonus_row(job_id, worker_id, con)
+    if bonus_row is None:
     return 0
+    return bonus_row["bonus_cents"] + bonus_row["paid_bonus_cents"]
 
 def get_resp_worker_id(base, job_id, prop_worker_id, treatment=None):
     """
