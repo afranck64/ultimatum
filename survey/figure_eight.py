@@ -278,7 +278,13 @@ class FigureEight(object):
         :amount_in_cents: USD amount in cents
         """
         url = self.get_url(worker_id=worker_id, endpoint="bonus")
-        #return requests.post(url=url, json={"amount":amout_in_cents})
+        resp = requests.post(url=url, json={"amount":amout_in_cents})
+        if resp.status_code == Status.SUCCESS:
+            return True
+        else:
+            warnings.warn(resp.text)
+            return False
+
 
     def contributor_notify(self, worker_id, message):
         """
@@ -287,7 +293,12 @@ class FigureEight(object):
         :param message: message to the worker
         """
         url = self.get_url(worker_id=worker_id, endpoint="notify")
-        return requests.post(url=url, json={'message':message})
+        resp = requests.post(url=url, json={'message':message})
+        if resp.status_code == Status.SUCCESS:
+            return True
+        else:
+            warnings.warn(resp.text)
+            return False
     
     def contributor_flag(self, worker_id, reason):
         """
