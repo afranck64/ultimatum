@@ -65,8 +65,8 @@ def test_cg_bonus(client):
         worker_id = generate_worker_id("cg")
         res = _process_cg(client, worker_id=worker_id, bonus_mode="random")
         assert b"cg:" in res
-        res = _process_cg(client, worker_id=worker_id, bonus_mode="none")
         worker_id = generate_worker_id("cg")
+        res = _process_cg(client, worker_id=worker_id, bonus_mode="none")
         assert b"cg:" in res
         assert get_worker_bonus("test", worker_id) == 0
 
@@ -148,11 +148,11 @@ def test_eff_bonus(client):
         res = _process_eff(client, worker_id=worker_id, bonus_mode="full")
         assert b"eff:" in res
         assert get_worker_bonus("test", worker_id) == eff.MAX_BONUS
+        worker_id = generate_worker_id("eff")
         res = _process_eff(client, worker_id=worker_id, bonus_mode="random")
-        worker_id = generate_worker_id("eff")
         assert b"eff:" in res
-        res = _process_eff(client, worker_id=worker_id, bonus_mode="none")
         worker_id = generate_worker_id("eff")
+        res = _process_eff(client, worker_id=worker_id, bonus_mode="none")
         assert b"eff:" in res
         assert get_worker_bonus("test", worker_id) == 0
 
