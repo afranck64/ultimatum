@@ -38,7 +38,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     }
     """
     result = dict(response)
-    result["selfish"] = 60 - response_to_bonus(response)
+    result["selfish"] = response_to_bonus(response)
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id
