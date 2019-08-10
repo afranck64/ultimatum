@@ -404,6 +404,13 @@ def handle_done(treatment, template=None, response_to_result_func=None):
             increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=0, con=get_db("DB"))
         except Exception as err:
             app.log_exception(err)
+        
+        auto_finalize = request.args.get("auto_finalize")
+        if auto_finalize:
+            url = url_for(f"{treatment}.webhook", job_id=job_id, worker_id=worker_id, auto_finalize=auto_finalize)
+            client = app.test_client()
+            client.get(url)
+
         session.clear()
 
         session[BASE] = True

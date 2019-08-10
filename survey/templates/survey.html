@@ -17,6 +17,8 @@
 <script>
     window.onload=function() {
       document.getElementById("features").style.display="none";
+      update_tasks();
+      document.getElementById("{{form.code_resp_prop.id}}").onchange = update_tasks;
     }
     
     function getDocHeight(doc) {
@@ -95,11 +97,12 @@
         {{form.proposer_responder.label}}<br>
         {{form.proposer_responder}}<br>
         
+        {{(form.code_resp_prop) }}
         <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button" type="button">Click here to start the main task</button></a><br>
+        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}&auto_finalize=1" target="_blank"><button class="button" type="button">Click here to start the main task</button></a><br>
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_resp_prop.errors)}}</div>
         {{form.code_resp_prop.label}}<br>
-        <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.valule}}" onchange="update_tasks()"><br>
+        <!-- <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.data}}" onchange="update_tasks()"><br> -->
 
         <div id="features">
             <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
@@ -127,7 +130,7 @@
           {{form.code_crt}}<br>
 
           <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.hexaco.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the hexaco task...</button></a><br>
+          <a href="{{url_for('tasks.hexaco.index')}}?job_id={{job_id}}&worker_id={{worker_id}}&treatment={{treatment}}&auto_finalize=1" target="_blank"><button class="button"  type="button">Click here to start the hexaco task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_hexaco.errors)}}</div>
           {{form.code_hexaco.label}}<br>
           {{form.code_hexaco}}<br>
@@ -139,9 +142,6 @@
 
         {{form.please_enter_your_comments_feedback_or_suggestions_below.label}}<br>
         <textarea rows="3" cols="100" id="{{form.please_enter_your_comments_feedback_or_suggestions_below.id}}" value={{form.please_enter_your_comments_feedback_or_suggestions_below.value}}></textarea>
-
-        <div>Follow the link to continue.</div><br>
-        <a href="{{url_for(treatment+'.webhook')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to continue...</button></a><br>
       </div>
     </fieldset>
     <br>

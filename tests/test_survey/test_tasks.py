@@ -8,20 +8,25 @@ from tests.test_survey import client, app, generate_worker_id
 from survey.tasks import cg, crt, eff, risk
 from survey.utils import get_worker_bonus
 
-def process_tasks(client, job_id="test", worker_id=None, bonus_mode="full"):
+#NOTE:
+# - The hexaco tasks is run as the last one for feature generation
+# - The tasks are run after the responder task and the responder round can therefore be finalize at the end of the hexaco task
+
+def process_tasks(client, job_id="test", worker_id=None, bonus_mode="full", url_kwargs=None):
     """
     :param client: (flask.testclient)
     :param job_id: (str)
     :param worker_id: (str)
     :param bonus_mode: (str: random|full|none)
+    :param url_kwars: (dict)
     """
     if worker_id is None:
         worker_id = generate_worker_id("tasks")
     _process_cg(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     _process_crt(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     _process_eff(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    _process_hexaco(client, job_id, worker_id=worker_id)
     _process_risk(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    _process_hexaco(client, job_id, worker_id=worker_id, url_kwargs=url_kwargs)
 
 def _process_cg(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True):
     """
@@ -151,10 +156,14 @@ def test_eff_bonus(client):
         assert b"eff:" in res
         assert get_worker_bonus("test", worker_id) == 0
 
-def _process_hexaco(client, job_id="test", worker_id=None, clear_session=True):
+def _process_hexaco(client, job_id="test", worker_id=None, clear_session=True, url_kwargs=None):
     if worker_id is None:
         worker_id = generate_worker_id("hexaco")
     path = f"/tasks/hexaco/?job_id={job_id}&worker_id={worker_id}"
+    if url_kwargs:
+        for k,v in url_kwargs.items():
+            path += f"&{k}={v}"
+        app.logger.debug("PATH: " + str(path))
     with app.test_request_context(path):
         if clear_session:
             with client:

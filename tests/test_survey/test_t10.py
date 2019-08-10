@@ -13,6 +13,8 @@ from tests.test_survey.test_tasks import process_tasks
 
 TREATMENT = os.path.splitext(os.path.split(__file__)[1])[0][-3:]
 
+WEBHOOK_DELAY = 0.25
+
 def _process_resp(client, job_id="test", worker_id=None, min_offer=100, clear_session=True, path=None):
     if worker_id is None:
         worker_id = generate_worker_id()
@@ -91,11 +93,13 @@ def test_prop_check(client):
         assert b"acceptance_probability" in res
         assert b"best_offer_probability" in res
 
-def _process_prop(client, job_id="test", worker_id=None, offer=100, clear_session=True, response_available=False, path=None):
+def _process_prop(client, job_id="test", worker_id=None, offer=100, clear_session=True, response_available=False, path=None, auto_finalize=False):
     if worker_id is None:
         worker_id = generate_worker_id("prop")
     if path is None:
         path = f"/{TREATMENT}/prop/?job_id={job_id}&worker_id={worker_id}"
+    if auto_finalize is True:
+        path += "&auto_finalize=1"
     if not response_available:
         _process_resp_tasks(client, job_id=job_id)
     with app.test_request_context(path):
@@ -141,9 +145,9 @@ def test_bonus_delayed(client, synchron=False):
         resp_worker_id = generate_worker_id("resp")
         prop_worker_id = generate_worker_id("prop")
         _process_resp_tasks(client, worker_id=resp_worker_id, min_offer=100, bonus_mode="full", synchron=synchron)
-        time.sleep(0.25)
+        time.sleep(WEBHOOK_DELAY)
         _process_prop_round(client, worker_id=prop_worker_id, offer=100, response_available=True, synchron=synchron)
-        time.sleep(0.25)
+        time.sleep(WEBHOOK_DELAY)
         with app.app_context():
             bonus_resp = get_worker_bonus(job_id, resp_worker_id)
             assert bonus_resp == tasks.MAX_BONUS + 100
@@ -172,13 +176,28 @@ def test_webhook(client):
     process_tasks(client, job_id, resp_worker_id, bonus_mode="full")
     _process_resp(client, job_id, resp_worker_id, min_offer=100)
     emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=resp_worker_id, by_get=True)
-    time.sleep(0.25)
+    time.sleep(WEBHOOK_DELAY)
     _process_prop(client, worker_id=prop_worker_id, offer=100, response_available=True)
     emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=prop_worker_id, by_get=True)
-    time.sleep(0.25)
+    time.sleep(WEBHOOK_DELAY)
     with app.app_context():
         bonus_resp = get_worker_bonus(job_id, resp_worker_id)
         assert bonus_resp == tasks.MAX_BONUS + 100
         bonus_prop = get_worker_bonus(job_id, prop_worker_id)
         assert bonus_prop == 100
 
+
+def test_auto_finalize(client):
+    job_id = "test"
+    resp_worker_id = generate_worker_id("resp")
+    prop_worker_id = generate_worker_id("prop")
+    _process_resp(client, job_id, resp_worker_id, min_offer=100)
+    process_tasks(client, job_id, resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": TREATMENT})
+    time.sleep(WEBHOOK_DELAY)
+    _process_prop(client, job_id=job_id, worker_id=prop_worker_id, auto_finalize=True)
+    time.sleep(WEBHOOK_DELAY)
+    with app.app_context():
+        bonus_resp = get_worker_bonus(job_id, resp_worker_id)
+        assert bonus_resp == tasks.MAX_BONUS + 100
+        bonus_prop = get_worker_bonus(job_id, prop_worker_id)
+        assert bonus_prop == 100

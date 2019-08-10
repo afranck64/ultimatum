@@ -20,7 +20,7 @@ from survey._app import app, csrf_protect
 from survey.admin import get_job_config
 from survey.db import get_db, table_exists
 from survey.figure_eight import RowState
-from survey.utils import get_table, increase_worker_bonus
+from survey.utils import get_table, increase_worker_bonus, pay_worker_bonus, get_resp_worker_id
 from .prop import BASE as prop_BASE, finalize_round, JUDGING_TIMEOUT_SEC, LAST_MODIFIED_KEY, STATUS_KEY, WORKER_KEY
 from .resp import BASE as resp_BASE, finalize_resp
 
@@ -66,6 +66,7 @@ def check_is_proposer_next(job_id, worker_id, treatment):
 def handle_index(treatment):
     job_id = request.args.get("job_id", "na")
     worker_id = request.args.get("worker_id", "na")
+    auto_finalize = request.args.get("auto_finalize")
     app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
     is_proposer = check_is_proposer_next(job_id, worker_id, treatment)
 
@@ -80,17 +81,18 @@ def handle_index(treatment):
     
 
     if is_proposer:
-        return redirect(url_for(f"{treatment}.prop.index", job_id=job_id, worker_id=worker_id))
+        return redirect(url_for(f"{treatment}.prop.index", **request.args))
     else:
-        return redirect(url_for(f"{treatment}.resp.index", job_id=job_id, worker_id=worker_id))
+        return redirect(url_for(f"{treatment}.resp.index", **request.args))
 
 
-def _process_judgments(signal, payload, job_id, job_config, treatment):
+def _process_judgments(signal, payload, job_id, job_config, treatment, auto_finalize=False):
     """
     :param signal: (str)
     :param payload: (dict)
     :param job_id: (int|str)
     :param job_config: (JobConfig)
+    :param auto_finalize (bool)
     """
     error_happened = False
     app.logger.debug(f"_process_judgments: {signal}, job_id: {job_id}")
@@ -125,6 +127,14 @@ def _process_judgments(signal, payload, job_id, job_config, treatment):
                             finalize_resp(job_id=job_id, worker_id=worker_id, treatment=treatment)
                         elif is_proposer:
                             finalize_round(job_id=job_id, prop_worker_id=worker_id, treatment=treatment)
+                            
+                            if auto_finalize == False:
+                                #TODO: payment can be done here!!!
+                                #TODO: still requires some tests
+                                prop_worker_id = worker_id
+                                resp_worker_id = get_resp_worker_id(prop_BASE, job_id, prop_worker_id, treatment=treatment)
+                                pay_worker_bonus(job_id, prop_worker_id, fig8)
+                                pay_worker_bonus(job_id, resp_worker_id, fig8)
                         else:
                             app.logger.error(f"Error: unknown worker_id: {worker_id} for job_id: {job_id}")
                     except Exception as err:

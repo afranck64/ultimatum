@@ -185,7 +185,7 @@ def handle_task_index(base, validate_response=None):
             response["time_stop"] = time.time()
             response["time_start"] = session.get("time_start")
             session["response"] = response
-            return redirect(url_for(f"tasks.{base}.done"))
+            return redirect(url_for(f"tasks.{base}.done", **request.args))
         else:
             flash("Please check your fields")
     return render_template(f"tasks/{base}.html")
@@ -247,6 +247,15 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
             increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=worker_bonus)
         except Exception as err:
             app.log_exception(err)
+        
+        #NOTE: hexaco is the LAST task required from the user!!!
+        auto_finalize = request.args.get("auto_finalize")
+        if auto_finalize and base=="hexaco":
+            #TODO finalize user_input
+            treatment = request.args.get("treatment")
+            client = app.test_client()
+            url = url_for(f"{treatment}.webhook", job_id=job_id, worker_id=worker_id, auto_finalize=auto_finalize)
+            client.get(url)
         session.clear()
 
         session[base] = True
@@ -357,6 +366,7 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
         app.logger.info(f"SHOULD BE PAYING: {bonus_cents} cents")
         if job_config["payment_max_cents"] > 0 and job_config["payment_max_cents"] > bonus_cents:
             app.logger.warning(f"Attempted payment over max allowed payment to worker {worker_id} on job {job_id}")
+            return False
         #fig8.contributor_pay(worker_id, bonus_cents)
         fig8.contributor_notify(worker_id, f"Thank you for your participation. You just received your total bonus of {cents_repr(bonus_cents)} ^_^")
         with con:
