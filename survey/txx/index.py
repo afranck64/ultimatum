@@ -95,53 +95,57 @@ def _process_judgments(signal, payload, job_id, job_config, treatment, auto_fina
     :param auto_finalize (bool)
     """
     error_happened = False
-    app.logger.debug(f"_process_judgments: {signal}, job_id: {job_id}")
+    app.logger.debug(f"_process_judgments: {signal}, job_id: {job_id}, auto_finalize: {auto_finalize}")
     with app.app_context():
         try:
-            # app.logger.info(f"Started part-payments..., with signal: {signal}")
             if signal == "new_judgments":
                 judgments_count = payload['judgments_count']
                 fig8 = FigureEight(job_id, job_config["api_key"])
                 for idx in range(judgments_count):
-                    try:
-                        con = get_db("RESULT")
+                    if auto_finalize == True:
+                        try:
+                            con = get_db("RESULT")
+                            worker_judgment = payload['results']['judgments'][idx]
+                            worker_id = worker_judgment["worker_id"]
+                            app.logger.debug(f"_process_judgments: {signal}, job_id: {job_id}, worker_id: {worker_id}")
+                            is_responder = False
+                            is_proposer = False
+                            table_resp = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
+                            table_prop = get_table(prop_BASE, job_id=job_id, schema="result", treatment=treatment)
+                            with con:
+                                if table_exists(con, table_resp):
+                                    res = con.execute(f"SELECT * from {table_resp} WHERE job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
+                                    if res:
+                                        is_responder = True
+                                if not is_responder and table_exists(con, table_prop):
+                                    res = con.execute(f"SELECT * from {table_prop} WHERE job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
+                                    if res:
+                                        is_proposer= True
+                            if is_responder:
+                                finalize_resp(job_id=job_id, worker_id=worker_id, treatment=treatment)
+                            elif is_proposer:
+                                finalize_round(job_id=job_id, prop_worker_id=worker_id, treatment=treatment)
+                            else:
+                                app.logger.error(f"Error: unknown worker_id: {worker_id} for job_id: {job_id}")
+                        except Exception as err:
+                            if not error_happened:
+                                app.log_exception(err)
+                                error_happened = True
+                    else:
                         worker_judgment = payload['results']['judgments'][idx]
                         worker_id = worker_judgment["worker_id"]
-                        app.logger.debug(f"_process_judgments: {signal}, job_id: {job_id}, worker_id: {worker_id}")
-                        #TODO: Not paying any bonus yet
-                        #TODO: may compute the next level here
-                        is_responder = False
-                        is_proposer = False
-                        table_resp = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
-                        table_prop = get_table(prop_BASE, job_id=job_id, schema="result", treatment=treatment)
-                        with con:
-                            if table_exists(con, table_resp):
-                                res = con.execute(f"SELECT * from {table_resp} WHERE job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
-                                if res:
-                                    is_responder = True
-                            if not is_responder and table_exists(con, table_prop):
-                                res = con.execute(f"SELECT * from {table_prop} WHERE job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
-                                if res:
-                                    is_proposer= True
-                        if is_responder:
-                            finalize_resp(job_id=job_id, worker_id=worker_id, treatment=treatment)
-                        elif is_proposer:
-                            finalize_round(job_id=job_id, prop_worker_id=worker_id, treatment=treatment)
-                            
-                            if auto_finalize == False:
-                                #TODO: payment can be done here!!!
-                                #TODO: still requires some tests
-                                prop_worker_id = worker_id
-                                resp_worker_id = get_resp_worker_id(prop_BASE, job_id, prop_worker_id, treatment=treatment)
-                                pay_worker_bonus(job_id, prop_worker_id, fig8)
-                                pay_worker_bonus(job_id, resp_worker_id, fig8)
-                        else:
-                            app.logger.error(f"Error: unknown worker_id: {worker_id} for job_id: {job_id}")
-                    except Exception as err:
-                        if not error_happened:
-                            app.log_exception(err)
-                            error_happened = True
+                        pay_worker_bonus(job_id, worker_id, fig8)
+
             elif signal == "unit_complete":
+                judgments_count = payload['judgments_count']
+                fig8 = FigureEight(job_id, job_config["api_key"])
+                for idx in range(judgments_count):
+                    if auto_finalize == False:
+                        worker_judgment = payload['results']['judgments'][idx]
+                        worker_id = worker_judgment["worker_id"]
+                        # PAY_WORKER won't pay someone twice.
+                        pay_worker_bonus(job_id, worker_id, fig8)
+
                 #TODO: may process the whole unit here
                 pass
         except Exception as err:
@@ -153,6 +157,7 @@ def _process_judgments(signal, payload, job_id, job_config, treatment, auto_fina
 def handle_webhook(treatment):
     app.logger.debug("handle_webhook")
     sync_process = False
+    auto_finalize = False
     sync_process = request.args.get("synchron", False)
     form = request.form.to_dict()
     if "signal" in form:
@@ -167,7 +172,7 @@ def handle_webhook(treatment):
             payload_ext = payload_raw + job_config["api_key"]
             verif_signature = hashlib.sha1(payload_ext.encode()).hexdigest()
             if signature == verif_signature:
-                args = (signal, payload, job_id, job_config, treatment)
+                args = (signal, payload, job_id, job_config, treatment, auto_finalize)
                 if sync_process:
                     _process_judgments(*args)
                 else:
@@ -176,6 +181,7 @@ def handle_webhook(treatment):
         job_id = request.args.get("job_id")
         worker_id = request.args.get("worker_id")
         job_config = get_job_config(get_db("DB"), job_id)
+        auto_finalize = True
         payload = {
             "judgments_count": 1,
             "job_id": job_id,
@@ -188,7 +194,7 @@ def handle_webhook(treatment):
                 ]
             }
         }
-        args = ("new_judgments", payload, job_id, job_config, treatment)
+        args = ("new_judgments", payload, job_id, job_config, treatment, auto_finalize)
         if sync_process:
             _process_judgments(*args)
         else:

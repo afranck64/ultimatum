@@ -1,11 +1,13 @@
 import os
 import time
 import unittest
-
+from unittest import mock
+import requests
 from flask import jsonify
+from httmock import urlmatch, HTTMock, response
 
 from survey import tasks
-from survey.utils import get_worker_bonus
+from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus
 
 from tests.test_survey import app, client, generate_worker_id, emit_webhook
 from tests.test_survey.test_tasks import process_tasks
@@ -14,6 +16,12 @@ from tests.test_survey.test_tasks import process_tasks
 TREATMENT = os.path.splitext(os.path.split(__file__)[1])[0][-3:]
 
 WEBHOOK_DELAY = 0.25
+
+
+@urlmatch(netloc=r'api.figure-eight.com$')
+def figure_eight_mock(url, request):
+    return response()
+
 
 def _process_resp(client, job_id="test", worker_id=None, min_offer=100, clear_session=True, path=None):
     if worker_id is None:
@@ -169,7 +177,7 @@ def test_bonus_nodelay(client, synchron=True):
             assert bonus_prop == 100
 
 def test_webhook(client):
-    #TODO: include form/payload based webhook trigger
+    # In real conditions, the tasks/webhook are delayed with +500 ms
     job_id = "test"
     resp_worker_id = generate_worker_id("resp")
     prop_worker_id = generate_worker_id("prop")
@@ -188,6 +196,7 @@ def test_webhook(client):
 
 
 def test_auto_finalize(client):
+    # Test automatic webhook triggering to finalize tasks
     job_id = "test"
     resp_worker_id = generate_worker_id("resp")
     prop_worker_id = generate_worker_id("prop")
@@ -201,3 +210,24 @@ def test_auto_finalize(client):
         assert bonus_resp == tasks.MAX_BONUS + 100
         bonus_prop = get_worker_bonus(job_id, prop_worker_id)
         assert bonus_prop == 100
+
+
+def test_payment(client):
+    with HTTMock(figure_eight_mock):
+        job_id = "test"
+        resp_worker_id = generate_worker_id("resp")
+        prop_worker_id = generate_worker_id("prop")
+        _process_resp(client, job_id, resp_worker_id, min_offer=100)
+        process_tasks(client, job_id, resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": TREATMENT})
+        time.sleep(WEBHOOK_DELAY)
+        _process_prop(client, job_id=job_id, worker_id=prop_worker_id, auto_finalize=True)
+        time.sleep(WEBHOOK_DELAY)
+        for _ in range(5):
+            emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id="test", worker_id=prop_worker_id, by_get=False)
+            emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id="test", worker_id=resp_worker_id, by_get=False)
+            time.sleep(WEBHOOK_DELAY)
+            with app.app_context():
+                assert 0 == get_worker_bonus(job_id, resp_worker_id)
+                assert get_worker_paid_bonus(job_id, resp_worker_id) == tasks.MAX_BONUS + 100
+                assert 0 == get_worker_bonus(job_id, prop_worker_id)
+                assert get_worker_paid_bonus(job_id, prop_worker_id) == 100
