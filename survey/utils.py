@@ -347,7 +347,7 @@ def get_total_worker_bonus(job_id, worker_id, con=None):
     """
     bonus_row = _get_worker_bonus_row(job_id, worker_id, con)
     if bonus_row is None:
-    return 0
+        return 0
     return bonus_row["bonus_cents"] + bonus_row["paid_bonus_cents"]
 
 def get_resp_worker_id(base, job_id, prop_worker_id, treatment=None):
@@ -388,8 +388,8 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
         with con:
             row = con.execute(f'select bonus_cents, paid_bonus_cents, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
             if row:
-                should_pay = True
                 bonus_cents = row["bonus_cents"]
+                should_pay = True and bonus_cents > 0
                 new_paid_bonus_cents = row["bonus_cents"] + row["paid_bonus_cents"]
             else:
                 app.logger.warning(f"pay_worker_bonus: worker not found! job_id: {job_id}, worker_id: {worker_id}")
@@ -400,13 +400,17 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
         if job_config["payment_max_cents"] > 0 and job_config["payment_max_cents"] > bonus_cents:
             app.logger.warning(f"Attempted payment over max allowed payment to worker {worker_id} on job {job_id}")
             return False
-        #fig8.contributor_pay(worker_id, bonus_cents)
+        success = fig8.contributor_pay(worker_id, bonus_cents)
+        if not success:
+            app.logger.info(f"Impossible to pay: {bonus_cents} cents to contributor {worker_id}")
+            return False
+        else:
+            with con:
+                update(f"UPDATE {table} SET bonus_cents=?, paid_bonus_cents=? WHERE rowid=?", (0, new_paid_bonus_cents, row["rowid"]), con=con)
         fig8.contributor_notify(worker_id, f"Thank you for your participation. You just received your total bonus of {cents_repr(bonus_cents)} ^_^")
-        with con:
-            update(f"UPDATE {table} SET bonus_cents=?, paid_bonus_cents=? WHERE rowid=?", (0, new_paid_bonus_cents, row["rowid"]), con=con)
         return True
     else:
-        #fig8.contributor_notify(worker_id, f"Thank you for your participation. You seems to have already been paid. ^_^")
+        fig8.contributor_notify(worker_id, f"Thank you for your participation. Either you have already been paid or your bonus amount to 0.0 USD. ^_^")
         pass
     return False
 ############################################################
