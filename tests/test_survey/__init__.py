@@ -4,6 +4,7 @@ import random
 import string
 import json
 import hashlib
+import time
 
 import pytest
 from survey.app import app
@@ -118,7 +119,7 @@ webhook_data_template =  {
     "signature": ""
 }
 
-def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgments", unit_state="finalized", treatment="t10", by_get=False):
+def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgments", unit_state="finalized", treatment="t10", by_get=True):
     """
     :param client:
     :param url: (str) relative path to target api
@@ -130,8 +131,9 @@ def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgmen
     """
     import time
     proceed = False
+    max_retries = 5
     with app.app_context():
-        while not proceed:
+        while not proceed and max_retries>0:
             table_resp = get_table("resp", job_id, "result", treatment=treatment)
             table_prop = get_table("prop", job_id, "result", treatment=treatment)
             app.logger.debug("Waiting for the db...")
@@ -142,6 +144,8 @@ def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgmen
                 elif con.execute(f"SELECT * FROM {table_prop} where worker_id=?", (worker_id,)).fetchone():
                     proceed = True
             con = None
+            time.sleep(0.01)
+            max_retries -= 1
         data_dict = dict(webhook_data_template)
         data_dict["signal"] = signal
         data_dict["payload"]["job_id"] = job_id
@@ -164,7 +168,9 @@ def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgmen
                 url += f"&job_id={job_id}&worker_id={worker_id}"
             else:
                 url += f"?job_id={job_id}&worker_id={worker_id}"
-        res = client.post(url, data=data, follow_redirects=True).status
+            res = client.get(url, follow_redirects=True).status
+        else:
+            res = client.post(url, data=data, follow_redirects=True).status
         return res
 
 def generate_worker_id(base="test", k=10):
