@@ -4,13 +4,14 @@ import importlib
 
 from survey import tasks
 from survey import t10
-from survey.txx import handle_survey, handle_survey_done
+from survey.txx import handle_survey, handle_survey_done, handle_survey_cpc, handle_survey_cpc_done
 from survey import admin
 
 from survey._app import app, csrf_protect
 
 app.register_blueprint(tasks.cg.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.crt.bp, url_prefix='/tasks')
+app.register_blueprint(tasks.cpc.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.eff.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.hexaco.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.risk.bp, url_prefix='/tasks')
@@ -46,6 +47,15 @@ def survey_done():
 @app.route("/survey/overview")
 def overview():
     return render_template("overview.html")
+
+@csrf_protect.exempt
+@app.route("/survey_cpc", methods=["GET", "POST"])
+def survey_cpc():
+    return handle_survey_cpc()
+
+@app.route("/survey_cpc/done")
+def survey_cpc_done():
+    return handle_survey_cpc_done()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)

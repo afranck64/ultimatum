@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .button {
+    background-color: #49afcd; /* Green */
+    border: none;
+    color: white;
+    padding: 7px 8px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 4px;
+  }
+</style>
+<script>
+    window.onload=function() {
+      document.getElementById("features").style.display="none";
+      update_tasks();
+      document.getElementById("{{form.code_resp_prop.id}}").onchange = update_tasks;
+    }
+    
+    function getDocHeight(doc) {
+      doc = doc || document;
+      // stackoverflow.com/questions/1145850/
+      var body = doc.body, html = doc.documentElement;
+      var height = Math.max( body.scrollHeight, body.offsetHeight, 
+          html.clientHeight, html.scrollHeight, html.offsetHeight );
+      return height;
+    }
+
+    function setIframeHeight(id) {
+      var ifrm = document.getElementById(id);
+      var doc = ifrm.contentDocument? ifrm.contentDocument: 
+          ifrm.contentWindow.document;
+      ifrm.style.visibility = 'hidden';
+      ifrm.style.height = "10px"; // reset to minimal height ...
+      // IE opt. for bing/msn needs a bit added or scrollbar appears
+      ifrm.style.height = getDocHeight( doc ) + 4 + "px";
+      ifrm.style.visibility = 'visible';
+    }
+
+    function update_tasks() {
+      var code_resp_prop = document.getElementById("{{form.code_resp_prop.id}}").value;
+      
+      if (code_resp_prop.startsWith("resp")) {
+        document.getElementById("features").style.display='block';
+      } else {
+        document.getElementById("features").style.display='none';
+      }
+    }
+
+    function toggle_overview() {
+      console.log(document.getElementById("overview").style.display=="none")
+      if (document.getElementById("overview").style.display=="none") {
+        document.getElementById("overview").style.display="block";
+      } else {
+        document.getElementById("overview").style.display="none";
+      }
+    }
+  </script>
+
+  <br>
+  <input type="button" onclick="toggle_overview()" value="Toggle Instructions" width="100px">
+  <iframe onload="setIframeHeight(this.id)" id="overview" src="{{url_for('overview')}}"  width="100%" height="1200px" style="display: block;" frameborder="1"></iframe>
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <fieldset>
+      <div>
+        {#
+        <!-- Begin comment -->
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.gender.errors)}}</div>
+        {{form.gender.label}}<br>
+        {{form.gender}}<br>
+
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.age.errors)}}</div>
+        {{form.age.label}}<br>
+        {{form.age}}<br>
+
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.ethnicity.errors)}}</div>
+        {{form.ethnicity.label}}<br>
+        {{form.ethnicity}}<br>
+
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.income.errors)}}</div>
+        {{form.income.label}}<br>
+        {{form.income}}<br>
+        
+        <!-- End comment -->
+        #}
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.proposer.errors)}}</div>
+        {{form.proposer.label}}<br>
+        {{form.proposer}}<br>
+
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.responder.errors)}}</div>
+        {{form.responder.label}}<br>
+        {{form.responder}}<br>
+
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.proposer_responder.errors)}}</div>
+        {{form.proposer_responder.label}}<br>
+        {{form.proposer_responder}}<br>
+        
+        <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+        <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}&auto_finalize=1" target="_blank"><button class="button" type="button">Click here to start the main task</button></a><br>
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_resp_prop.errors)}}</div>
+        {{form.code_resp_prop.label}}<br>
+        {{(form.code_resp_prop) }}
+        <!-- <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.data}}" onchange="update_tasks()"><br> -->
+
+        <div id="features">
+
+          <div>Follow the link to begin the choices task, complete it and then enter the completion code below.</div><br>
+          <a href="{{url_for('tasks.cpc.index')}}?job_id={{job_id}}&worker_id={{worker_id}}&treatment={{treatment}}&auto_finalize=1" target="_blank"><button class="button"  type="button">Click here to start the hexaco task...</button></a><br>
+          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_cpc.errors)}}</div>
+          {{form.code_cpc.label}}<br>
+          {{form.code_cpc}}<br>
+        </div>
+
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.test.errors)}}</div>
+        {{form.test.label}}<br>
+        {{form.test}}<br>
+
+        {{form.please_enter_your_comments_feedback_or_suggestions_below.label}}<br>
+        <textarea rows="3" cols="100" id="{{form.please_enter_your_comments_feedback_or_suggestions_below.id}}" value={{form.please_enter_your_comments_feedback_or_suggestions_below.value}}></textarea>
+      </div>
+    </fieldset>
+    <br>
+    <div align="center">
+        <input type="submit" class="button"  type="button" value="Submit">
+    </div>
+  </form>
+{% endblock %}

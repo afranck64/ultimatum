@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{url_for('static', filename='risk.css')}}">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+                $(document).ready(function() {
+		    var count=0;
+                    logClicks(count);
+                });
+
+function GetURLParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+        {
+            return sParameterName[1];
+        }
+    }
+}
+
+        function logClicks(counter) {
+	        $(".box*").on("click", function() {
+		counter++;
+                var cell = $(this).attr('id');
+                $("#"+cell).css("background-color", "#E68B8B");
+                $("#"+cell).css("pointer-events", "none");
+                document.getElementById('total').innerHTML=counter*5;
+                document.getElementById('cell_count').innerHTML=counter;
+                document.getElementById('cells_unopened').innerHTML=50-counter;
+
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("GET", "check?cell=" +cell, true);
+                xmlhttp.send();
+                
+                /*if(cell=="cell1"){
+                    console.log('Entered Cell 1')
+                    $("#cell1").css("background-color", "#E68B8B");
+                }
+                else if (cell=="cell2") {
+                    console.log('Entered Cell 2');
+                    $("#cell2").css("background-color", "#E68B8B");
+                }*/
+                
+            });
+        }
+    </script>
+    <title>Play and Earn Money!</title>
+</head>
+<title>Choices</title>
+</head>
+<body>
+
+<div>
+<h1 align="center">Please make your choices between option A and option B.</h1>
+<br>
+<h2 align="center">For each choice a reward is randomly drawn according to the presented probabilities and your profit is the sum of the reward for each question.</h2>
+<br>
+<br>
+<form action="{{url_for('tasks.cpc.index')}}" method="POST" id="cg">
+  {% for problem in problems %}
+  <table width="600px" border="1" align="center">
+      <tr>
+          <td>
+              <ul>
+                    {% for choice in problem["optionsA"] %}
+                        <li> {{ choice }}</li>
+                    {% endfor %}
+              </ul>
+          </td>
+          <td>
+                <ul>
+                      {% for choice in problem["optionsB"] %}
+                          <li> {{ choice }}</li>
+                      {% endfor %}
+                </ul>
+          </td>
+      </tr>
+      <tr>
+          <td>
+                <label style="display: inline-block; width:100%; text-align: center"><input type="radio" name="q{{loop.index0+1}}" value="A" required>Option A</label>
+            </td>
+          <td>
+                <label style="display: inline-block; width:100%; text-align: center"><input type="radio" name="q{{loop.index0+1}}" value="B" required>Option B</label>
+            </td>
+      </tr>
+  </table>
+  <br>
+  {% endfor %}
+  <br>
+    <div style="text-align:center">
+    <input class="button" type="submit" value="Submit" style="margin:50"></div>
+</form>
+</body>
+</html>
