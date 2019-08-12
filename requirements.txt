@@ -21,3 +21,4 @@ requests
 #### tests
 pytest
 pytest-cov
+httpmock
