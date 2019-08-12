@@ -49,7 +49,7 @@ def overview():
     return render_template("overview.html")
 
 @csrf_protect.exempt
-@app.route("/survey_cpc", methods=["GET", "POST"])
+@app.route("/survey_cpc/", methods=["GET", "POST"])
 def survey_cpc():
     return handle_survey_cpc()
 
