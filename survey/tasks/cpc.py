@@ -58,7 +58,7 @@ def CPC18_getDist(H, pH, L, lot_shape, lot_num):
         # incorporate L into the distribution
         dist = high_dist
         locb = np.where(high_dist[:, 0] == L)
-        if all(locb):
+        if np.all(locb):
             dist[locb, 1] = dist[locb, 1] + (1-pH)
         elif pH < 1:
             dist = np.vstack((dist, [L, 1-pH]))
