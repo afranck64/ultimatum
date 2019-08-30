@@ -44,7 +44,7 @@
     function update_tasks() {
       var code_resp_prop = document.getElementById("{{form.code_resp_prop.id}}").value;
       
-      if (code_resp_prop.startsWith("resp")) {
+      if (code_resp_prop.indexOf("resp") !== -1) {
         document.getElementById("features").style.display='block';
       } else {
         document.getElementById("features").style.display='none';
