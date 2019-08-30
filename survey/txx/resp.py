@@ -42,6 +42,8 @@ LAST_MODIFIED_KEY = '_time_change'
 
 OFFER_VALUES = {str(val):cents_repr(val) for val in range(0, 201, 5)}
 
+OTHERS_MISSING_VALUE = -1
+
 JUDGING_TIMEOUT_SEC = 5*60
 
 if app.config["DEBUG"]:
@@ -112,9 +114,8 @@ def handle_index(treatment, template=None):
         response = session["response"]
         response["time_stop"] = time.time()
         response["min_offer"] = int(request.form["min_offer"])
-        response["other_resp"] = int(request.form["other_resp"])
-        response["other_prop"] = int(request.form["other_prop"])
-        ##TODO return redirect
+        response["other_resp"] = int(request.form.get("other_resp", OTHERS_MISSING_VALUE))
+        response["other_prop"] = int(request.form.get("other_prop", OTHERS_MISSING_VALUE))
         session['response'] = response
         return redirect(url_for(f"{treatment}.resp.done"))
 

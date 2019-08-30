@@ -253,6 +253,7 @@ def close_row(con, job_id, row_id, treatment):
 
 def insert_row(job_id, resp_row, treatment, overwrite=False):
     app.logger.debug("insert_row")
+    ENABLED_FAKE_MODEL_KEY = f"{treatment.upper()}_FAKE_MODEL"
     MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
     MODEL_TYPES = [REAL_MODEL, WEAK_FAKE_MODEL, STRONG_FAKE_MODEL]
     model_type = None
@@ -273,9 +274,11 @@ def insert_row(job_id, resp_row, treatment, overwrite=False):
     con = get_db("DATA")
     insert(df, table, con=con, overwrite=overwrite, unique_fields=["resp_worker_id"])
 
-    if app.config["FAKE_MODEL"]:
-        with con:
-            rowid = con.execute(f"SELECT {PK_KEY} FROM {table} where resp_worker_id=?", (resp_row[WORKER_KEY], )).fetchone()[PK_KEY]
+    with con:
+        rowid = con.execute(f"SELECT {PK_KEY} FROM {table} where resp_worker_id=?", (resp_row[WORKER_KEY], )).fetchone()[PK_KEY]
+
+    # if true, fake models should be used for this treatment
+    if app.config[ENABLED_FAKE_MODEL_KEY]:
         if rowid is not None:
             model_type = MODEL_TYPES[rowid % len(MODEL_TYPES)]
         else:

@@ -54,12 +54,13 @@ app.config["DATABASE_DATA"] = os.getenv("DATABASE_DATA", "./db.data.sqlite3")
 app.config["DATABASE_RESULT"] = os.getenv("DATABASE_RESULT", "./db.result.sqlite3")
 app.config["ADMIN_SECRET"] = os.getenv("ADMIN_SECRET", "")
 app.config["THREADS_POOL"] = pool.ThreadPool(processes=1)
-app.config["FAKE_MODEL"] = _env2bool(os.getenv("FAKE_MODEL", 'yes'))
 _treatments = []
 for treatment in ["T10", "T11", "T12", "T13", "T20", "T21", "T22"]:
     app.config[treatment] = _env2bool(os.getenv(treatment)) or _env2bool(os.getenv("TXX"))
     model_treatment = TREATMENTS_MODEL_REFS[treatment]
     treatment_dir = f"{CODE_DIR}/data/{model_treatment.lower()}/"
+    fake_model_key = f"{treatment}_FAKE_MODEL"
+    app.config[fake_model_key] = _env2bool(os.getenv(fake_model_key)) or _env2bool(os.getenv("TXX_FAKE_MODEL"))
     if app.config[treatment] and os.path.exists(treatment_dir):
         model_key = f"{model_treatment}_MODEL"
         model_infos_key = f"{model_treatment}_MODEL_INFOS"
