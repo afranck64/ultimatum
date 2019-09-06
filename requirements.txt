@@ -12,6 +12,7 @@ xlrd
 xlwt
 ##conda install -c conda-forge xgboost
 #shap
+boto3
 
 #### survey
 flask
