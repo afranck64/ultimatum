@@ -101,7 +101,7 @@ class ProposerForm(FlaskForm):
 def handle_index(treatment, template=None):
     app.logger.debug("handle_index")
     if template is None:
-        template = f"{treatment}/resp.html"
+        template = f"txx/resp.html"
     if request.method == "GET":
         worker_id = request.args.get("worker_id", "na")
         job_id = request.args.get("job_id", "na")
@@ -125,7 +125,7 @@ def handle_index(treatment, template=None):
 def handle_done(treatment, template=None):
     app.logger.debug("handle_done")
     if template is None:
-        template = f"{treatment}/resp.done.html"
+        template = f"txx/resp.done.html"
 
     worker_code_key = f"{BASE}__worker_code"
     if not session.get(BASE, None):

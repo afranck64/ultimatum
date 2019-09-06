@@ -23,6 +23,7 @@ for treatment in app.config["TREATMENTS"]:
             app.register_blueprint(txx.index.bp, url_prefix=f"/{treatment.lower()}")
             app.register_blueprint(txx.prop.bp, url_prefix=f"/{treatment.lower()}")
             app.register_blueprint(txx.resp.bp, url_prefix=f"/{treatment.lower()}")
+            app.register_blueprint(txx.survey.bp, url_prefix=f"/survey/{treatment.lower()}")
         except ImportError as err:
             #app.log_exception(err)
             warnings.warn(str(err))
@@ -58,4 +59,5 @@ def survey_cpc_done():
     return handle_survey_cpc_done()
 
 if __name__ == "__main__":
+    # print(app.url_map)
     app.run(host='0.0.0.0', port=8000)
