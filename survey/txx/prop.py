@@ -215,6 +215,7 @@ def get_row(con, job_id, worker_id, treatment):
     app.logger.debug("get_row")
     table = get_table(base=BASE, job_id=job_id, schema="data", treatment=treatment)
     if not table_exists(con, table):
+        app.logger.warning(f"table: {table} does not exist")
         return None
     free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==?', (RowState.JUDGEABLE,)).fetchone()
     res = None
@@ -251,11 +252,33 @@ def close_row(con, job_id, row_id, treatment):
             update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING), con=con)
     app.logger.debug("close_row - done")
 
-def insert_row(job_id, resp_row, treatment, overwrite=False):
-    app.logger.debug("insert_row")
+
+def process_insert_row_no_model(job_id, resp_row, treatment, overwrite=False):
+    """
+    Insert a new row for the proposer assuming no model is available
+    """
+    app.logger.debug("process_insert_row_no_model")
+    resp_row = dict(resp_row)
+    df = pd.DataFrame(data=[resp_row])
+    df[STATUS_KEY] = RowState.JUDGEABLE
+    df[LAST_MODIFIED_KEY] = time.time()
+    df[WORKER_KEY] = None
+    df["resp_worker_id"] = resp_row[WORKER_KEY]
+
+    table = get_table(BASE, job_id=job_id, schema="data", treatment=treatment)
+    con = get_db("DATA")
+    insert(df, table, con=con, overwrite=overwrite, unique_fields=["resp_worker_id"])
+
+    app.logger.debug("process_insert_row_no_model - done")
+
+def process_insert_row_with_model(job_id, resp_row, treatment, overwrite=False):
+    """
+    Insert a new row for the proposer with the ai predicted min_offer
+    """
+    app.logger.debug("process_insert_row_with_model")
     ENABLED_FAKE_MODEL_KEY = f"{treatment.upper()}_FAKE_MODEL"
     MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
-    MODEL_TYPES = [REAL_MODEL, WEAK_FAKE_MODEL, STRONG_FAKE_MODEL]
+    MODEL_TYPES = [WEAK_FAKE_MODEL, STRONG_FAKE_MODEL]
     model_type = None
     ai_offer = 0
     features, features_dict = get_features(job_id, resp_worker_id=resp_row[WORKER_KEY], treatment=treatment)
@@ -295,8 +318,16 @@ def insert_row(job_id, resp_row, treatment, overwrite=False):
     ai_offer = int(ai_offer)
     with con:
         update(sql=f"UPDATE {table} SET ai_offer=?, model_type=? where rowid=?", args=(ai_offer, model_type, rowid), con=con)
-    app.logger.debug("insert_row - done" + "MODEL_TYPE: " + str(rowid % len(MODEL_TYPES)) + "  " + str(rowid))
+    app.logger.debug("process_insert_row_with_model - done" + "MODEL_TYPE: " + str(rowid % len(MODEL_TYPES)) + "  " + str(rowid))
 
+
+def insert_row(job_id, resp_row, treatment, overwrite=False):
+    MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
+    dss_available = bool(app.config.get(MODEL_KEY))
+    if dss_available:
+        process_insert_row_with_model(job_id, resp_row, treatment, overwrite)
+    else:
+        process_insert_row_no_model(job_id, resp_row, treatment, overwrite)
 
 
 def save_prop_result2db(con, proposal_result, job_id, overwrite=False, treatment=None):
