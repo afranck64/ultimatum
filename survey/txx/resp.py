@@ -98,8 +98,10 @@ class ProposerForm(FlaskForm):
     other_resp = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
-def handle_index(treatment, template=None):
+def handle_index(treatment, template=None, messages=None):
     app.logger.debug("handle_index")
+    if messages is None:
+        messages = []
     if template is None:
         template = f"txx/resp.html"
     if request.method == "GET":
@@ -110,6 +112,8 @@ def handle_index(treatment, template=None):
         session["worker_id"] = worker_id
         session["job_id"] = job_id
 
+        for message in messages:
+            flash(message)
     if request.method == "POST":
         response = session["response"]
         response["time_stop"] = time.time()
