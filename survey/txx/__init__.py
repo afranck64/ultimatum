@@ -69,9 +69,9 @@ class MainForm(FlaskForm):
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
-def handle_survey():
-    job_id = BASE
-    worker_id = str(uuid.uuid4())
+def handle_survey(treatment=None, template=None):
+    if template is None:
+        template = "txx/survey.html"
     treatment = get_latest_treatment()
     session["job_id"] = job_id
     session["worker_id"] = worker_id
@@ -82,7 +82,7 @@ def handle_survey():
         form = MainForm(request.form)
         session["response"] = request.form.to_dict()
         return redirect(url_for("survey_done"))
-    return render_template("survey.html", job_id=job_id, worker_id=worker_id, treatment=treatment, form=form)
+    return render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form)
 
 def handle_survey_done():
     if not session.get("txx"):
