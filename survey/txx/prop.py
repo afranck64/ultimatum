@@ -312,10 +312,12 @@ class ProposerForm(FlaskForm):
 
 def handle_index(treatment, template=None, proposal_class=None, messages=None):
     app.logger.debug("handle_index")
+    if messages is None:
+        messages = []
     if proposal_class is None:
         proposal_class = HHI_Prop_ADM
     if template is None:
-        template = f"{treatment}/prop.html"
+        template = f"txx/prop.html"
     if request.method == "GET":
         session['proposal'] = proposal_class()
         worker_id = request.args.get("worker_id", "na")
@@ -381,7 +383,7 @@ def handle_check(treatment):
 def handle_done(treatment, template=None, response_to_result_func=None):
     app.logger.debug("handle_done")
     if template is None:
-        template = f"{treatment}/{BASE}.done.html"
+        template = f"txx/{BASE}.done.html"
     if response_to_result_func is None:
         response_to_result_func = prop_to_prop_result
     worker_code_key = f"{BASE}_worker_code"
