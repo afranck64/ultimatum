@@ -47,6 +47,9 @@ def _process_resp_tasks(client, job_id="test", worker_id=None, min_offer=100, bo
         emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id=job_id, worker_id=worker_id)
     return res
 
+def test_available():
+    assert TREATMENT.upper() in app.config["TREATMENTS"]
+
 def test_index(client):
     for _ in range(3):
         worker_id = generate_worker_id("index_resp")

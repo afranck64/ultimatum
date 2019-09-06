@@ -36,10 +36,14 @@ def get_latest_treatment():
     """
     Returns the highest enabled treatment
     """
-    print(app.config["TREATMENTS"])
+    treatment = None
     for _treatment in app.config["TREATMENTS"][::-1]:
         if app.config[_treatment]:
-            return _treatment.lower()
+            treatment = _treatment.lower()
+            break
+    if treatment is None:
+        raise ValueError("No selectable treatment detected. ")
+    return treatment
 
 
 
