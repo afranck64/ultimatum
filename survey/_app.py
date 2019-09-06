@@ -55,27 +55,38 @@ app.config["DATABASE_RESULT"] = os.getenv("DATABASE_RESULT", "./db.result.sqlite
 app.config["ADMIN_SECRET"] = os.getenv("ADMIN_SECRET", "")
 app.config["THREADS_POOL"] = pool.ThreadPool(processes=1)
 _treatments = []
-for treatment in ["T10", "T11", "T12", "T13", "T20", "T21", "T22"]:
+for treatment in TREATMENTS:
     app.config[treatment] = _env2bool(os.getenv(treatment)) or _env2bool(os.getenv("TXX"))
     model_treatment = TREATMENTS_MODEL_REFS[treatment]
-    treatment_dir = f"{CODE_DIR}/data/{model_treatment.lower()}/"
-    fake_model_key = f"{treatment}_FAKE_MODEL"
-    app.config[fake_model_key] = _env2bool(os.getenv(fake_model_key)) or _env2bool(os.getenv("TXX_FAKE_MODEL"))
-    if app.config[treatment] and os.path.exists(treatment_dir):
-        model_key = f"{model_treatment}_MODEL"
-        model_infos_key = f"{model_treatment}_MODEL_INFOS"
+    model_key = f"{model_treatment}_MODEL"
+    model_infos_key = f"{model_treatment}_MODEL_INFOS"
+    if model_treatment is None:
+        app.config[model_key] = None
+        app.config[model_infos_key] = None
         try:
-            if app.config.get(model_key) is None or app.config.get(model_infos_key) is None:
-                app.config[model_key] = joblib.load(os.path.join(treatment_dir, "model.pkl"))
-                with open(os.path.join(treatment_dir, "model.json")) as inp_f:
-                    app.config[model_infos_key] = json.load(inp_f)
-            try:
-                importlib.import_module(f"survey.{treatment.lower()}")
-                _treatments.append(treatment)
-            except Exception as err:
-                app.log_exception(err)
+            importlib.import_module(f"survey.{treatment.lower()}")
+            _treatments.append(treatment)
         except Exception as err:
             app.logger.warning(err)
+    else:
+        treatment_dir = f"{CODE_DIR}/data/{model_treatment.lower()}/"
+        fake_model_key = f"{treatment}_FAKE_MODEL"
+        app.config[fake_model_key] = _env2bool(os.getenv(fake_model_key)) or _env2bool(os.getenv("TXX_FAKE_MODEL"))
+        if app.config[treatment] :# and os.path.exists(treatment_dir):
+            try:
+                if app.config.get(model_key) is None or app.config.get(model_infos_key) is None:
+                    app.config[model_key] = joblib.load(os.path.join(treatment_dir, "model.pkl"))
+                    with open(os.path.join(treatment_dir, "model.json")) as inp_f:
+                        app.config[model_infos_key] = json.load(inp_f)
+                try:
+                    importlib.import_module(f"survey.{treatment.lower()}")
+                    _treatments.append(treatment)
+                except ImportError as err:
+                    app.logger.warning(err)
+                except Exception as err:
+                    app.logger.error(err)
+            except Exception as err:
+                app.logger.warning(err)
 app.config["TREATMENTS"] = _treatments
 app.config["OUTPUT_DIR"] = os.getenv("OUTPUT_DIR", "./data/output")
 os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)
