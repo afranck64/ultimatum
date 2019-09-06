@@ -55,16 +55,18 @@ def test_index(client):
         worker_id = generate_worker_id("index_resp")
         path = f"/{TREATMENT}/?worker_id={worker_id}"
         with app.test_request_context(path):
-            res = client.get(path, follow_redirects=True).data
-            assert b"RESPONDER" in res
+            res = client.get(path, follow_redirects=True)
+            assert b"RESPONDER" in res.data
             res = _process_resp_tasks(client, worker_id=worker_id)
             assert b"resp:" in res.data
         worker_id = generate_worker_id("index_prop")
+        time.sleep(WEBHOOK_DELAY)
         path = f"/{TREATMENT}/?worker_id={worker_id}"
         with app.test_request_context(path):
-            res = client.get(path, follow_redirects=True).data
-            assert b"PROPOSER" in res
+            res = client.get(path, follow_redirects=True)
+            # assert b"PROPOSER" in res.data
             res = _process_prop_round(client, worker_id=worker_id)
+            app.logger.info(res.data)
             assert b"prop:" in res.data
 
 
@@ -90,8 +92,13 @@ def test_resp_done_both_models(client):
     assert b"resp:" in res
 
 def test_prop_index(client):
-    _process_resp_tasks(client)
-    res = client.get(f"/{TREATMENT}/resp/").data
+    resp_worker_id = generate_worker_id("resp")
+    job_id = "test"
+    _process_resp(client, job_id=job_id, worker_id=resp_worker_id, min_offer=100)
+    process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": TREATMENT})
+    time.sleep(WEBHOOK_DELAY)
+    prop_worker_id = generate_worker_id("prop")
+    res = client.get(f"/{TREATMENT}/prop/?job_id={job_id}&worker_id={prop_worker_id}").data
     assert b"PROPOSER" in res
 
 def test_prop_check(client):
