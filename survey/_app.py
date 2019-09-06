@@ -7,7 +7,7 @@ import joblib
 import importlib
 from multiprocessing import pool
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify
+    Blueprint, flash, Flask, g, redirect, render_template, request, url_for, jsonify
 )
 from flask_wtf.csrf import CSRFProtect
 

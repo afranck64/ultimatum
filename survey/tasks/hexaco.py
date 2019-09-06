@@ -3,7 +3,7 @@ from flask import (
 )
 import datetime
 from survey._app import csrf_protect
-from survey.utils import handle_task_done, handle_task_index
+from survey.tasks.task import handle_task_done, handle_task_index
 
 
 #### const

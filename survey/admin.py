@@ -11,7 +11,7 @@ import io
 import pandas as pd
 
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
+    Blueprint, flash, Flask, g, redirect, render_template, request, url_for, jsonify, Response
 )
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField

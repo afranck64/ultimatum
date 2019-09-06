@@ -10,7 +10,7 @@ import io
 import hashlib
 
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
+    Blueprint, flash, Flask, g, redirect, render_template, request, url_for, jsonify, Response
 )
 
 from survey._app import app, csrf_protect

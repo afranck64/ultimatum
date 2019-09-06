@@ -3,13 +3,20 @@ import time
 import unittest
 from unittest import mock
 import requests
-import random
 from flask import jsonify
 from httmock import urlmatch, HTTMock, response
 
 from survey import tasks
-from survey.txx.survey import MainForm
-from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED
+from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus
+
+### The test partially reflects an old implementation
+# they are disabled first, as T00 is not required anymore.
+# TODO: fix 
+import pytest
+if pytest.__version__ < "3.0.0":
+    pytest.skip()
+else:
+    pytestmark = pytest.mark.skip
 
 from tests.test_survey import app, client, generate_worker_id, emit_webhook
 from tests.test_survey.test_tasks import process_tasks
@@ -17,9 +24,10 @@ from tests.test_survey.test_tasks import process_tasks
 
 TREATMENT = os.path.splitext(os.path.split(__file__)[1])[0][-3:]
 
+TASK_REPETITION = 1
+
 WEBHOOK_DELAY = 0.25
 
-TASK_REPETITION = 1
 
 @urlmatch(netloc=r'api.figure-eight.com$')
 def figure_eight_mock(url, request):
@@ -45,34 +53,28 @@ def _process_resp_tasks(client, job_id="test", worker_id=None, min_offer=100, bo
     process_tasks(client, job_id=job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     res = _process_resp(client, job_id=job_id, worker_id=worker_id, min_offer=min_offer, clear_session=clear_session, path=path)
     if synchron:
-        emit_webhook(client, url=f"/{TREATMENT}/webhook/?synchron=1", job_id=job_id, worker_id=worker_id)
+        emit_webhook(client, url=f"/{TREATMENT}/webhook/?synchron=1", job_id=job_id, worker_id=worker_id, treatment=TREATMENT)
     else:
-        emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id=job_id, worker_id=worker_id)
+        emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id=job_id, worker_id=worker_id, treatment=TREATMENT)
     return res
 
-def test_available():
-    assert TREATMENT.upper() in app.config["TREATMENTS"]
-
 def test_index(client):
-    job_id = "test"
+    app.logger.error("TREATMENT: " + TREATMENT)
     for _ in range(TASK_REPETITION):
-        resp_worker_id = generate_worker_id("index_resp")
-        path = f"/{TREATMENT}/?worker_id={resp_worker_id}"
+        worker_id = generate_worker_id("index_resp")
+        path = f"/{TREATMENT}/?worker_id={worker_id}"
         with app.test_request_context(path):
             res = client.get(path, follow_redirects=True)
             assert b"RESPONDER" in res.data
-            # res = _process_resp_tasks(client, worker_id=worker_id)
-
-            res = _process_resp(client, job_id=job_id, worker_id=resp_worker_id, min_offer=100)
-            process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": TREATMENT})
+            res = _process_resp_tasks(client, worker_id=worker_id)
             assert b"resp:" in res.data
-        prop_worker_id = generate_worker_id("index_prop")
-        time.sleep(WEBHOOK_DELAY)
-        path = f"/{TREATMENT}/?worker_id={prop_worker_id}"
+        worker_id = generate_worker_id("index_prop")
+        path = f"/{TREATMENT}/?worker_id={worker_id}"
         with app.test_request_context(path):
             res = client.get(path, follow_redirects=True)
             # assert b"PROPOSER" in res.data
-            res = _process_prop_round(client, worker_id=prop_worker_id, response_available=True)
+            res = _process_prop_round(client, worker_id=worker_id)
+            app.logger.info(res.data)
             assert b"prop:" in res.data
 
 
@@ -107,15 +109,6 @@ def test_prop_index(client):
     res = client.get(f"/{TREATMENT}/prop/?job_id={job_id}&worker_id={prop_worker_id}").data
     assert b"PROPOSER" in res
 
-def test_prop_check(client):
-    worker_id = generate_worker_id("prop_check")
-    path = f"/{TREATMENT}/prop/?job_id=test&worker_id={worker_id}"
-    _process_resp_tasks(client, worker_id=None)
-    with app.test_request_context(path):
-        client.get(path)
-        res = client.get(f"{TREATMENT}/prop/check/?offer=100").data
-        assert b"acceptance_probability" in res
-        assert b"best_offer_probability" in res
 
 def _process_prop(client, job_id="test", worker_id=None, offer=100, clear_session=True, response_available=False, path=None, auto_finalize=False):
     if worker_id is None:
@@ -145,8 +138,7 @@ def _process_prop_round(client, job_id="test", worker_id=None, offer=100, clear_
     if not response_available:
         _process_resp_tasks(client, worker_id=None, min_offer=100, bonus_mode="full")
     res = _process_prop(client, worker_id=worker_id, offer=offer, response_available=True, path=path)
-    time.sleep(WEBHOOK_DELAY)
-    emit_webhook(client, url=webhook_url, job_id=job_id, worker_id=worker_id)
+    emit_webhook(client, url=webhook_url, job_id=job_id, worker_id=worker_id, treatment=TREATMENT)
     return res
 
 
@@ -154,12 +146,12 @@ def _process_prop_round(client, job_id="test", worker_id=None, offer=100, clear_
 def test_prop_done(client):
     res = _process_prop(client)
     assert b"prop:" in res.data
-        # res = _process_prop(client)
-        # assert b"prop:" in res.data
-        # res = _process_prop(client)
-        # assert b"prop:" in res.data
-        # res = _process_prop(client)
-        # assert b"prop:" in res.data
+    res = _process_prop(client)
+    assert b"prop:" in res.data
+    res = _process_prop(client)
+    assert b"prop:" in res.data
+    res = _process_prop(client)
+    assert b"prop:" in res.data
 
 
 
@@ -200,10 +192,10 @@ def test_webhook(client):
     prop_worker_id = generate_worker_id("prop")
     process_tasks(client, job_id, resp_worker_id, bonus_mode="full")
     _process_resp(client, job_id, resp_worker_id, min_offer=100)
-    emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=resp_worker_id, by_get=True)
+    emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=resp_worker_id, by_get=True, treatment=TREATMENT)
     time.sleep(WEBHOOK_DELAY)
     _process_prop(client, worker_id=prop_worker_id, offer=100, response_available=True)
-    emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=prop_worker_id, by_get=True)
+    emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=prop_worker_id, by_get=True, treatment=TREATMENT)
     time.sleep(WEBHOOK_DELAY)
     with app.app_context():
         bonus_resp = get_worker_bonus(job_id, resp_worker_id)
@@ -220,7 +212,7 @@ def test_auto_finalize(client):
     _process_resp(client, job_id, resp_worker_id, min_offer=100)
     process_tasks(client, job_id, resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": TREATMENT})
     time.sleep(WEBHOOK_DELAY)
-    _process_prop(client, job_id=job_id, worker_id=prop_worker_id, response_available=True, auto_finalize=True)
+    _process_prop(client, job_id=job_id, worker_id=prop_worker_id, auto_finalize=True)
     time.sleep(WEBHOOK_DELAY)
     with app.app_context():
         bonus_resp = get_worker_bonus(job_id, resp_worker_id)
@@ -237,98 +229,14 @@ def test_payment(client):
         _process_resp(client, job_id, resp_worker_id, min_offer=100)
         process_tasks(client, job_id, resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": TREATMENT})
         time.sleep(WEBHOOK_DELAY)
-        _process_prop(client, job_id=job_id, worker_id=prop_worker_id, response_available=True, auto_finalize=True)
+        _process_prop(client, job_id=job_id, worker_id=prop_worker_id, auto_finalize=True)
         time.sleep(WEBHOOK_DELAY)
         for _ in range(5):
-            emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id="test", worker_id=prop_worker_id, by_get=False)
-            emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id="test", worker_id=resp_worker_id, by_get=False)
+            emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id="test", worker_id=prop_worker_id, by_get=False, treatment=TREATMENT)
+            emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id="test", worker_id=resp_worker_id, by_get=False, treatment=TREATMENT)
             time.sleep(WEBHOOK_DELAY)
             with app.app_context():
                 assert 0 == get_worker_bonus(job_id, resp_worker_id)
                 assert get_worker_paid_bonus(job_id, resp_worker_id) == tasks.MAX_BONUS + 100
                 assert 0 == get_worker_bonus(job_id, prop_worker_id)
                 assert get_worker_paid_bonus(job_id, prop_worker_id) == 100
-
-
-
-def test_survey_resp(client):
-    CONTROL_FIELDS = ["proposer", "responder", "proposer_responder"]
-    CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
-    codes = {"code_crt": "crt:", "code_cg":"cg:", "code_hexaco": "hexaco:", "code_effort": "eff:", "code_risk": "risk:", "code_resp_prop": "resp:"}
-    with app.app_context():
-        worker_id = generate_worker_id("survey")
-        assignment_id = worker_id.upper().replace("_", "")
-        path = f"/survey/{TREATMENT}/?job_id=test&worker_id={worker_id}&assignment_id={assignment_id}"
-        with app.test_request_context(path):
-            client.get(path, follow_redirects=True)
-            form = MainForm()
-            form_data = {}
-            for field, item in form._fields.items():
-                if field in CONTROL_FIELDS:
-                    form_data[field] = "correct"
-                elif field in CHOICE_FIELDS:
-                    form_data[field] = random.choice(item.choices)[0]
-                else:
-                    form_data[field] = "abc"
-            form_data.update(codes)
-            res = client.post(path, data=form_data, follow_redirects=True)
-            assert b"Your survey completion code is:" in res.data
-            assert b"dropped" not in res.data
-
-def test_survey_prop(client):
-    CONTROL_FIELDS = ["proposer", "responder", "proposer_responder"]
-    CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
-    codes = {"code_crt": "", "code_cg":"", "code_hexaco": "", "code_effort": "", "code_risk": "", "code_resp_prop": "prop:"}
-    with app.app_context():
-        worker_id = generate_worker_id("survey")
-        assignment_id = worker_id.upper().replace("_", "")
-        path = f"/survey/{TREATMENT}/?job_id=test&worker_id={worker_id}&assignment_id={assignment_id}"
-        with app.test_request_context(path):
-            client.get(path, follow_redirects=True)
-            form = MainForm()
-            form_data = {}
-            for field, item in form._fields.items():
-                if field in CONTROL_FIELDS:
-                    form_data[field] = "correct"
-                elif field in CHOICE_FIELDS:
-                    form_data[field] = random.choice(item.choices)[0]
-                else:
-                    form_data[field] = "abc"
-            form_data.update(codes)
-            res = client.post(path, data=form_data, follow_redirects=True)
-            assert b"Your survey completion code is:" in res.data
-            assert b"dropped" not in res.data
-
-def test_survey_drop(client):
-    """
-        test if the submissed is dropped without control on other fields when <drop> is set to "1"
-    """
-    with app.app_context():
-        worker_id = generate_worker_id("survey")
-        path = f"/survey/{TREATMENT}/?job_id=test&worker_id={worker_id}"
-        with app.test_request_context(path):
-            form = MainForm()
-            form_data = {key: "" for key in form._fields}
-            form_data["drop"] = "1"
-            res = client.post(path, data=form_data, follow_redirects=True)
-            assert b"dropped" in res.data
-
-def test_survey_unique(client):
-    """
-        test if the submissed is dropped without control on other fields when <drop> is set to "1"
-    """
-    with app.app_context():
-        worker_id = generate_worker_id("survey")
-        path = f"/survey/{TREATMENT}/?job_id=test&worker_id={worker_id}"
-        with app.test_request_context(path):
-            form = MainForm()
-            form_data = {key: "" for key in form._fields}
-            form_data["drop"] = "1"
-            res = client.post(path, data=form_data, follow_redirects=True)
-            assert b"dropped" in res.data
-        with app.test_request_context(path):
-            form = MainForm()
-            form_data = {key: "" for key in form._fields}
-            form_data["drop"] = "0"
-            res = client.post(path, data=form_data, follow_redirects=True)
-            assert b"dropped" in res.data

@@ -271,11 +271,12 @@ class FigureEight(object):
 
     ### Contributor related actions
 
-    def contributor_pay(self, worker_id, amout_in_cents):
+    def contributor_pay(self, worker_id, amout_in_cents, assignment_id=None):
         """
         Pay a contributor bonus
         :param worker_id: Contributor/Worker's id
-        :amount_in_cents: USD amount in cents
+        :param amount_in_cents: USD amount in cents
+        :param assignment_id: Not used!
         """
         url = self.get_url(worker_id=worker_id, endpoint="bonus")
         resp = requests.post(url=url, json={"amount":amout_in_cents})

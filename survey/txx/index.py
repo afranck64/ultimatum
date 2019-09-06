@@ -10,7 +10,7 @@ import io
 import hashlib
 
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
+    Blueprint, flash, Flask, g, redirect, render_template, request, url_for, jsonify, Response
 )
 
 from survey.figure_eight import FigureEight
@@ -26,7 +26,10 @@ from .resp import BASE as resp_BASE, finalize_resp
 
 BASE = "txx"
 
-def check_is_proposer_next(job_id, worker_id, treatment):
+NEXT_IS_RESPONDER = 0
+NEXT_IS_PROPOSER = 1
+NEXT_IS_PROPOSER_WAITING = 2
+def check_is_proposer_next(job_id, worker_id, treatment, max_judgments=None):
     app.logger.debug("check_is_proposer_next")
     resp_table = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
     prop_table = get_table(prop_BASE, job_id=job_id, schema="data", treatment=treatment)
@@ -38,37 +41,47 @@ def check_is_proposer_next(job_id, worker_id, treatment):
     nb_prop_open = 0
     if table_exists(con, resp_table):
         with con:
-            tmp = con.execute(f"SELECT COUNT(*) as count from {resp_table}").fetchone()
+            tmp = con.execute(f"SELECT COUNT(*) as count from {resp_table} where job_id=?", (job_id, )).fetchone()
             if tmp:
                 nb_resp = tmp["count"]
     if table_exists(con, prop_table):
         with con:
             judging_timeout = time.time() - JUDGING_TIMEOUT_SEC
-            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table} where {STATUS_KEY}=? OR ({STATUS_KEY}=? and {LAST_MODIFIED_KEY}<?) OR ({WORKER_KEY}=?)", (RowState.JUDGEABLE, RowState.JUDGING, judging_timeout, worker_id)).fetchone()
+            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table} where job_id=? and ({STATUS_KEY}=? OR ({STATUS_KEY}=? and {LAST_MODIFIED_KEY}<?) OR ({WORKER_KEY}=?))", (job_id, RowState.JUDGEABLE, RowState.JUDGING, judging_timeout, worker_id)).fetchone()
             if tmp:
                 nb_prop_open = tmp["count"]
     if table_exists(con, prop_table):
         with con:
-            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table}").fetchone()
+            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table} where job_id=?", (job_id, )).fetchone()
             if tmp:
                 nb_prop = tmp["count"]
     
     #TODO: if nb_resp >= expected row/2, should only take props
-    max_judgements = job_config["expected_judgments"]
-    if max_judgements > 0 and max_judgements // 2 >= nb_resp and max_judgements // 2 < nb_prop:
-        is_proposer = True
+    if max_judgments is None:
+        max_judgments = job_config["expected_judgments"]
+    if max_judgments > 0 and max_judgments // 2 >= nb_resp and max_judgments // 2 < nb_prop:
+        if nb_prop_open > 0:
+            is_proposer = NEXT_IS_PROPOSER
+        else:
+            is_proposer = NEXT_IS_PROPOSER_WAITING
     elif nb_prop_open > 0:
-        is_proposer = True
+        is_proposer = NEXT_IS_PROPOSER
     else:
-        is_proposer = False
+        is_proposer = NEXT_IS_RESPONDER
+    app.logger.debug(f"max_judgments: {max_judgments}, nb_prop: {nb_prop}, nb_resp: {nb_resp}, nb_prop_open: {nb_prop_open}")
     return is_proposer
 
 def handle_index(treatment):
     job_id = request.args.get("job_id", "na")
     worker_id = request.args.get("worker_id", "na")
+    max_judgments = None
+    try:
+        max_judgments = int(request.args.get("max_judgments", "0"))
+    except ValueError:
+        pass
     auto_finalize = request.args.get("auto_finalize")
     app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
-    is_proposer = check_is_proposer_next(job_id, worker_id, treatment)
+    is_proposer = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
 
     table_all = get_table(BASE, "all", schema=None)
     con = get_db()
@@ -155,6 +168,13 @@ def _process_judgments(signal, payload, job_id, job_config, treatment, auto_fina
 
 
 def handle_webhook(treatment):
+    """
+    request.args:
+        - job_id: job's id
+        - worker_id: worker's id
+        - synchron: Directly process data without puting in a queue for another thread
+
+    """
     app.logger.debug("handle_webhook")
     sync_process = False
     auto_finalize = False
@@ -199,6 +219,6 @@ def handle_webhook(treatment):
             _process_judgments(*args)
         else:
             app.config["THREADS_POOL"].starmap_async(_process_judgments, [args])
-        flash("You may close this tab now and continue with the survey.")
-        return render_template("info.html", job_id=job_id, webhook=True)
+        # flash("You may close this tab now and continue with the survey.")
+        # return render_template("info.html", job_id=job_id, webhook=True)
     return Response(status=200)

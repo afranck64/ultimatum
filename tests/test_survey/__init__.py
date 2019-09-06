@@ -31,6 +31,7 @@ def client():
             _fd, app.config[_db] = tempfile.mkstemp(dir=os.path.join(BASE_DIR, "data", "output", "test"))
         dbs_fds.append(_fd)
     app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
     client = app.test_client()
 
     with app.app_context():

@@ -12,7 +12,7 @@ import hashlib
 import pandas as pd
 
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
+    Blueprint, flash, Flask, g, redirect, render_template, request, url_for, jsonify, Response, make_response
 )
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField
@@ -32,7 +32,8 @@ from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists, update
 from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table, predict_weak, predict_strong,
-    generate_completion_code, increase_worker_bonus, save_worker_id, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
+    generate_completion_code, increase_worker_bonus, get_cookie_obj, set_cookie_obj,
+    LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
 
 
 ############ Consts #################################
@@ -131,7 +132,6 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
         #result[f"data__{k}"] = v
         if k not in discard_row_data_fields:
             result[k] = v
-    #print("RESULT_ROW: ", result)
     return result
 
 
@@ -217,27 +217,27 @@ def get_row(con, job_id, worker_id, treatment):
     if not table_exists(con, table):
         app.logger.warning(f"table: {table} does not exist")
         return None
-    free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==?', (RowState.JUDGEABLE,)).fetchone()
+    free_rowid = con.execute(f'select {PK_KEY} from {table} where job_id=? and {STATUS_KEY}==?', (job_id, RowState.JUDGEABLE,)).fetchone()
     res = None
     if free_rowid:
         free_rowid = free_rowid[PK_KEY]
         ## let's search for a rowid that hasn't been processed yetf
-        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid,)).fetchone())
+        res = dict(con.execute(f'select {PK_KEY}, * from {table} where job_id=? and {PK_KEY}=?', (job_id, free_rowid,)).fetchone())
         with con:
-            update(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
+            update(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where job_id=? and {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, job_id, free_rowid), con=con)
             return res
     else:
         dep_change_time = time.time() - JUDGING_TIMEOUT_SEC
         # Let's check if the same worker is looking for a row (then give him the one he is working on back)
-        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {WORKER_KEY}==? and {LAST_MODIFIED_KEY} > ?', (RowState.JUDGING, worker_id, dep_change_time)).fetchone()
+        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {WORKER_KEY}==? and {LAST_MODIFIED_KEY} > ? and job_id=?', (RowState.JUDGING, worker_id, dep_change_time, job_id)).fetchone()
         if not free_rowid:
             ## let's search for a row that remained too long in the 'judging' state
-            free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {LAST_MODIFIED_KEY} < ?', (RowState.JUDGING, dep_change_time)).fetchone()
+            free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {LAST_MODIFIED_KEY} < ? and job_id=?', (RowState.JUDGING, dep_change_time, job_id)).fetchone()
     if free_rowid:
         free_rowid = free_rowid[PK_KEY]
-        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid, )).fetchone())
+        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=? and job_id=?', (free_rowid, job_id)).fetchone())
         with con:
-            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
+            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=? and job_id=?', (time.time(), RowState.JUDGING, worker_id, free_rowid, job_id), con=con)
     else:
         app.logger.warning(f"no row available! job_id: {job_id}, worker_id: {worker_id}")
     return res
@@ -249,7 +249,7 @@ def close_row(con, job_id, row_id, treatment):
         app.logger.warning(f"table missing: <{table}>")
     else:
         with con:
-            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING), con=con)
+            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=? and job_id=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING, job_id), con=con)
     app.logger.debug("close_row - done")
 
 
@@ -278,7 +278,7 @@ def process_insert_row_with_model(job_id, resp_row, treatment, overwrite=False):
     app.logger.debug("process_insert_row_with_model")
     ENABLED_FAKE_MODEL_KEY = f"{treatment.upper()}_FAKE_MODEL"
     MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
-    MODEL_TYPES = [WEAK_FAKE_MODEL, STRONG_FAKE_MODEL]
+    FAKE_MODEL_TYPES = [WEAK_FAKE_MODEL, STRONG_FAKE_MODEL]
     model_type = None
     ai_offer = 0
     features, features_dict = get_features(job_id, resp_worker_id=resp_row[WORKER_KEY], treatment=treatment)
@@ -303,7 +303,7 @@ def process_insert_row_with_model(job_id, resp_row, treatment, overwrite=False):
     # if true, fake models should be used for this treatment
     if app.config[ENABLED_FAKE_MODEL_KEY]:
         if rowid is not None:
-            model_type = MODEL_TYPES[rowid % len(MODEL_TYPES)]
+            model_type = FAKE_MODEL_TYPES[rowid % len(FAKE_MODEL_TYPES)]
         else:
             model_type = REAL_MODEL
     else:
@@ -318,7 +318,7 @@ def process_insert_row_with_model(job_id, resp_row, treatment, overwrite=False):
     ai_offer = int(ai_offer)
     with con:
         update(sql=f"UPDATE {table} SET ai_offer=?, model_type=? where rowid=?", args=(ai_offer, model_type, rowid), con=con)
-    app.logger.debug("process_insert_row_with_model - done" + "MODEL_TYPE: " + str(rowid % len(MODEL_TYPES)) + "  " + str(rowid))
+    app.logger.debug("process_insert_row_with_model - done" + "MODEL_TYPE: " + str(rowid % len(FAKE_MODEL_TYPES)) + "  " + str(rowid))
 
 
 def insert_row(job_id, resp_row, treatment, overwrite=False):
@@ -349,16 +349,23 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None):
         proposal_class = HHI_Prop_ADM
     if template is None:
         template = f"txx/prop.html"
+    cookie_obj = get_cookie_obj(BASE)
+    worker_code_key = f"{BASE}_worker_code"
+    worker_id = request.args.get("worker_id", "na")
+    job_id = request.args.get("job_id", "na")
+    # The task was already completed, so we skip to the completion code display
+    if cookie_obj.get(BASE) and cookie_obj.get(worker_code_key) and cookie_obj.get("worker_id") == worker_id :
+        req_response =  make_response(redirect(url_for(f"{treatment}.prop.done", **request.args)))
+        return req_response
+
     if request.method == "GET":
-        session['proposal'] = proposal_class()
-        worker_id = request.args.get("worker_id", "na")
-        job_id = request.args.get("job_id", "na")
+        cookie_obj['proposal'] = proposal_class()
         app.logger.debug(f"handle_index: job_id:{job_id}, worker_id:{worker_id} ")
         row_info = get_row(get_db("DATA"), job_id, worker_id, treatment=treatment)
 
-        session["worker_id"] = worker_id
-        session["job_id"] = job_id
-        session["row_info"] = row_info
+        cookie_obj["worker_id"] = worker_id
+        cookie_obj["job_id"] = job_id
+        cookie_obj["row_info"] = row_info
         
         #TODO: check if worker_id has started answering this unit
         if not row_info:
@@ -366,48 +373,52 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None):
 
             flash(f"There are either no more rows available or you already took part on this survey. Thank you for your participation")
             return render_template("error.html")
-            if not app.config["DEBUG"]:
-                if app.config.get("TESTING"):
-                    return render_template("error.html")
         for message in messages:
             flash(message)
     if request.method == "POST":
-        proposal = session["proposal"]
+        proposal = cookie_obj["proposal"]
         proposal["time_stop"] = time.time()
         offer = request.form["offer"]
         try:
             offer = int(offer)
-        except ValueError:
+        except ValueError as err:
+            app.logger.warn(f"Conversion error: {err}")
             offer = None
         proposal["offer"] = offer
-        session['proposal'] = proposal
-        return redirect(url_for(f"{treatment}.prop.done", **request.args))
+        cookie_obj['proposal'] = proposal
+        req_response =  make_response(redirect(url_for(f"{treatment}.prop.done", **request.args)))
+        set_cookie_obj(req_response, BASE, cookie_obj)
+        return req_response
 
-    session[BASE] = True
+    cookie_obj[BASE] = True
     prop_check_url = url_for(f"{treatment}.prop.check")
-    return render_template(template, offer_values=OFFER_VALUES, form=ProposerForm(), prop_check_url=prop_check_url)
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ProposerForm(), prop_check_url=prop_check_url))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response
 
 
 def handle_check(treatment):
     app.logger.debug("handle_check")
     MODEL_INFOS_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL_INFOS"
-    if not session.get(BASE, None):
+    cookie_obj = get_cookie_obj(BASE)
+    if not cookie_obj.get(BASE):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
     
-    proposal = session["proposal"]
+    proposal = cookie_obj["proposal"]
     offer = int(request.args.get("offer", 0))
     proposal["ai_calls_offer"].append(offer)
 
     proposal["ai_calls_time"].append(time.time())
-    ai_offer = int(session["row_info"]["ai_offer"])
+    ai_offer = int(cookie_obj["row_info"]["ai_offer"])
     acceptance_probability = get_acceptance_probability(offer, app.config[MODEL_INFOS_KEY]["pdf"])
     best_offer_probability = get_best_offer_probability(ai_offer=ai_offer, offer=offer, accuracy=app.config[MODEL_INFOS_KEY]["acc"], train_err_pdf=app.config[MODEL_INFOS_KEY]["train_err_pdf"])
 
     #TODO: use the model predictions, data distribution to generate the ai_calls_response
     proposal["ai_calls_response"].append([acceptance_probability, best_offer_probability])
-    session["proposal"] = proposal
-    return jsonify({"offer": offer, "acceptance_probability": acceptance_probability, "best_offer_probability": best_offer_probability})
+    cookie_obj["proposal"] = proposal
+    req_response = make_response(jsonify({"offer": offer, "acceptance_probability": acceptance_probability, "best_offer_probability": best_offer_probability}))
+    return req_response
     #return "checked %s - acceptance: %s, best_offer: %s" % (offer, acceptance_probability, best_offer_probability)
 
 
@@ -419,15 +430,16 @@ def handle_done(treatment, template=None, response_to_result_func=None):
         response_to_result_func = prop_to_prop_result
     worker_code_key = f"{BASE}_worker_code"
     worker_bonus_key = f"{BASE}_worker_bonus"
-    if not session.get(BASE, None):
+    cookie_obj = get_cookie_obj(BASE)
+    if not cookie_obj.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
-    if not (session.get("worker_bonus") and session.get("worker_code")):
-        job_id = session["job_id"]
+    if not (cookie_obj.get("worker_code")):
+        job_id = cookie_obj["job_id"]
         worker_code = generate_completion_code(base=BASE, job_id=job_id)
-        proposal = session["proposal"]
-        row_info = session["row_info"]
-        worker_id = session["worker_id"]
+        proposal = cookie_obj["proposal"]
+        row_info = cookie_obj["row_info"]
+        worker_id = cookie_obj["worker_id"]
         close_row(get_db("DATA"), job_id, row_info[PK_KEY], treatment=treatment)
         worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
         prop_result = response_to_result_func(proposal, job_id=job_id, worker_id=worker_id, row_data=row_info)
@@ -447,13 +459,15 @@ def handle_done(treatment, template=None, response_to_result_func=None):
             client = app.test_client()
             client.get(url)
 
-        session.clear()
+        cookie_obj.clear()
 
-        session[BASE] = True
-        session[worker_bonus_key] = cents_repr(worker_bonus)
-        session[worker_code_key] = worker_code
-        save_worker_id(job_id=job_id, worker_id=worker_id)
-    return render_template(template, worker_code=session[worker_code_key], worker_bonus=session[worker_bonus_key])
+        cookie_obj[BASE] = True
+        cookie_obj["worker_id"] = worker_id
+        cookie_obj[worker_bonus_key] = cents_repr(worker_bonus)
+        cookie_obj[worker_code_key] = worker_code
+    req_response = make_response(render_template(template, worker_code=cookie_obj[worker_code_key]))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response
 
 def finalize_round(job_id, prop_worker_id, treatment):
     app.logger.debug("finalize_round")

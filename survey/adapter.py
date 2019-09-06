@@ -2,8 +2,10 @@
 Adapter
 Transform available request args into known internal value
 """
+from urllib.parse import urlparse, parse_qs
 from collections import defaultdict
 from flask import request, current_app as app
+from survey.mturk import MTurk
 
 class BaseAdapter(object):
     def get_job_id(self):
@@ -12,7 +14,7 @@ class BaseAdapter(object):
     def get_worker_id(self):
         raise NotImplementedError
     
-    def get_unit_id(self):
+    def get_assignment_id(self):
         raise NotImplementedError
 
     def get_submit_to_URL(self):
@@ -29,17 +31,29 @@ class BaseAdapter(object):
 
     @classmethod
     def from_dict(self, dict_obj):
-        raise NotADirectoryError
+        raise NotImplementedError
 
+    def get_api(self):
+        raise NotImplementedError
 
-class DefaultAdapter(object):
+    @classmethod
+    def has_api(cls):
+        raise NotImplementedError
+
+class DefaultAdapter(BaseAdapter):
     def __init__(self):
-        self.job_id = request.args.get("job_id", "na")
-        self.worker_id = request.args.get("worker_id", "na")
-        self.unit_id = request.args.get("unit_id", "na")
+        self.job_id = request.args.get("job_id", "")
+        self.worker_id = request.args.get("worker_id", "")
+        self.assignment_id = request.args.get("assignment_id", "")
         self.submit_to_URL = request.args.get("submit_to_URL")
         self.preview = request.args.get("preview") in {"1", "true"}
-        self.submit_to_kwargs = {}
+        if self.preview:
+            self.worker_id = "na"
+        self.submit_to_kwargs = {
+            "job_id": self.job_id,
+            "worker_id": self.worker_id,
+            "assignement_id": self.assignment_id
+        }
 
     def get_job_id(self):
         return self.job_id
@@ -47,8 +61,8 @@ class DefaultAdapter(object):
     def get_worker_id(self):
         return self.worker_id
     
-    def get_unit_id(self):
-        return self.unit_id
+    def get_assignment_id(self):
+        return self.assignment_id
     
     def get_submit_to_URL(self):
         return self.submit_to_URL
@@ -63,6 +77,10 @@ class DefaultAdapter(object):
         obj_dict = dict(self.__dict__)
         obj_dict["_adapter"] = None
         return obj_dict
+
+    @classmethod
+    def has_api(cls):
+        return False
     
     @classmethod
     def from_dict(cls, dict_obj):
@@ -74,19 +92,37 @@ class DefaultAdapter(object):
 
 class MTurkAdapter(DefaultAdapter):
     def __init__(self):
-        self.job_id = request.args.get("hitId")
-        self.worker_id = request.args.get("workerId")
-        self.unit_id = request.args.get("assignmentId")
-        self.submit_to_URL = request.args.get("turkSubmitTo")
-        self.preview = request.args.get("assignmentId") == "ASSIGNMENT_ID_NOT_AVAILABLE"
+        referrer = request.headers.get("Referer")
+        args_source = request.args
+        app.logger.debug(f"adapter: referrer={referrer}")
+        if referrer:
+            parsed_url = urlparse(referrer)
+            query = parse_qs(parsed_url.query)
+            query_flat = {k:v[0] for k,v in query.items()}
+            args_source = query_flat
+        self.job_id = args_source.get("hitId")
+        self.worker_id = args_source.get("workerId")
+        self.assignment_id = args_source.get("assignmentId", "NA")
+        self.submit_to_URL = args_source.get("turkSubmitTo")
+        self.preview = args_source.get("assignmentId") == "ASSIGNMENT_ID_NOT_AVAILABLE"
+        if self.preview:
+            self.worker_id = "na"
         self.submit_to_kwargs = {
-            "assignmentId": request.args.get("assignmentId")
+            "assignmentId": args_source.get("assignmentId")
         }
 
     def to_dict(self):
         obj_dict = dict(self.__dict__)
-        obj_dict["_adapter"] = None
+        obj_dict["_adapter"] = "mturk"
         return obj_dict
+    
+    def get_api(self):
+        return MTurk(self.get_job_id())
+
+    @classmethod
+    def has_api(cls):
+        return True
+    
 
 ADAPTERS = defaultdict(
     lambda: DefaultAdapter,
@@ -94,14 +130,14 @@ ADAPTERS = defaultdict(
 )
 
 
-def get_adapter():
+def get_adapter() -> BaseAdapter:
     app.logger.debug("get_adapter")
     adapter_key = request.args.get("adapter")
     adapter_cls = ADAPTERS[adapter_key]
     app.logger.debug(f"get_adapter: {adapter_cls.__name__}")
     return adapter_cls()
 
-def get_adapter_from_dict(dict_obj):
+def get_adapter_from_dict(dict_obj) -> BaseAdapter:
     adapter_key = dict_obj.get("_adapter")
     adapter_cls = ADAPTERS[adapter_key]
     adapter = adapter_cls()

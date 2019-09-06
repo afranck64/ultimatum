@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<br>
+
+{% if dropped %}
+    <div align="center">You have been disqualified as you failed 3 times to correctly answer the control questions.</div>
+    <br>
+{% else %}
+    {% if job_id == "home" %}
+        {% if webhook %}
+        {% else %}
+            <br>
+            <div align="center">Thank you for taking part in our experiment.</div>
+        {% endif %}
+    {% else %}
+        <br>
+        <div align="center">
+            Thank you for taking part in our experiment.
+        </div>
+        <div align="center">Your bonus will be transfered to you soon.</div>
+    {% endif %}
+{% endif %}
+
+<div align="center">
+    Your survey completion code is: <br>
+    <strong>{{worker_code}}</strong>
+</div>
+<div align="center">
+    <br>
+    {{message}}
+</div>
+{% endblock %}

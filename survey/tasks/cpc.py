@@ -12,7 +12,7 @@ from flask import (
 )
 
 from survey._app import csrf_protect, app
-from survey.utils import handle_task_done, handle_task_index
+from survey.tasks.task import handle_task_done, handle_task_index
 
 
 #### helpers
@@ -157,9 +157,6 @@ def response_to_result(response, job_id=None, worker_id=None):
 @csrf_protect.exempt
 @bp.route("/cpc/", methods=["GET", "POST"])
 def index():
-    # if session.get("eff", None) and session.get("worker_id", None):
-    #     return redirect(url_for("eff.done"))
-    # PROBLEMS = generate_problems("data/t00/ug2cpc.csv")
     base = "cpc"
     app.logger.debug(f"handle_task_index: {base}")
     if request.method == "GET":

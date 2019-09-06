@@ -1,17 +1,22 @@
+import os
 import datetime
 import time
 
 from flask import (
-    Blueprint, render_template, request, session, redirect, flash, url_for
+    Blueprint, render_template, request, redirect, flash, url_for, make_response, g
 )
 
 from survey._app import csrf_protect
-from survey.utils import handle_task_done, handle_task_index
+from survey.utils import set_cookie_obj, get_cookie_obj
+
+from survey.tasks.task import handle_task_done, handle_task_index
 
 
 #### const
 bp = Blueprint("tasks.risk", __name__)
 
+BASE = os.path.splitext(os.path.split(__file__)[1])[0]
+BASE = "risk"
 MAX_BONUS = 100
 
 FIELDS = {f"cell{i}" for i in range(1, 51)}
@@ -52,30 +57,40 @@ def response_to_result(response, job_id=None, worker_id=None):
 @csrf_protect.exempt
 @bp.route("/risk/", methods=["GET", "POST"])
 def index():
-    base = "risk"
     #return handle_task_index("risk", validate_response=validate_response)
 
-    # if session.get("eff", None) and session.get("worker_id", None):
-    #     return redirect(url_for("eff.done"))
+    cookie_obj = get_cookie_obj(BASE)
+    worker_code_key = f"{BASE}_worker_code"
+    worker_id = request.args.get("worker_id", "na")
+    job_id = request.args.get("job_id", "na")
+    # The task was already completed, so we skip to the completion code display
+    if cookie_obj.get(BASE) and cookie_obj.get(worker_code_key) and cookie_obj.get("worker_id") == worker_id:
+        req_response =  make_response(redirect(url_for(f"tasks.{BASE}.done")))
+        return req_response
+
+    cookie_obj = get_cookie_obj(BASE)
+    g.cookie_obj = cookie_obj
     if request.method == "GET":
-        worker_id = request.args.get("worker_id", "na")
-        job_id = request.args.get("job_id", "na")
-        session[base] = True
-        session["worker_id"] = worker_id
-        session["job_id"] = job_id
-        session["time_start"] = time.time()
-        session["cells"] = {f"cell{cid}":0 for cid in range(1, 51)}
+        cookie_obj[BASE] = True
+        cookie_obj["worker_id"] = worker_id
+        cookie_obj["job_id"] = job_id
+        cookie_obj["time_start"] = time.time()
+        cookie_obj["cells"] = {f"cell{cid}":0 for cid in range(1, 51)}
     if request.method == "POST":
         #response = request.form.to_dict()
-        response = session["cells"]
+        response = cookie_obj["cells"]
         if validate_response is not None and validate_response(response):
             response["time_stop"] = time.time()
-            response["time_start"] = session.get("time_start")
-            session["response"] = response
-            return redirect(url_for(f"tasks.{base}.done"))
-        else:
-            flash("Please check your fields")
-    return render_template(f"tasks/{base}.html")
+            response["time_start"] = cookie_obj.get("time_start")
+            cookie_obj["response"] = response
+            req_response = make_response(redirect(url_for(f"tasks.{BASE}.done")))
+            set_cookie_obj(req_response, BASE, cookie_obj)
+            return req_response
+
+    req_response = make_response(render_template(f"tasks/{BASE}.html"))
+    cookie_obj[BASE] = True
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response
 
 
 
@@ -85,11 +100,14 @@ def done():
 
 @bp.route("/risk/check/")
 def check():
-    if not session.get("risk", None):
+    cookie_obj = get_cookie_obj(BASE)
+    if not cookie_obj.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
     cell = request.args.get("cell")
-    cells = session["cells"]
+    cells = cookie_obj["cells"]
     cells[cell] = 1
-    session["cells"] = cells
-    return ""
+    cookie_obj["cells"] = cells
+    req_response = make_response("")
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response

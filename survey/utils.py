@@ -4,17 +4,22 @@ import os
 import string
 import random
 import time
+import json
 
 import pandas as pd
 
+import click
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
+    Blueprint, flash, Flask, g, redirect, render_template, request, url_for, jsonify, Response, make_response, session
 )
+from flask.cli import with_appcontext
+from werkzeug.contrib.securecookie import SecureCookie
 
 
 from survey._app import app
 from survey.db import get_db, insert, table_exists, update
 from survey.admin import get_job_config
+from survey.mturk import MTurk
 from core.utils import cents_repr
 from core.models.metrics import MAX_GAIN
 
@@ -31,6 +36,9 @@ JOB_KEY = 'job_id'
 
 PK_KEY = 'rowid'
 
+WORKER_CODE_DROPPED = "dropped"
+
+ALL_COOKIES_KEY = "all_cookies"
 ######
 def get_latest_treatment():
     """
@@ -68,19 +76,23 @@ def generate_completion_code(base, job_id):
 
 def get_table(base, job_id, schema, category=None, treatment=None, is_task=False):
     """
-    Generate a table name based on the job_id
+    Generate a table name
     :param base:
-    :param job_id:
+    :param job_id: has been deprecated internally, just kept to maintain api compatibility
     :param schema:
     :param category:
     :param is_task: (bool) if True, get a table for a feature task, without 'task' instead of job_id
     """
-    if is_task:
-        job_id = "task"
+    # if is_task:
+    #     job_id = "task"
+    # if category is None:
+    #     res = f"{base}_{job_id}"
+    # else:
+    #     res = f"{base}_{category}_{job_id}"
     if category is None:
-        res = f"{base}_{job_id}"
+        res = f"{base}"
     else:
-        res = f"{base}_{category}_{job_id}"
+        res = f"{base}_{category}"
     if treatment:
         res = f"{treatment}_{res}"
     if schema is not None:
@@ -91,26 +103,29 @@ def get_table(base, job_id, schema, category=None, treatment=None, is_task=False
 
     return res
 
-def save_worker_id(job_id, worker_id, base=None):
+def save_worker_id(job_id, worker_id, worker_code, assignment_id, base=None):
     """
     Save the given information in a general table
     :param job_id:
     :param worker_id:
+    :param worker_code:
+    :assignment_id:
     """
     app.logger.debug(f"save_worker_id: job_id: {job_id}, worker_id: {worker_id}")
     if base is None:
         base = "txx"
     table_all = get_table("txx", "all", schema=None)
+    
     try:
-        insert(pd.DataFrame(data=[{"job_id": job_id, "worker_id": worker_id}]), table=table_all, unique_fields=["worker_id"])
+        insert(pd.DataFrame(data=[{"job_id": job_id, "worker_id": worker_id, "worker_code":worker_code, "assignment_id":assignment_id}]), table=table_all, unique_fields=["worker_id"])
     except Exception as err:
         app.log_exception(err)
 
 def get_output_filename(base, job_id, category=None, treatment=None, is_task=False):
     """
-    Generate a table name based on the job_id
+    Generate a table name
     :param base:
-    :param job_id:
+    :param job_id: has been deprecated internally, just kept to maintain api compatibility
     :param category:
     :param treatment:
     :param is_task: (bool) if True, get a table for a feature task, without 'task' instead of job_id
@@ -154,45 +169,117 @@ def save_result2db(table, response_result, overwrite=False, unique_fields=None):
     insert(df, table=table, con=get_db("RESULT"), overwrite=overwrite, unique_fields=unique_fields)
 
 
-
-
-def response_to_result(response, job_id=None, worker_id=None):
+def has_worker_submitted(con, job_id, worker_id, treatment=None):
     """
-    :returns: {
-        timestamp: server time when genererting the result
-        job_id: fig-8 job id
-        worker_id: fig-8 worker id
-        *: response's keys
-    }
+    Return True if the worker's submission was found
     """
-    result = dict(response)
-    result["timestamp"] = str(datetime.datetime.now())
-    result["job_id"] = job_id
-    result["worker_id"] = worker_id
-    result["worker_bonus"] = 0
-    return result
+    base = "prop"
+    table_data = get_table(base, job_id=job_id, schema="data", treatment=treatment)
+    sql_data = "select * from {table_data} where job_id? and (prop_worker_id=? or resp_worker_id=?)"
+    res = con.exeucte(sql_data, (job_id, worker_id, worker_id)).fetchone()
+    if res:
+        return True
 
-def handle_task_index(base, validate_response=None):
-    # if session.get("eff", None) and session.get("worker_id", None):
-    #     return redirect(url_for("eff.done"))
-    app.logger.debug(f"handle_task_index: {base}")
-    if request.method == "GET":
-        worker_id = request.args.get("worker_id", "na")
-        job_id = request.args.get("job_id", "na")
-        session[base] = True
-        session["worker_id"] = worker_id
-        session["job_id"] = job_id
-        session["time_start"] = time.time()
-    if request.method == "POST":
-        response = request.form.to_dict()
-        if validate_response is not None and validate_response(response):
-            response["time_stop"] = time.time()
-            response["time_start"] = session.get("time_start")
-            session["response"] = response
-            return redirect(url_for(f"tasks.{base}.done", **request.args))
-        else:
-            flash("Please check your fields")
-    return render_template(f"tasks/{base}.html")
+
+    table_result = get_table(base, job_id=job_id, schema="result", treatment=treatment)
+    sql_result = "select * from {table_result} where job_id? and (prop_worker_id=? or resp_worker_id=?)"
+    res = con.exeucte(sql_result, (job_id, worker_id, worker_id)).fetchone()
+    if res:
+        return True
+    
+    return False
+
+
+def set_to_cookie(req_response, cookie, key, value):
+    cookie_data = request.cookies.get(cookie, None)
+    if cookie_data is None:
+        cookie_obj = SecureCookie(secret_key=app.config["SECRET_KEY"])
+    else:
+        cookie_obj = SecureCookie.unserialize(cookie_data, app.config["SECRET_KEY"])
+    cookie_obj[key] = value
+    all_cookies = session.get(ALL_COOKIES_KEY, [])
+    if cookie not in all_cookies:
+        all_cookies.append(cookie)
+    session[ALL_COOKIES_KEY] = all_cookies
+    req_response.set_cookie(cookie, cookie_obj.serialize())
+
+def get_from_cookie(cookie, key):
+    cookie_data = request.cookies.get(cookie, None)
+    if cookie_data is None:
+        cookie_obj = SecureCookie(secret_key=app.config["SECRET_KEY"])
+    else:
+        cookie_obj = SecureCookie.unserialize(cookie_data, app.config["SECRET_KEY"])
+    print("Getting cookie data: ", dict(cookie_obj))
+    return cookie_obj.get(key)
+
+def get_cookie_obj(cookie):
+    cookie_data = request.cookies.get(cookie, None)
+    if cookie_data is None:
+        cookie_obj = SecureCookie(secret_key=app.config["SECRET_KEY"])
+    else:
+        cookie_obj = SecureCookie.unserialize(cookie_data, app.config["SECRET_KEY"])
+    return cookie_obj
+
+def set_cookie_obj(req_response, cookie, cookie_obj):
+    req_response.set_cookie(cookie, cookie_obj.serialize(), httponly=True)
+
+def approve_and_reject_assignments(job_id, treatment):
+    base = "survey"
+    table_assignment = get_table("txx", "DEPRECATED_JOB_ID_PARAMETER", schema=None)
+    table_survey = get_table(base, "DEPRECATED_JOB_ID_PARAMETER", schema="result", treatment=treatment)
+    # sql = f"""
+    #     select a.job_id as job_id, a.assignment_id as assignment_id, a.worker_id as worker_id, s.worker_code as worker_code
+    #     from {table_assignment} as a left join {table_survey} as s on a.worker_id=s.worker_id
+    #     where {table_assignment}.job_id like ?"""
+    sql = f"select * from {table_assignment} where {table_assignment}.job_id like ?"
+    df = pd.read_sql(sql, con=get_db(), params=(job_id,))
+    api = MTurk(job_id)
+    con = get_db("DB")
+    payment_count = 0
+    validation_count = 0
+    rejection_count = 0
+    for idx in range(df.shape[0]):
+        row = df.iloc[idx].to_dict()
+        print("ROW: ", row)
+        worker_id = row["worker_id"]
+        assignment_id = row["assignment_id"]
+        print("worker_id", worker_id, type(worker_id), "assignment_id", assignment_id, type(assignment_id))
+        success = True
+        if row["worker_code"] != WORKER_CODE_DROPPED and has_worker_submitted(con, job_id, worker_id, treatment):
+                success &= api.approve_assignment(row["assignment_id"], "Thank you")
+                validation_count += success
+                if success:
+                    success &= pay_worker_bonus(job_id, worker_id, api=api, con=con, assignment_id=assignment_id)
+                    payment_count += success
+            
+        else:   #if row["worker_code"] == WORKER_CODE_DROPPED:
+            success &= api.reject_assignment(row["assignment_id"], "You exceeded the number of 3 failures")
+            rejection_count += success
+            
+    app.logger.info(f"validations: {validation_count}, rejections: {rejection_count}, payments: {payment_count}, rows: {df.shape[0]}")
+
+def pay_bonus_assignments(job_id):
+    table = get_table("txx", "all", schema=None)
+    df = pd.read_sql(f"select * from {table}", get_db("result"))
+    df = df[df["job_id"] == job_id]
+    api = MTurk(job_id)
+
+    con = get_db("DB")
+    payment_count = 0
+    for idx in range(df.shape[0]):
+        row = df.iloc[idx]
+        worker_id = row["worker_id"]
+        assignment_id = row["assignment_id"]
+        success = True
+        if row["worker_code"] != WORKER_CODE_DROPPED:
+            success &= pay_worker_bonus(job_id, worker_id, api=api, con=con, assignment_id=assignment_id)
+            payment_count += success
+    app.logger.info(f"payments: {payment_count}, rows: {df.shape[0]}")
+    
+        
+
+
+
 
 def value_to_numeric(value):
     f_value = float(value)
@@ -201,71 +288,6 @@ def value_to_numeric(value):
         return i_value
     else:
         return f_value
-
-def handle_task_done(base, response_to_result_func=None, response_to_bonus=None, numeric_fields=None, unique_fields=None):
-    """
-    :param base: (str)
-    :param response_to_result_func: (func)
-    :param response_to_bonus: (func)
-    :param numeric_fields: (None| '*' | list)  if '*' all fields are converted to float
-    :param unique_fields: (str|list)
-    """
-    app.logger.debug(f"handle_task_done: {base}")
-    worker_code_key = f"{base}_worker_code"
-    worker_bonus_key = f"{base}_worker_bonus"
-    if response_to_result_func is None:
-        response_to_result_func = response_to_result
-    if not session.get(base, None):
-        flash("Sorry, you are not allowed to use this service. ^_^")
-        return render_template("error.html")
-    if response_to_bonus is None:
-        response_to_bonus = lambda args, **kwargs: 0
-    if not session.get(worker_code_key, None) or (app.config["DEBUG"] and False):
-        job_id = session["job_id"]
-        worker_code = generate_completion_code(base, job_id)
-        response = session["response"]
-        if numeric_fields is not None:
-            if isinstance(numeric_fields, (list, tuple)):
-                for field in numeric_fields:
-                    try:
-                        response[field] = value_to_numeric(response[field])
-                    except Exception as err:
-                        app.log_exception(err)
-            elif numeric_fields == "*":
-                for field in response:
-                    try:
-                        response[field] = value_to_numeric(response[field])
-                    except Exception as err:
-                        app.log_exception(err)
-
-        worker_id = session["worker_id"]
-        response_result = response_to_result_func(response, job_id=job_id, worker_id=worker_id)
-        worker_bonus = response_to_bonus(response)
-        try:
-            save_result2file(get_output_filename(base, job_id, is_task=True), response_result)
-        except Exception as err:
-            app.log_exception(err)
-        try:
-            #TODO: check later
-            save_result2db(get_table(base, job_id=job_id, schema="result", is_task=True), response_result, unique_fields=unique_fields)
-            increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=worker_bonus)
-        except Exception as err:
-            app.log_exception(err)
-        
-        #NOTE: hexaco is the LAST task required from the user!!!
-        auto_finalize = request.args.get("auto_finalize")
-        if auto_finalize and base=="hexaco":
-            #TODO finalize user_input
-            treatment = request.args.get("treatment")
-            client = app.test_client()
-            url = url_for(f"{treatment}.webhook", job_id=job_id, worker_id=worker_id, auto_finalize=auto_finalize)
-            client.get(url)
-        session.clear()
-
-        session[base] = True
-        session[worker_code_key] = worker_code
-        session[worker_bonus_key] = worker_bonus
-    return render_template("done.html", worker_code=session[worker_code_key], worker_bonus=cents_repr(session[worker_bonus_key]))
 
 
 def _get_payment_table(job_id):
@@ -369,14 +391,15 @@ def get_resp_worker_id(base, job_id, prop_worker_id, treatment=None):
     return resp_worker_id
 
 
-def pay_worker_bonus(job_id, worker_id, fig8, con=None):
+def pay_worker_bonus(job_id, worker_id, api, con=None, assignment_id=None, send_notification=False):
     """
     :param job_id:
     :param worker_id:
     :param bonus_cents:
-    :param fig8:
+    :param api:
     :param overwite:
     :param con:
+    :param assignment_id:
     :returns True if payment was done, False otherwise
     """
     app.logger.debug("pay_worker_bonus")
@@ -393,7 +416,7 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
             row = con.execute(f'select bonus_cents, paid_bonus_cents, rowid from {table} WHERE job_id==? and worker_id==?', (job_id, worker_id)).fetchone()
             if row:
                 bonus_cents = row["bonus_cents"]
-                should_pay = True and bonus_cents > 0
+                should_pay = bonus_cents > 0
                 new_paid_bonus_cents = row["bonus_cents"] + row["paid_bonus_cents"]
             else:
                 app.logger.warning(f"pay_worker_bonus: worker not found! job_id: {job_id}, worker_id: {worker_id}")
@@ -404,17 +427,42 @@ def pay_worker_bonus(job_id, worker_id, fig8, con=None):
         if job_config["payment_max_cents"] > 0 and job_config["payment_max_cents"] > bonus_cents:
             app.logger.warning(f"Attempted payment over max allowed payment to worker {worker_id} on job {job_id}")
             return False
-        success = fig8.contributor_pay(worker_id, bonus_cents)
+        success = api.contributor_pay(worker_id, bonus_cents, assignment_id)
         if not success:
             app.logger.info(f"Impossible to pay: {bonus_cents} cents to contributor {worker_id}")
             return False
         else:
             with con:
                 update(f"UPDATE {table} SET bonus_cents=?, paid_bonus_cents=? WHERE rowid=?", (0, new_paid_bonus_cents, row["rowid"]), con=con)
-        fig8.contributor_notify(worker_id, f"Thank you for your participation. You just received your total bonus of {cents_repr(bonus_cents)} ^_^")
+        if send_notification:
+            api.contributor_notify(worker_id, f"Thank you for your participation. You just received your total bonus of {cents_repr(bonus_cents)} ^_^")
         return True
     else:
-        fig8.contributor_notify(worker_id, f"Thank you for your participation. Either you have already been paid or your bonus amount to 0.0 USD. ^_^")
-        pass
+        if send_notification:
+            api.contributor_notify(worker_id, f"Thank you for your participation. Either you have already been paid or your bonus amount to 0.0 USD. ^_^")
     return False
-############################################################
+
+
+
+############################################################ CLI #
+
+@click.command('approve_and_reject_assignments')
+@with_appcontext
+def _approve_and_reject_assignments():
+    job_id = input("job_id: ")
+    treatment = input("treatment: ").lower()
+    approve_and_reject_assignments(job_id, treatment)
+    click.echo("Approved results and paid bonus")
+app.cli.add_command(_approve_and_reject_assignments)
+
+@click.command('pay_bonus_assignments')
+@with_appcontext
+def _pay_bonus_assignments_command():
+    job_id = input("job_id: ")
+    pay_bonus_assignments(job_id)
+    click.echo("Paid bonus ")
+
+app.cli.add_command(_pay_bonus_assignments_command)
+
+
+

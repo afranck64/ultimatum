@@ -4,7 +4,7 @@ import importlib
 
 from survey import tasks
 from survey import t10
-from survey.txx import handle_survey, handle_survey_done, handle_survey_cpc, handle_survey_cpc_done
+from survey.txx import handle_survey_cpc, handle_survey_cpc_done
 from survey.txx.survey import handle_survey, handle_survey_done
 from survey import admin
 
@@ -26,8 +26,7 @@ for treatment in app.config["TREATMENTS"]:
             app.register_blueprint(txx.resp.bp, url_prefix=f"/{treatment.lower()}")
             app.register_blueprint(txx.survey.bp, url_prefix=f"/survey/{treatment.lower()}")
         except ImportError as err:
-            #app.log_exception(err)
-            warnings.warn(str(err))
+            warnings.warn(f"Treatment: {treatment} ==> {err}")
             pass
 
 app.register_blueprint(admin.bp)

@@ -12,7 +12,7 @@ import hashlib
 import pandas as pd
 
 from flask import (
-    Blueprint, flash, Flask, g, redirect, render_template, request, session, url_for, jsonify, Response
+    Blueprint, flash, Flask, g, redirect, render_template, request, url_for, jsonify, Response, make_response, session
 )
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField
@@ -30,7 +30,10 @@ from core.models.metrics import gain
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
 from .prop import insert_row
-from survey.utils import save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus, save_worker_id
+from survey.utils import (
+    save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, get_cookie_obj, set_cookie_obj,
+    LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus
+)
 
 
 ############ Consts #################################
@@ -104,42 +107,53 @@ def handle_index(treatment, template=None, messages=None):
         messages = []
     if template is None:
         template = f"txx/resp.html"
+    cookie_obj = get_cookie_obj(BASE)
+    worker_code_key = f"{BASE}_worker_code"
+    worker_id = request.args.get("worker_id", "na")
+    job_id = request.args.get("job_id", "na")
+    # The task was already completed, so we skip to the completion code display
+    if cookie_obj.get(BASE) and cookie_obj.get(worker_code_key) and cookie_obj.get("worker_id") == worker_id:
+        req_response = redirect(url_for(f"{treatment}.resp.done"))
+        return req_response
     if request.method == "GET":
-        worker_id = request.args.get("worker_id", "na")
-        job_id = request.args.get("job_id", "na")
         app.logger.debug(f"handle_index: job_id:{job_id}, worker_id:{worker_id} ")
-        session['response'] = HHI_Resp_ADM()
-        session["worker_id"] = worker_id
-        session["job_id"] = job_id
+        cookie_obj['response'] = HHI_Resp_ADM()
+        cookie_obj["worker_id"] = worker_id
+        cookie_obj["job_id"] = job_id
 
         for message in messages:
             flash(message)
     if request.method == "POST":
-        response = session["response"]
+        response = cookie_obj["response"]
         response["time_stop"] = time.time()
         response["min_offer"] = int(request.form["min_offer"])
         response["other_resp"] = int(request.form.get("other_resp", OTHERS_MISSING_VALUE))
         response["other_prop"] = int(request.form.get("other_prop", OTHERS_MISSING_VALUE))
-        session['response'] = response
-        return redirect(url_for(f"{treatment}.resp.done"))
+        cookie_obj['response'] = response
+        req_response = make_response(redirect(url_for(f"{treatment}.resp.done")))
+        set_cookie_obj(req_response, BASE, cookie_obj)
+        return req_response
 
-    session[BASE] = True
-    return render_template(template, offer_values=OFFER_VALUES, form=ProposerForm())
+    cookie_obj[BASE] = True
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ProposerForm()))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response
 
 def handle_done(treatment, template=None):
     app.logger.debug("handle_done")
     if template is None:
         template = f"txx/resp.done.html"
 
-    worker_code_key = f"{BASE}__worker_code"
-    if not session.get(BASE, None):
+    cookie_obj = get_cookie_obj(BASE)
+    worker_code_key = f"{BASE}_worker_code"
+    if not cookie_obj.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
         return render_template("error.html")
-    if not session.get(worker_code_key) or app.config["DEBUG"]:
-        job_id = session["job_id"]
+    if not cookie_obj.get(worker_code_key):
+        job_id = cookie_obj["job_id"]
         worker_code = generate_completion_code(BASE, job_id)
-        response = session["response"]
-        worker_id = session["worker_id"]
+        response = cookie_obj["response"]
+        worker_id = cookie_obj["worker_id"]
         resp_result = resp_to_resp_result(response, job_id=job_id, worker_id=worker_id)
         try:
             #save_resp_result(TUBE_RES_FILENAME, resp_result)
@@ -152,14 +166,16 @@ def handle_done(treatment, template=None):
             increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=0)
         except Exception as err:
             app.log_exception(err)
-        session.clear()
+        cookie_obj.clear()
     
 
-        session[BASE] = True
-        session[worker_code_key] = worker_code
+        cookie_obj[BASE] = True
+        cookie_obj["worker_id"] = worker_id
+        cookie_obj[worker_code_key] = worker_code
 
-        save_worker_id(job_id=job_id, worker_id=worker_id)
-    return render_template(template, worker_code=session[worker_code_key])
+    req_response = make_response(render_template(template, worker_code=cookie_obj[worker_code_key]))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response
 
 
 def finalize_resp(job_id, worker_id, treatment):
