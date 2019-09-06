@@ -22,13 +22,6 @@ bp = Blueprint(f"{TREATMENT}.resp", __name__)
 
 ############# HELPERS   ###########################
 
-class HHI_Resp_ADM(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self["min_offer"] = None
-        self["time_start"] = time.time()
-        self["timestamp"] = None
-
 @csrf_protect.exempt
 @bp.route("/resp/", methods=["GET", "POST"])
 def index():
