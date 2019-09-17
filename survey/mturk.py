@@ -299,16 +299,10 @@ class MTurk(object):
                 WorkerId=str(worker_id),
                 BonusAmount=str(bonus_amount_dollars),
                 AssignmentId=str(assignment_id),
-                Reason=f"Bonus for the assignment - {self.job_id}",
+                Reason=f"Thank you for your work. ^_^",
                 #UniqueRequestToken=unique_token
             )
-            # Expects an empty list
-            failures = response.get('NotifyWorkersFailureStatuses')
-            if failures is not None and len(failures)==0:
-                return True
-            else:
-                warnings.warn(str(response))
-                return False
+            return True
         except ClientError as e:
             if e.response['Error']['Code'] == 'RequestError':
                 warnings.warn(f"{e}")
@@ -333,12 +327,7 @@ class MTurk(object):
                     worker_id
                 ]
             )
-            failures = response.get('NotifyWorkersFailureStatuses')
-            if failures is not None and len(failures)==0:
-                return True
-            else:
-                warnings.warn(str(response))
-                return False
+            return True
         except ClientError as e:
             if e.response['Error']['Code'] == 'RequestError':
                 warnings.warn(f"{e}")
