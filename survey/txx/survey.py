@@ -82,6 +82,7 @@ def handle_survey(treatment=None, template=None):
         "code_crt": "crt:",
         "code_hexaco": "hexaco:"
     }
+    app.logger.info("handle_survey")
     if template is None:
         template = "txx/survey.html"
     cookie_obj = get_cookie_obj(BASE)
@@ -113,8 +114,8 @@ def handle_survey(treatment=None, template=None):
     next_player = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
     #The next player should be a proposer but some responders may still be processing data
     if next_player == NEXT_IS_PROPOSER_WAITING:
-        flash("Unfornately there is no available HIT right now, please come back later.")
-        return render_template("error.html")
+        flash("Unfornately there is no available HIT right now. Please check again in 15 minutes. Otherwise you can submit right now using the survey code provided")
+        return render_template("error.html", worker_code=WORKER_CODE_DROPPED)
 
 
     table_all = get_table("txx", "all", schema=None)
@@ -154,7 +155,6 @@ def handle_survey(treatment=None, template=None):
                     # Validated forms have errors as tuples
                     field.errors = field.errors + ("Invalid code",)
                     is_codes_valid = False
-        print("job_id", job_id, "worker_id", worker_id)
         if is_codes_valid and job_id != "na" and worker_id != "na":
             cookie_obj["response"] = response
             req_response = make_response(redirect(url_for("survey_done")))
@@ -226,10 +226,10 @@ def handle_survey_done(template=None):
         #     except Exception as err:
         #         app.logger.warn(f"{err}")
         save_worker_id(job_id=job_id, worker_id=worker_id, worker_code=worker_code, assignment_id=adapter.assignment_id)
+        app.logger.info(f"handle_survey_done: saved new survey - job_id: {job_id}, worker_id: {worker_id}")
     req_response = make_response(render_template(template, worker_code=worker_code, dropped=True))
     set_cookie_obj(req_response, BASE, cookie_obj)
     for cookie in session.get(ALL_COOKIES_KEY, []):
         req_response.set_cookie(cookie, expires=0)
-        print("COOKIE: ", cookie)
     session[ALL_COOKIES_KEY] = []
     return req_response
