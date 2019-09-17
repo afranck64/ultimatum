@@ -161,6 +161,8 @@ def handle_survey(treatment=None, template=None):
             set_cookie_obj(req_response, BASE, cookie_obj)
             app.logger.debug(f"RESPONSE: {response}")
             return req_response
+        elif is_codes_valid:
+            flash("Your data was validated and submitted. But not saved as this is a test task")
     else:
         response = request.form.to_dict()
         if "resp:" in response.get("code_resp_prop", ""):
