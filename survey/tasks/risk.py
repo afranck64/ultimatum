@@ -17,7 +17,9 @@ bp = Blueprint("tasks.risk", __name__)
 
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 BASE = "risk"
-MAX_BONUS = 100
+CELL_BONUS_CENTS = 2
+NB_CELLS = 50
+MAX_BONUS = NB_CELLS * CELL_BONUS_CENTS
 
 FIELDS = {f"cell{i}" for i in range(1, 51)}
 def validate_response(response):
@@ -29,7 +31,7 @@ def validate_response(response):
 def response_to_bonus(response):
     bonus = 0
     for field in FIELDS:
-        bonus += response[field] * 2
+        bonus += response[field] * CELL_BONUS_CENTS
     return bonus
 
 
@@ -45,7 +47,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     }
     """
     result = dict(response)
-    result["cells"] = response_to_bonus(response)//2
+    result["cells"] = response_to_bonus(response)//CELL_BONUS_CENTS
     result["time_spent_risk"] = int(response["time_stop"] - response["time_start"]) * 1000
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
