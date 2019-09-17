@@ -175,17 +175,19 @@ def has_worker_submitted(con, job_id, worker_id, treatment=None):
     """
     base = "prop"
     table_data = get_table(base, job_id=job_id, schema="data", treatment=treatment)
-    sql_data = "select * from {table_data} where job_id? and (prop_worker_id=? or resp_worker_id=?)"
-    res = con.exeucte(sql_data, (job_id, worker_id, worker_id)).fetchone()
-    if res:
-        return True
+    if table_exists(con, table_data):
+        sql_data = f"select * from {table_data} where job_id=? and (resp_worker_id=?)"
+        res = con.execute(sql_data, (job_id, worker_id)).fetchone()
+        if res:
+            return True
 
 
     table_result = get_table(base, job_id=job_id, schema="result", treatment=treatment)
-    sql_result = "select * from {table_result} where job_id? and (prop_worker_id=? or resp_worker_id=?)"
-    res = con.exeucte(sql_result, (job_id, worker_id, worker_id)).fetchone()
-    if res:
-        return True
+    if table_exists(con, table_result):
+        sql_result = f"select * from {table_result} where job_id=? and (prop_worker_id=? or resp_worker_id=?)"
+        res = con.execute(sql_result, (job_id, worker_id, worker_id)).fetchone()
+        if res:
+            return True
     
     return False
 
