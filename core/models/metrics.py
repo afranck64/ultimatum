@@ -81,13 +81,24 @@ def avg_loss_ratio(min_offer, predicted):
     """
     Compute the avg gain ratio in relation to the maximal gain
     """
-    return 1 - np.mean(gain(min_offer, predicted) / gain(min_offer, min_offer))
+    numerator, denominator = gain(min_offer, predicted), gain(min_offer, min_offer)
+    zero_mask = denominator==0
+    denominator[zero_mask] = 1  #avoid division by zero
+    tmp = numerator / denominator
+    tmp[denominator==0] = 1
+    return 1 - np.mean(tmp)
 
 def gain_mean(min_offer, predicted):
     return gain(min_offer, predicted).mean()
 
 def avg_gain_ratio(min_offer, predicted):
-    return np.mean(gain(min_offer, predicted) / gain(min_offer, min_offer))
+    numerator, denominator = gain(min_offer, predicted), gain(min_offer, min_offer)
+    zero_mask = denominator==0
+    denominator[zero_mask] = 1  #avoid division by zero
+    tmp = numerator / denominator
+    tmp[denominator==0] = 0
+    return np.mean(tmp)
+    # return np.mean(gain(min_offer, predicted) / gain(min_offer, min_offer))
 
 def cross_compute(min_offer, predicted, metric):
     """
@@ -98,7 +109,7 @@ def cross_compute(min_offer, predicted, metric):
     res = 0
     for idx in range(predicted.shape[0]):
         sub_predicted = np.ones_like(min_offer) * predicted[idx]
-        res += metric(min_offer, predicted)
+        res += metric(min_offer, sub_predicted)
     return res/predicted.shape[0]
 
 def invariance(min_offer, predicted):
