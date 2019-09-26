@@ -55,7 +55,7 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
         df_max["crt_performance"] = 3.0
         import warnings
 
-    if fuse_risk or "risk" in select_columns:
+    if fuse_risk or (select_columns is not None and "risk" in select_columns):
         risk_cols = ['cells', 'time_spent_risk']
         df_risk = df[risk_cols]
         df_risk = (df_risk - df_risk.min()) / (df_risk.max() - df_risk.min())
