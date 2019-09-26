@@ -45,6 +45,8 @@ def mse(min_offer, predicted):
     """
     Compute mse using the loss as error
     """
+    min_offer = min_offer.ravel()
+    predicted = predicted.ravel()
     return np.mean(np.square(loss(min_offer.ravel(), predicted.ravel())))
 
 def rejection_ratio(min_offer, predicted):
@@ -81,6 +83,8 @@ def avg_loss_ratio(min_offer, predicted):
     """
     Compute the avg gain ratio in relation to the maximal gain
     """
+    min_offer = min_offer.ravel()
+    predicted = predicted.ravel()
     numerator, denominator = gain(min_offer, predicted), gain(min_offer, min_offer)
     zero_mask = denominator==0
     denominator[zero_mask] = 1  #avoid division by zero
@@ -89,9 +93,13 @@ def avg_loss_ratio(min_offer, predicted):
     return 1 - np.mean(tmp)
 
 def gain_mean(min_offer, predicted):
+    min_offer = min_offer.ravel()
+    predicted = predicted.ravel()
     return gain(min_offer, predicted).mean()
 
 def avg_gain_ratio(min_offer, predicted):
+    min_offer = min_offer.ravel()
+    predicted = predicted.ravel()
     numerator, denominator = gain(min_offer, predicted), gain(min_offer, min_offer)
     zero_mask = denominator==0
     denominator[zero_mask] = 1  #avoid division by zero
