@@ -31,8 +31,12 @@ bp = Blueprint(f"{TREATMENT}.{BASE}", __name__)
 def index():
     # flash("""In this task, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER""")
     messages = [
-        """An artificial intelligence system (AI-System) is available to gain some insight about the RESPONDER. There is no restriction to the use of the AI-System.""",
-        """The RESPONDER doesn't know about the existence of the AI-System."""
+        """You have been assigned the role of a PROPOSER. As a PROPOSER, you will make an offer to the RESPONDER. Instead of purely relying on your own intuition, you can use an AI Recommendation System (Machine-Learning System) to help you with your offer. The system was trained using prior interactions of comparable bargaining situations.""",
+        """To use the AI System, simply select a test offer and submit it to the system. The system will tell you its estimates on:
+1. The probability that your offer will be accepted (by your specific RESPONDER)
+2. The probability that your offer is the minimal offer accepted by your specific RESPONDER
+
+You can use the system as often as you want."""
     ]
     return handle_index(TREATMENT, messages=messages)
 
