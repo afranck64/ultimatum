@@ -25,7 +25,9 @@
     {% block header %}{% endblock %}
   </header>
   {% for message in get_flashed_messages() %}
-    <div class="flash" style="text-align: center">{{ message }}</div>
+    <!-- <div class="flash" style="text-align: center, display: inline-block;"> -->
+      <pre style="overflow-wrap: break-word; white-space: pre-wrap;" class="flash">{{ message }}</pre>
+    <!-- </div> -->
   {% endfor %}
   {% block content %}{% endblock %}
 </section>
