@@ -109,9 +109,9 @@ MAX_BONUS = 0
 
 
 def validate_response(response):
-    # for key in FIELDS:
-    #     if key not in response:
-    #         return False
+    for key in FIELDS:
+        if key not in response:
+            return False
     return True
 
 def response_to_bonus(response):
@@ -157,27 +157,7 @@ def response_to_result(response, job_id=None, worker_id=None):
 @csrf_protect.exempt
 @bp.route("/cpc/", methods=["GET", "POST"])
 def index():
-    base = "cpc"
-    app.logger.debug(f"handle_task_index: {base}")
-    if request.method == "GET":
-        worker_id = request.args.get("worker_id", "na")
-        job_id = request.args.get("job_id", "na")
-        session[base] = True
-        session["worker_id"] = worker_id
-        session["job_id"] = job_id
-        session["time_start"] = time.time()
-    if request.method == "POST":
-        response = request.form.to_dict()
-        print("response", response, validate_response(response))
-        if validate_response is not None and validate_response(response):
-            response["time_stop"] = time.time()
-            response["time_start"] = session.get("time_start")
-            session["response"] = response
-            return redirect(url_for(f"tasks.{base}.done", **request.args))
-        else:
-            flash("Please check your fields")
-    return render_template(f"tasks/{base}.html", problems=PROBLEMS)
-    #return handle_task_index("cpc", validate_response=validate_response, problems=PROBLEMS)
+    return handle_task_index("cpc", validate_response=validate_response, template_kwargs={"problems":PROBLEMS})
 
 
 @bp.route("/cpc/done")
