@@ -188,4 +188,4 @@ def finalize_resp(job_id, worker_id, treatment):
             resp_result = dict(res)
             insert_row(job_id, resp_result, treatment)
         else:
-            app.logger.warnings(f"finalize_resp: worker_id {worker_id} not found - job_id: {job_id}")
+            app.logger.warn(f"finalize_resp: worker_id {worker_id} not found - job_id: {job_id}")
