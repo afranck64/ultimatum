@@ -14,7 +14,7 @@
        
         function drawChart() {
             responder = parseInt(document.getElementById('user2ai').value);
-            proposer = 200-responder;
+            proposer = {{max_gain}}-responder;
             
             var data = google.visualization.arrayToDataTable([
                 ['Actor', 'Share'],

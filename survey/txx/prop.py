@@ -392,7 +392,7 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None):
 
     cookie_obj[BASE] = True
     prop_check_url = url_for(f"{treatment}.prop.check")
-    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ProposerForm(), prop_check_url=prop_check_url))
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ProposerForm(), prop_check_url=prop_check_url, max_gain=MAX_GAIN))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
