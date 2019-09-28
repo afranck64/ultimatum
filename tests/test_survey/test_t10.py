@@ -49,9 +49,9 @@ def _process_resp_tasks(client, job_id="test", worker_id=None, min_offer=MIN_OFF
     process_tasks(client, job_id=job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     res = _process_resp(client, job_id=job_id, worker_id=worker_id, min_offer=min_offer, clear_session=clear_session, path=path)
     if synchron:
-        emit_webhook(client, url=f"/{TREATMENT}/webhook/?synchron=1", job_id=job_id, worker_id=worker_id)
+        emit_webhook(client, url=f"/{TREATMENT}/webhook/?synchron=1", treatment=TREATMENT, job_id=job_id, worker_id=worker_id)
     else:
-        emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id=job_id, worker_id=worker_id)
+        emit_webhook(client, url=f"/{TREATMENT}/webhook/", treatment=TREATMENT, job_id=job_id, worker_id=worker_id)
     return res
 
 def test_available():
@@ -150,7 +150,7 @@ def _process_prop_round(client, job_id="test", worker_id=None, offer=OFFER, clea
         _process_resp_tasks(client, worker_id=None, min_offer=MIN_OFFER, bonus_mode="full")
     res = _process_prop(client, worker_id=worker_id, offer=offer, response_available=True, path=path)
     time.sleep(WEBHOOK_DELAY)
-    emit_webhook(client, url=webhook_url, job_id=job_id, worker_id=worker_id)
+    emit_webhook(client, url=webhook_url, treatment=TREATMENT, job_id=job_id, worker_id=worker_id)
     return res
 
 
@@ -204,10 +204,10 @@ def test_webhook(client):
     prop_worker_id = generate_worker_id("prop")
     process_tasks(client, job_id, resp_worker_id, bonus_mode="full")
     _process_resp(client, job_id, resp_worker_id, min_offer=MIN_OFFER)
-    emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=resp_worker_id, by_get=True)
+    emit_webhook(client, url=f"/{TREATMENT}/webhook/", treatment=TREATMENT, worker_id=resp_worker_id, by_get=True)
     time.sleep(WEBHOOK_DELAY)
     _process_prop(client, worker_id=prop_worker_id, offer=OFFER, response_available=True)
-    emit_webhook(client, url=f"/{TREATMENT}/webhook/", worker_id=prop_worker_id, by_get=True)
+    emit_webhook(client, url=f"/{TREATMENT}/webhook/", treatment=TREATMENT, worker_id=prop_worker_id, by_get=True)
     time.sleep(WEBHOOK_DELAY)
     with app.app_context():
         bonus_resp = get_worker_bonus(job_id, resp_worker_id)
@@ -243,8 +243,8 @@ def test_payment(client):
         _process_prop(client, job_id=job_id, worker_id=prop_worker_id, response_available=True, auto_finalize=True)
         time.sleep(WEBHOOK_DELAY)
         for _ in range(5):
-            emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id="test", worker_id=prop_worker_id, by_get=False)
-            emit_webhook(client, url=f"/{TREATMENT}/webhook/", job_id="test", worker_id=resp_worker_id, by_get=False)
+            emit_webhook(client, url=f"/{TREATMENT}/webhook/", treatment=TREATMENT, job_id="test", worker_id=prop_worker_id, by_get=False)
+            emit_webhook(client, url=f"/{TREATMENT}/webhook/", treatment=TREATMENT, job_id="test", worker_id=resp_worker_id, by_get=False)
             time.sleep(WEBHOOK_DELAY)
             with app.app_context():
                 assert 0 == get_worker_bonus(job_id, resp_worker_id)
@@ -255,9 +255,9 @@ def test_payment(client):
 
 
 def test_survey_resp(client):
-    CONTROL_FIELDS = ["proposer", "responder", "proposer_responder"]
-    CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
-    codes = {"code_crt": "crt:", "code_cg":"cg:", "code_hexaco": "hexaco:", "code_effort": "eff:", "code_risk": "risk:", "code_resp_prop": "resp:"}
+    CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
+    CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test", "ultimatum_game_experience"}
+    codes = {"code_cpc": "cpc:", "code_resp_prop": "resp:"}
     with app.app_context():
         worker_id = generate_worker_id("survey")
         assignment_id = worker_id.upper().replace("_", "")
@@ -274,14 +274,16 @@ def test_survey_resp(client):
                 else:
                     form_data[field] = "abc"
             form_data.update(codes)
+            print("form_data: ", form_data)
             res = client.post(path, data=form_data, follow_redirects=True)
+            print(res.data)
             assert b"Your survey completion code is:" in res.data
             assert b"dropped" not in res.data
 
 def test_survey_prop(client):
-    CONTROL_FIELDS = ["proposer", "responder", "proposer_responder"]
-    CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
-    codes = {"code_crt": "", "code_cg":"", "code_hexaco": "", "code_effort": "", "code_risk": "", "code_resp_prop": "prop:"}
+    CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
+    CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test", "ultimatum_game_experience"}
+    codes = {"code_cpc": "", "code_resp_prop": "prop:"}
     with app.app_context():
         worker_id = generate_worker_id("survey")
         assignment_id = worker_id.upper().replace("_", "")
