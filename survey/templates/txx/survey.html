@@ -33,6 +33,10 @@
       document.getElementById("{{form.proposer_responder.id}}").onchange = countControlError;
       document.getElementById("{{form.proposer_responder.id}}-info").style.display = "none";
       document.getElementById("{{form.proposer_responder.id}}-info").textContent = "You seem to have misunderstood the instructions. The role of the PROPOSER is to make an offer to the RESPONDER regarding how to divide the {{ '%.2f'|format(max_gain / 100)}} USD. The role of the RESPONDER is to either accept or reject that offer. Both the PROPOSER and the  RESPONDER are real human contributors who are dynamically linked to participate in this task. If you understand this now, please correct your answer to the statement below and continue."
+      document.getElementById("{{form.money_division.id}}").onchange = countControlError;
+      document.getElementById("{{form.money_division.id}}-info").style.display = "none";
+      document.getElementById("{{form.money_division.id}}-info").textContent = "You seem to have misunderstood the instructions. The PROPOSER decides how the money is divided and the RESPONDER accepts or reject the proposal. If you understand this now, please correct your answer to the statement regarding the money division below and continue."
+      money_division
       if (getCookie("hide_instructions")) {
         toggle_overview();
       }
@@ -57,10 +61,10 @@
     }
 
     function update_main_link() {
-      var ids = ["{{form.proposer.id}}", "{{form.responder.id}}", "{{form.proposer_responder.id}}"];
+      var control_ids = ["{{form.proposer.id}}", "{{form.responder.id}}", "{{form.proposer_responder.id}}", "{{form.money_division.id}}"];
       var valid_ids = 0;
-      for (var idx=0; idx<3; idx++) {
-        var selector = 'input[name="' + ids[idx] + '"]:checked';
+      for (var idx=0; idx<control_ids.length; idx++) {
+        var selector = 'input[name="' + control_ids[idx] + '"]:checked';
         var element = document.querySelector(selector);
         if (element) { 
           var choice = document.querySelector(selector).value;
@@ -69,7 +73,8 @@
           };
         }
       }
-      if (valid_ids == 3 ) {
+      console.log(valid_ids);
+      if (valid_ids == control_ids.length ) {
         document.getElementById("main_link").style.display='inline-block';
       } else {
         document.getElementById("main_link").style.display='none';
@@ -168,6 +173,10 @@
         {{form.income.label}}<br>
         {{form.income}}<br>
 
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.ultimatum_game_experience.errors)}}</div>
+        {{form.ultimatum_game_experience.label}}<br>
+        {{form.ultimatum_game_experience}}<br>
+
         <hr>
         <h3> CONTROL QUESTIONS </h3>
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.proposer.errors)}}</div>
@@ -184,6 +193,12 @@
         <div style="background-color:lightskyblue;" id="{{form.proposer_responder.id}}-info"></div>
         {{form.proposer_responder.label}}<br>
         {{form.proposer_responder}}<br>
+
+
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.money_division.errors)}}</div>
+        <div style="background-color:lightskyblue;" id="{{form.money_division.id}}-info"></div>
+        {{form.money_division.label}}<br>
+        {{form.money_division}}<br>
         <hr>
         <div>Follow the link to begin the task, complete it and then enter the completion code below. If you do not see the link it is because you have answered incorrectly to one or more of the CONTROL questions above. Please read the instructions once again to understand the task adequately. Thanks for your effort!<br>
         <a href="{{url_for(treatment+'.'+'index')}}?job_id={{job_id}}&worker_id={{worker_id}}&max_judgments={{max_judgments}}&auto_finalize=1" target="_blank"><button class="button" type="button" id="main_link">Click here to start the main task</button></a><br>
@@ -193,35 +208,11 @@
         <!-- <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.data}}" onchange="update_tasks()"><br> -->
 
         <div id="features">
-            <div>Follow the link to begin the task, complete it for a bonus and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.eff.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click start to the effort task...</button></a><br>
-          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_effort.errors)}}</div>
-          {{form.code_effort.label}}<br>
-          {{form.code_effort}}<br>
-
-          <div>Follow the link to begin the task, complete it for a bonus and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.risk.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button"">Click here to start the risk task...</button></a><br>
-          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_risk.errors)}}</div>
-          {{form.code_risk.label}}<br>
-          {{form.code_risk}}<br>
-
-          <div>Follow the link to begin the task, complete it for a bonus and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.cg.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the charity giving task...</button></a><br>
-          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_cg.errors)}}</div>
-          {{form.code_cg.label}}<br>
-          {{form.code_cg}}<br>
-
-          <div>Follow the link to begin the task, complete it for a bonus and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.crt.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the calculus task...</button></a><br>
-          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_crt.errors)}}</div>
-          {{form.code_crt.label}}<br>
-          {{form.code_crt}}<br>
-
           <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.hexaco.index')}}?job_id={{job_id}}&worker_id={{worker_id}}&treatment={{treatment}}&auto_finalize=1" target="_blank"><button class="button"  type="button">Click here to start the hexaco task...</button></a><br>
-          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_hexaco.errors)}}</div>
-          {{form.code_hexaco.label}}<br>
-          {{form.code_hexaco}}<br>
+          <a href="{{url_for('tasks.cpc.index')}}?job_id={{job_id}}&worker_id={{worker_id}}&treatment={{treatment}}&auto_finalize=1" target="_blank"><button class="button"  type="button">Click here to start the hexaco task...</button></a><br>
+          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_cpc.errors)}}</div>
+          {{form.code_cpc.label}}<br>
+          {{form.code_cpc}}<br>
         </div>
 
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.test.errors)}}</div>

@@ -49,6 +49,12 @@ class MainForm(FlaskForm):
         ("I earn nearly equal incomes from crowdsourced microtasks and other job(s)", "I earn nearly equal incomes from crowdsourced microtasks and other job(s)")],
         validators=[DataRequired("Please choose a value")]
     )
+    ultimatum_game_experience = RadioField("How many times have you played the ultimatum game?", choices=[
+        ("0", "0 games played"),
+        ("1", "1 to 9 games played"),
+        ("10", "10 to 99 games played"),
+        ("100", "100 or more games played")
+    ])
     proposer = RadioField("The PROPOSER...", choices=[
         ("incorrect1", "decides the amount of money that the RESPONDER is paid"),
         ("correct", f"proposes a division of the {MAX_GAIN / 100:.2f} USD with the RESPONDER"),
@@ -67,25 +73,21 @@ class MainForm(FlaskForm):
         ("incorrect2", "Your decisions do not affect another worker.")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
     )
+    money_division = RadioField("Choose the correct answer", choices=[
+        ("incorrect1", "The money is divided 50/50 between the RESPONDER and the PROPOSER"),
+        ("incorrect2", "The money is divided according to the RESPONDER's minimum offer"),
+        ("correct", "The money is divided according to the PROPOSER's offer")],
+        validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
+    )
     code_resp_prop = StringField("Completion Code: main task", validators=[DataRequired(), Regexp(regex="prop:|resp:")])
-    code_effort = StringField("Completion Code: effort task", validators=[Optional()])
-    code_risk = StringField("Completion Code: risk task", validators=[Optional()])
-    code_cg = StringField("Completion Code: charitable giving", validators=[Optional()])
-    code_crt = StringField("Completion Code: calculus task", validators=[Optional()])
-    code_hexaco = StringField("Completion Code: hexaco task", validators=[Optional()])
+    code_cpc = StringField("Completion Code: choice task", validators=[Optional()])
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
 def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None):
     app.logger.info("handle_survey")
     if code_prefixes is None:
-        code_prefixes = {
-            "code_effort": "eff:",
-            "code_risk": "risk:",
-            "code_cg": "cg:",
-            "code_crt": "crt:",
-            "code_hexaco": "hexaco:"
-        }
+        code_prefixes = {"code_cpc": "cpc"}
     if form_class is None:
         form_class = MainForm
     if template is None:
