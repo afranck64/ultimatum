@@ -10,6 +10,8 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, Integ
 from survey.utils import (
     get_table, save_result2db, save_result2file, get_output_filename, get_latest_treatment, generate_completion_code, save_worker_id,
     get_cookie_obj, set_cookie_obj, table_exists, WORKER_CODE_DROPPED, ALL_COOKIES_KEY)
+
+from core.models.metrics import MAX_GAIN
 from survey.db import insert, get_db
 from survey._app import app
 from survey.adapter import get_adapter, get_adapter_from_dict
@@ -49,13 +51,13 @@ class MainForm(FlaskForm):
     )
     proposer = RadioField("The PROPOSER...", choices=[
         ("incorrect1", "decides the amount of money that the RESPONDER is paid"),
-        ("correct", "proposes a division of the 2 USD with the RESPONDER"),
+        ("correct", f"proposes a division of the {MAX_GAIN / 100:.2f} USD with the RESPONDER"),
         ("incorrect2", "accepts or rejects the offer made by the RESPONDER")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
     )
     responder = RadioField("The RESPONDER...", choices=[
         ("incorrect1", "decides the amount of money that the PROPOSER is paid"),
-        ("incorrect2", "proposes a division of the 2 USD with the PROPOSER"),
+        ("incorrect2", f"proposes a division of the {MAX_GAIN / 100:.2f} USD with the PROPOSER"),
         ("correct", "accepts or rejects the offer made by the PROPOSER")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
     )
@@ -172,7 +174,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
                     field.errors = field.errors + ["Invalid code"]
                     is_codes_valid = False
 
-    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments))
+    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments, max_gain=MAX_GAIN))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 

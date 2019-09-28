@@ -8,7 +8,7 @@ import joblib
 
 from core.models.acceptance import AcceptanceModel
 from core.models.cluster import ClusterExtModel
-from core.models.metrics import avg_loss_ratio, avg_gain_ratio
+from core.models.metrics import avg_loss_ratio, avg_gain_ratio, MAX_GAIN
 from core.utils.preprocessing import df_to_xy, df_to_xydf
 from core.utils.explanation import get_pdf, get_bins
 from core.utils.benchmark import process_benchmark_cv
@@ -51,7 +51,7 @@ def train_and_save(data_dir, output_dir, model=None, top_columns=None, shuffle=T
     df_max["selfish"] = 60.0
     df_max["time_spent_risk"] = 152000.0
     df_max["time_spent_prop"] = 269000.0
-    df_max["min_offer"] = 200.0
+    df_max["min_offer"] = MAX_GAIN
     df_max["count_effort"] = 20.0
     df_max["crf_performance"] = 3.0
     df_max = pd.Series(df_max)

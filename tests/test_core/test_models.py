@@ -7,10 +7,11 @@ from core.models.acceptance import AcceptanceModel
 from core.models.cluster import ClusterModel, ClusterExtModel
 from core.models.deep import KerasModel
 from core.models.featureless import ConservativeModel, EMModel, RandomModel
+from core.models.metrics import MAX_GAIN
 
 def get_xy(N=100, M=8):
     X = np.random.random((N, M))
-    y = np.random.randint(low=0, high=200, size=N)
+    y = np.random.randint(low=0, high=MAX_GAIN, size=N)
     return X, y
 
 class Test_acceptance(unittest.TestCase):

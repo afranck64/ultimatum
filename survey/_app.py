@@ -11,6 +11,8 @@ from flask import (
 )
 from flask_wtf.csrf import CSRFProtect
 
+from core.models.metrics import MAX_GAIN
+
 CODE_DIR = os.path.split(os.path.split(__file__)[0])[0]
 
 app = Flask(__name__)
@@ -36,7 +38,7 @@ class FakeModel(object):
         if not self._warned:
             warnings.warn("You are using the fake model!!!")
             self._warned = True
-        return kwargs.get("min_offer", random.randint(0, 200))
+        return kwargs.get("min_offer", random.randint(0, MAX_GAIN))
 
 def _env2bool(env_value):
     if env_value is None:

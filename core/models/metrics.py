@@ -1,6 +1,6 @@
 import numpy as np
 
-MAX_GAIN = 200
+MAX_GAIN = 100
 
 # def loss(min_offer, predicted):
 #     """

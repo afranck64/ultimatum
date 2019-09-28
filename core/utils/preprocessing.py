@@ -3,7 +3,6 @@ import numpy as np
 
 from core.models.metrics import MAX_GAIN
 # #TODO: check later (import from models.metrics?)
-# MAX_GAIN = 200
 
 def df_to_xy(df, normalize=True, centered=False, fuse_risk=False, drop_columns=None, select_columns=None, normalize_target=False, min_target=None, max_target=None, df_min=None, df_max=None):
     """
@@ -13,7 +12,7 @@ def df_to_xy(df, normalize=True, centered=False, fuse_risk=False, drop_columns=N
     :param fuse_risk (bool) if True, fuse count_effort and cells into a new columns <effort> while dropping both cells and count_effort
     :param drop_columns: (list) list of features to drop from the dataset
     :param select_columns: (list) list of columns to select if availabe, drop_columns isn't considered
-    :param normalize_target: (bool) if True, target columns is divided by 200
+    :param normalize_target: (bool) if True, target columns is divided by MAX_GAIN
     :param min_target: min target prior to target normalization
     :param max_target: max target prior to target normalization
     :param df_min: DataFrame, if available will be used as min for data normalization
@@ -31,7 +30,7 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
     :param fuse_risk (bool) if True, fuse time_spent_risk and cells into a new columns <risk> while dropping both cells and time_spent_risk
     :param drop_columns: (list) list of features to drop from the dataset
     :param select_columns: (list) list of columns to select if availabe, drop_columns isn't considered
-    :param normalize_target: (bool) if True, target columns is divided by 200
+    :param normalize_target: (bool) if True, target columns is divided by MAX_GAIN
     :param min_target: (float) min target prior to target normalization
     :param max_target: (float) max target prior to target normalization
     :param df_min: DataFrame, if available will be used as min for data normalization
@@ -50,7 +49,7 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
         df_max["selfish"] = 60.0
         df_max["time_spent_risk"] = 152000.0
         df_max["time_spent_prop"] = 269000.0
-        df_max["min_offer"] = 200.0
+        df_max["min_offer"] = MAX_GAIN
         df_max["count_effort"] = 20.0
         df_max["crt_performance"] = 3.0
         import warnings

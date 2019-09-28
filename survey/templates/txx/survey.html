@@ -26,14 +26,13 @@
       
       document.getElementById("{{form.proposer.id}}").onchange = countControlError;
       document.getElementById("{{form.proposer.id}}-info").style.display = "none";
-      document.getElementById("{{form.proposer.id}}-info").textContent = "You seem to have misunderstood the instructions. The role of the PROPOSER is to make an offer to the RESPONDER regarding how to divide the 2 USD. If you understand this now, please correct your answer to the statement regarding the PROPOSER above and continue."
+      document.getElementById("{{form.proposer.id}}-info").textContent = "You seem to have misunderstood the instructions. The role of the PROPOSER is to make an offer to the RESPONDER regarding how to divide the {{ '%.2f'|format(max_gain / 100)}} USD. If you understand this now, please correct your answer to the statement regarding the PROPOSER below and continue."
       document.getElementById("{{form.responder.id}}").onchange = countControlError;
       document.getElementById("{{form.responder.id}}-info").style.display = "none";
-      document.getElementById("{{form.responder.id}}-info").textContent = "You seem to have misunderstood the instructions. The role of the RESPONDER is to either accept or reject the offer made by the PROPOSER regarding how to divide the 2 USD. If you understand this now, please correct your answer to the statement regarding the RESPONDER above and continue."
+      document.getElementById("{{form.responder.id}}-info").textContent = "You seem to have misunderstood the instructions. The role of the RESPONDER is to either accept or reject the offer made by the PROPOSER regarding how to divide the {{ '%.2f'|format(max_gain / 100)}} USD. If you understand this now, please correct your answer to the statement regarding the RESPONDER below and continue."
       document.getElementById("{{form.proposer_responder.id}}").onchange = countControlError;
       document.getElementById("{{form.proposer_responder.id}}-info").style.display = "none";
-      document.getElementById("{{form.proposer_responder.id}}-info").textContent = "You seem to have misunderstood the instructions. The role of the PROPOSER is to make an offer to the RESPONDER regarding how to divide the 2 USD. The role of the RESPONDER is to either accept or reject that offer. Both the PROPOSER and the  RESPONDER are real human contributors who are dynamically linked to participate in this task. If you understand this now, please correct your answer to the statement above and continue."
-
+      document.getElementById("{{form.proposer_responder.id}}-info").textContent = "You seem to have misunderstood the instructions. The role of the PROPOSER is to make an offer to the RESPONDER regarding how to divide the {{ '%.2f'|format(max_gain / 100)}} USD. The role of the RESPONDER is to either accept or reject that offer. Both the PROPOSER and the  RESPONDER are real human contributors who are dynamically linked to participate in this task. If you understand this now, please correct your answer to the statement below and continue."
       if (getCookie("hide_instructions")) {
         toggle_overview();
       }

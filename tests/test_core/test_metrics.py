@@ -63,13 +63,13 @@ class Test_metrics(unittest.TestCase):
     
     def test_gain(self):
         y, ypred = get_y_ypred(mode="full")
-        np.testing.assert_almost_equal(gain(y, ypred), (200-ypred))
+        np.testing.assert_almost_equal(gain(y, ypred), (MAX_GAIN-ypred))
         y, ypred = get_y_ypred(mode="none")
         np.testing.assert_almost_equal(gain(y, ypred), (0))
     
     def test_gain_mean(self):
         y, ypred = get_y_ypred(mode="full")
-        np.testing.assert_almost_equal(gain_mean(y, ypred), (200-ypred).mean())
+        np.testing.assert_almost_equal(gain_mean(y, ypred), (MAX_GAIN-ypred).mean())
         y, ypred = get_y_ypred(mode="none")
         np.testing.assert_almost_equal(gain_mean(y, ypred), (0))
     

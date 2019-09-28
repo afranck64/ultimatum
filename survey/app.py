@@ -2,6 +2,7 @@ from flask import render_template
 import warnings
 import importlib
 
+from core.models.metrics import MAX_GAIN
 from survey import tasks
 from survey import t10
 from survey.txx import handle_survey_cpc, handle_survey_cpc_done
@@ -47,7 +48,7 @@ def survey_done():
 
 @app.route("/survey/overview")
 def overview():
-    return render_template("overview.html")
+    return render_template("overview.html", max_gain=MAX_GAIN)
 
 @csrf_protect.exempt
 @app.route("/survey_cpc/", methods=["GET", "POST"])

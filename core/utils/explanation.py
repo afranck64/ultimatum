@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 import pandas as pd
 
-MAX_GAIN = 200
+from core.models.metrics import MAX_GAIN
 STEP = 5
 
 def generate_decision_area(model, features_df, target_label='offer'):
