@@ -45,9 +45,11 @@ def response_to_result(response, job_id=None, worker_id=None):
     result["worker_bonus"] = 0
     return result
 
-def handle_task_index(base, validate_response=None):
+def handle_task_index(base, validate_response=None, template_kwargs=None):
     app.logger.debug(f"handle_task_index: {base}")
-    req_response = make_response(render_template(f"tasks/{base}.html"))
+    if template_kwargs is None:
+        template_kwargs = dict()
+    req_response = make_response(render_template(f"tasks/{base}.html", **template_kwargs))
     cookie_obj = get_cookie_obj(base)
 
     worker_code_key = f"{base}_worker_code"
@@ -133,7 +135,7 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
         
         #NOTE: hexaco is the LAST task required from the user!!!
         auto_finalize = cookie_obj.get("auto_finalize")
-        if auto_finalize and base=="hexaco":
+        if auto_finalize:# and base=="hexaco":
             treatment = cookie_obj.get("treatment")
             finalize_resp(job_id, worker_id, treatment)
             # client = app.test_client()
