@@ -71,7 +71,7 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
 @csrf_protect.exempt
 @bp.route("/prop/", methods=["GET", "POST"])
 def index():
-    return handle_index(TREATMENT, template=f"{TREATMENT.lower()}/prop.html")
+    return handle_index(TREATMENT)
 
 @bp.route("/prop/check/")
 def check():
@@ -79,5 +79,5 @@ def check():
 
 @bp.route("/prop/done")
 def done():
-    return handle_done(TREATMENT, response_to_result_func=prop_to_prop_result, template=f"{TREATMENT.lower()}/prop.done.html")
+    return handle_done(TREATMENT, response_to_result_func=prop_to_prop_result)
     

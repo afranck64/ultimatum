@@ -348,7 +348,13 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None):
     if proposal_class is None:
         proposal_class = HHI_Prop_ADM
     if template is None:
-        template = f"txx/prop.html"
+
+        MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
+        dss_available = bool(app.config.get(MODEL_KEY))
+        if dss_available:
+            template = f"txx/prop.html"
+        else:
+            template = f"txx/prop_no_dss.html"
     cookie_obj = get_cookie_obj(BASE)
     worker_code_key = f"{BASE}_worker_code"
     worker_id = request.args.get("worker_id", "na")
