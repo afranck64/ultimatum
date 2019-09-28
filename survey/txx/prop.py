@@ -51,7 +51,7 @@ REAL_MODEL = "real"
 WEAK_FAKE_MODEL = "weak_fake"
 STRONG_FAKE_MODEL = "strong_fake"
 
-OFFER_VALUES = {str(val):cents_repr(val) for val in range(0, 201, 5)}
+OFFER_VALUES = {str(val):cents_repr(val) for val in range(0, MAX_GAIN+1, 5)}
 
 JUDGING_TIMEOUT_SEC = 10*60
 

@@ -25,7 +25,7 @@ from survey._app import app, csrf_protect
 from survey.figure_eight import FigureEight, RowState
 from core.utils.explanation import get_acceptance_probability, get_best_offer_probability
 from core.utils import cents_repr
-from core.models.metrics import gain
+from core.models.metrics import gain, MAX_GAIN
 
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
@@ -43,7 +43,7 @@ BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 
 LAST_MODIFIED_KEY = '_time_change'
 
-OFFER_VALUES = {str(val):cents_repr(val) for val in range(0, 201, 5)}
+OFFER_VALUES = {str(val):cents_repr(val) for val in range(0, MAX_GAIN+1, 5)}
 
 OTHERS_MISSING_VALUE = -1
 
