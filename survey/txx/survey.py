@@ -74,22 +74,21 @@ class MainForm(FlaskForm):
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
-def handle_survey(treatment=None, template=None):
-    code_prefixes = {
-        "code_effort": "eff:",
-        "code_risk": "risk:",
-        "code_cg": "cg:",
-        "code_crt": "crt:",
-        "code_hexaco": "hexaco:"
-    }
+def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None):
     app.logger.info("handle_survey")
+    if code_prefixes is None:
+        code_prefixes = {
+            "code_effort": "eff:",
+            "code_risk": "risk:",
+            "code_cg": "cg:",
+            "code_crt": "crt:",
+            "code_hexaco": "hexaco:"
+        }
+    if form_class is None:
+        form_class = MainForm
     if template is None:
         template = "txx/survey.html"
     cookie_obj = get_cookie_obj(BASE)
-    # if not cookie_obj.get("adapter") or cookie_obj.get("worker_id") in {"", "na", None}:
-    #     adapter = get_adapter()
-    # else:
-    #     adapter = get_adapter_from_dict(cookie_obj.get("adapter"))
     
     adapter_cookie = get_adapter_from_dict(cookie_obj.get("adapter", {}))
     adapter_referrer = get_adapter()
@@ -131,7 +130,7 @@ def handle_survey(treatment=None, template=None):
     cookie_obj["treatment"] = treatment
     cookie_obj["adapter"] = adapter.to_dict()
     cookie_obj[BASE] = True
-    form = MainForm(request.form)
+    form = form_class(request.form)
     drop = request.form.get("drop")
     con = get_db()
     if table_exists(con, table_all):
@@ -143,7 +142,7 @@ def handle_survey(treatment=None, template=None):
                 return req_response
 
     if request.method == "POST" and (drop=="1" or form.validate_on_submit()):
-        form = MainForm(request.form)
+        form = form_class(request.form)
         cookie_obj["response"] = request.form.to_dict()
         response = request.form.to_dict()
         is_codes_valid = True
