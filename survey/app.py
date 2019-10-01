@@ -4,7 +4,6 @@ import importlib
 
 from core.models.metrics import MAX_GAIN
 from survey import tasks
-from survey import t10
 from survey.txx import handle_survey_cpc, handle_survey_cpc_done
 from survey.txx.survey import handle_survey, handle_survey_done
 from survey import admin
