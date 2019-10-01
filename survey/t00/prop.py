@@ -4,13 +4,13 @@ import time
 import datetime
 
 from flask import (
-    Blueprint
+    Blueprint, make_response, jsonify
 )
 
 from core.utils import cents_repr
 
 from survey._app import app, csrf_protect
-from survey.txx.prop import handle_check, handle_done, handle_index, insert_row
+from survey.txx.prop import handle_check, handle_done, handle_index, insert_row, handle_index_dss
 
 ############ Consts #################################
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
@@ -27,6 +27,7 @@ class HHI_Prop_ADM(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self["offer"] = None
+        self["offer_final"] = None
         self["time_start"] = time.time()
         self["time_stop"] = None
         self["ai_calls_offer"] = []
@@ -56,6 +57,7 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
     result = {}
     result["timestamp"] = str(datetime.datetime.now())
     result["offer"] = proposal["offer"]
+    result["offer_final"] = proposal["offer"]
     result["time_spent_prop"] = proposal["time_stop"] - proposal["time_start"]
     result["job_id"] = job_id
     result["worker_id"] = worker_id
@@ -73,9 +75,21 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
 def index():
     return handle_index(TREATMENT)
 
+
+# @bp.route("/prop_dss/", methods=["GET", "POST"])
+# def index_dss():
+#     app.logger.warn(f"{TREATMENT}index_dss")
+#     return handle_index_dss(TREATMENT)
+
 @bp.route("/prop/check/")
 def check():
-    return handle_check(TREATMENT)
+    app.logger.warn(f"{TREATMENT}index_dss")
+    req_response = make_response(jsonify({"offer": 0, "acceptance_probability": 0, "best_offer_probability": 0}))    
+    return req_response
+
+# @bp.route("/prop/check/")
+# def check():
+#     return handle_check(TREATMENT)
 
 @bp.route("/prop/done")
 def done():
