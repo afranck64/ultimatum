@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block head%}
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script> -->
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -13,7 +14,7 @@
         google.charts.setOnLoadCallback(drawChart);
        
         function drawChart() {
-            responder = parseInt(document.getElementById('user2ai').value);
+            responder = parseInt(document.getElementById('offer').value);
             proposer = {{max_gain}}-responder;
             
             var data = google.visualization.arrayToDataTable([
@@ -30,141 +31,33 @@
             };
             var chart = new google.visualization.PieChart(document.getElementById('piechart'));
             chart.draw(data, options);
-
-            // Reset ai response
-            delete window.acceptance_probability;
-            delete window.best_offer_probability;
-            drawAIResponse();
-        }
-    </script>
-
-    <script>
-        google.charts.load('current', {'packages':['gauge']});
-        google.charts.setOnLoadCallback(drawAIResponse);
-        update_ai_response = function() {
-            let request = new XMLHttpRequest();
-            request.onreadystatechange = function () {
-                if (this.readyState === 4) {
-                    if (this.status === 200) {
-                        document.body.className = 'ok';
-                        console.log(this.responseText);
-                    } else if (this.response == null && this.status === 0) {
-                        document.body.className = 'error offline';
-                        console.log("The computer appears to be offline.");
-                    } else {
-                        document.body.className = 'error';
-                    }
-                }
-            };
-
-            var user2ai = document.getElementById('user2ai');
-            if (user2ai.value == "") {
-                user2ai.checkValidity();
-                return;
-            }
-            user_value = user2ai.value;
-            url = "{{prop_check_url}}?offer=" + user_value
-            request.open("GET", url, true);
-            request.send(null);
-            request.onload = function() {
-                var element = document.getElementById('ai_response');
-                var resp = JSON.parse(request.responseText);
-                window.acceptance_probability = resp["acceptance_probability"];
-                window.best_offer_probability = resp["best_offer_probability"];
-                user2ai.value = "";
-                drawAIResponse();
-            }
-            //drawAIResponse();
-
-        }
-
-      function drawAIResponse() {
-
-        var data = google.visualization.arrayToDataTable([
-          ['Label', 'Value'],
-          ['Accepted', 100 * window.acceptance_probability],
-        ]);
-
-        var options = {
-          width: 200, height: 160,
-          redFrom: 0, redTo: 35,
-          yellowFrom:35, yellowTo: 65,
-          greenFrom:65, greenTo: 100,
-          minorTicks: 5
         };
-
-        var chart = new google.visualization.Gauge(document.getElementById('ai_response_accepted'));
-
-        chart.draw(data, options);
-
-
-        var data2 = google.visualization.arrayToDataTable([
-          ['Label', 'Value'],
-          ['Best offer', 100 * window.best_offer_probability],
-        ]);
-
-        var chart2 = new google.visualization.Gauge(document.getElementById('ai_response_best'));
-
-        chart2.draw(data2, options);
-      }
     </script>
 
-    <h1 align="center">You have been randomly assigned the role of a PROPOSER</h1>
-    <h2 align="center">Select your proposal from the dropdown menu below</h2>
+    <h1 align="center">You have been randomly assigned the role of a PROPOSER.</h1>
+    <h3 align="center">Select the offer you want to make to the RESPONDER from the dropdown menu below.</h3>
 
-    <!-- <h2>In this tasks, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER</h2>
-    <h2>The RESPONDER doesn't know about the existence of the Artificial intelligence</h2> -->
+    <!-- <h3>In this tasks, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER</h3>
+    <h3>The RESPONDER doesn't know about the existence of the Artificial intelligence</h3> -->
     <!-- <form method="GET" action=""> -->
-        <div class="offer" align="center">
-            <label align="center"> (test) Offer
-                <select name="offer" id="user2ai" onchange="drawChart()" required>
-                    <option value="" selected disabled hidden>Select a value</option>
-                    {% for value, label in offer_values.items() %}
-                        <option value={{value}}>{{label}}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <button type="button" id="submit2ai" onclick="update_ai_response()" align="center" >Submit to the AI-System</button> <br>
-
-            <div align="center"> 
-                    <div class="chart" id="piechart" style="opacity: 1;" ></div>
-                    <div id="ai_response">
-                        <table>
-                            <tr>
-                                <td style="width: 50% display: inline-block" align="center">
-                                    <div id="ai_response_accepted"></div>
-                                </td>
-                                <td style="width:200px"></td>
-                                <td style="width: 50% display: inline-block" align="center">
-                                    <div id="ai_response_best"></div>
-                                </td>
-                            </tr>
-                            <tr">
-                                <td style="width: 50% display: table-cell" align="center">
-                                    <div style="max-width: 240px">Chances of your offer being accepted by your specific RESPONDER</div>
-                                </td>
-                                <td style="width:200px"></td>
-                                <td style="width: 50% display: table-cell" align="center">
-                                    <div style="max-width: 240px">Chances of your offer being the minimal offer accepted by your specific RESPONDER</div>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-            </div>
-        </div>
     <!-- </form> -->
 
     <form action="" method="post" align="center">
         <div class="offer">
             {{ form.hidden_tag() }}
             <label align="center"> Offer
-                <select name="offer" required>
+                <select id="offer" name="offer" onchange="drawChart()" required>
                     <option value="" selected disabled hidden>Select a value</option>
                     {% for value, label in offer_values.items() %}
                         <option value={{value}}>{{label}}</option>
                     {% endfor %}
                 </select>
             </label>
+            <br>
+            <br>
+            <div align="center"> 
+                <div class="chart" id="piechart" style="opacity: 1;" ></div>
+            </div>
             <br>
             <br>
             <p align="center"> {{form.submit()}}</p>

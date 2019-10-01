@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block head%}
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script> -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<title>Proposer - The Ultimatum Bargaining Experiment</title>
+{% endblock %}
+{% block content %}
+
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+       
+        function drawChart() {
+            var element_p_accept = document.getElementById("ai_response_accepted_text");
+            element_p_accept.innerHTML = "## %";
+            var element_p_best = document.getElementById("ai_response_best_text");
+            element_p_best.innerHTML = "## %";
+            responder = parseInt(document.getElementById('user2ai').value);
+            proposer = {{max_gain}}-responder;
+            
+            var data = google.visualization.arrayToDataTable([
+                ['Actor', 'Share'],
+                ['Proposer', proposer],
+                ['Responder', responder]
+            ]);
+            var options = {
+                title: '',    
+                'backgroundColor': 'transparent',
+                'is3D': 'true',
+                legend: {position: 'bottom', textStyle: {fontSize: 18}},
+                pieSliceText: 'value'
+            };
+            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+            chart.draw(data, options);
+
+            // Reset ai response
+            delete window.acceptance_probability;
+            delete window.best_offer_probability;
+            //drawAIResponse();
+        };
+    </script>
+
+    <script>
+        google.charts.load('current', {'packages':['gauge']});
+        google.charts.setOnLoadCallback(drawAIResponse);
+        update_ai_response = function() {
+            let request = new XMLHttpRequest();
+            request.onreadystatechange = function () {
+                if (this.readyState === 4) {
+                    if (this.status === 200) {
+                        document.body.className = 'ok';
+                        console.log(this.responseText);
+                    } else if (this.response == null && this.status === 0) {
+                        document.body.className = 'error offline';
+                        console.log("The computer appears to be offline.");
+                    } else {
+                        document.body.className = 'error';
+                    }
+                }
+            };
+
+            var user2ai = document.getElementById('user2ai');
+            if (user2ai.value == "") {
+                user2ai.checkValidity();
+                return;
+            }
+            user_value = user2ai.value;
+            url = "{{prop_check_url}}?offer=" + user_value
+            request.open("GET", url, true);
+            request.send(null);
+            request.onload = function() {
+                var element = document.getElementById('ai_response');
+                var resp = JSON.parse(request.responseText);
+                window.acceptance_probability = resp["acceptance_probability"];
+                window.best_offer_probability = resp["best_offer_probability"];
+                var element_p_accept = document.getElementById("ai_response_accepted_text");
+                element_p_accept.innerHTML = (resp["acceptance_probability"] * 100).toFixed(2) + " %";
+                var element_p_best = document.getElementById("ai_response_best_text");
+                element_p_best.innerHTML = (resp["best_offer_probability"] * 100).toFixed(2) + " %";
+                user2ai.value = "";
+                drawAIResponse();
+            }
+            //drawAIResponse();
+
+        }
+
+      function drawAIResponse() {
+        //TODO: remove the following line to execute
+        return;
+        var data = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          ['Accepted', 100 * window.acceptance_probability],
+        ]);
+
+        var options = {
+          width: 200, height: 160,
+          redFrom: 0, redTo: 0,
+          yellowFrom:0, yellowTo: 0,
+          greenFrom:0, greenTo: 0,
+          minorTicks: 5
+        };
+
+        var chart = new google.visualization.Gauge(document.getElementById('ai_response_accepted'));
+
+        chart.draw(data, options);
+
+
+        var data2 = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          ['Best offer', 100 * window.best_offer_probability],
+        ]);
+
+        var chart2 = new google.visualization.Gauge(document.getElementById('ai_response_best'));
+
+        chart2.draw(data2, options);
+      }
+    </script>
+
+    <h1 align="center">You have been randomly assigned the role of a PROPOSER.</h1>
+    <h3 align="center">Select the test offer you want to submit to the AI-System from the dropdown menu below.</h3>
+
+    <!-- <h2>In this tasks, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER</h2>
+    <h2>The RESPONDER doesn't know about the existence of the Artificial intelligence</h2> -->
+    <!-- <form method="GET" action=""> -->
+        <div class="offer" align="center">
+            <label align="center"> (test) Offer
+                <select name="offer" id="user2ai" onchange="drawChart()" required>
+                    <option value="" selected disabled hidden>Select a value</option>
+                    {% for value, label in offer_values.items() %}
+                        <option value={{value}}>{{label}}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="button" id="submit2ai" onclick="update_ai_response()" align="center" >Submit to the AI-System</button> <br>
+
+            <div align="center"> 
+                <div class="chart" id="piechart" style="opacity: 1;" ></div>
+                <br>
+                <br>
+                <div id="ai_response">
+                    <table>
+                        <tr>
+                            <td style="display: block" align="center">
+                                <div id="ai_response_accepted"></div>
+                            </td>
+                            <td style="width:200px"></td>
+                            <td style="display: block" align="center">
+                                <div id="ai_response_best"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="display: table-cell" align="center">
+                                <div style="max-width: 240px" align="center">probability of your offer being accepted</div>
+                            </td>
+                            <td style="width:200px"></td>
+                            <td style="display: table-cell" align="center">
+                                <div style="max-width: 240px" align="center">probability of your offer being the best offer</div>
+                            </td>
+                        </tr>
+                        <tr style="height: 30px">
+                            <td style="display: block; font-weight: bold; background-color: #dddddd;">
+                                <div id="ai_response_accepted_text" align="center">## %</div>
+                            </td>
+                            <td style="width:200px"></td>
+                            <td style="display: block; font-weight: bold; background-color: #dddddd" align="center">
+                                <div id="ai_response_best_text" align="center">## %</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <!-- </form> -->
+
+    <br>
+    <br>
+    <br>
+    <br>
+    <form action="" method="post" align="center">
+        <h3 align="center">Select the final offer you want to make to the RESPONDER from the dropdown menu below.</h3>
+        <div class="offer">
+            {{ form.hidden_tag() }}
+            <label align="center"> Offer
+                <select name="offer_dss" required>
+                    <option value="" selected disabled hidden>Select a value</option>
+                    {% for value, label in offer_values.items() %}
+                        <option value={{value}}>{{label}}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <br>
+            <br>
+            <p align="center"> {{form.submit()}}</p>
+        </div>
+    </form>
+{% endblock %}
