@@ -5,7 +5,7 @@ import string
 from flask import session
 
 from tests.test_survey import client, app, generate_worker_id
-from survey.tasks import cg, crt, eff, risk
+from survey.tasks import cg, crt, eff, goat, cpc, exp, risk
 from survey.utils import get_worker_bonus
 
 #NOTE:
@@ -22,11 +22,14 @@ def process_tasks(client, job_id="test", worker_id=None, bonus_mode="full", url_
     """
     if worker_id is None:
         worker_id = generate_worker_id("tasks")
-    _process_cg(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    _process_crt(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    _process_eff(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    # _process_cg(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    # _process_crt(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    # _process_eff(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    # _process_goat(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    # _process_hexaco(client, job_id, worker_id=worker_id, url_kwargs=url_kwargs)
+    _process_exp(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     _process_risk(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    _process_hexaco(client, job_id, worker_id=worker_id, url_kwargs=url_kwargs)
+    _process_cpc(client, job_id, worker_id=worker_id, url_kwargs=url_kwargs)
 
 def _process_cg(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True):
     """
@@ -190,7 +193,7 @@ def disabled__test_hexaco_bonus():
         assert b"hexaco:" in res
         assert get_worker_bonus("test", worker_id) == 0
 
-def _process_risk(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True):
+def _process_goat(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True):
     """
     :param client: (flask.testclient)
     :param job_id: (str)
@@ -199,42 +202,42 @@ def _process_risk(client, job_id="test", worker_id=None, bonus_mode="random", cl
     :param clear_session: (bool)
     """
     if worker_id is None:
-        worker_id = generate_worker_id("risk")
-    path = f"/tasks/risk/?job_id={job_id}&worker_id={worker_id}"
+        worker_id = generate_worker_id("goat")
+    path = f"/tasks/goat/?job_id={job_id}&worker_id={worker_id}"
     if bonus_mode=="random":
-        data = {field:random.randint(0, 1) for field in risk.FIELDS}
+        data = {field:random.randint(0, 1) for field in goat.FIELDS}
     elif bonus_mode=="none":
-        data = {field:0 for field in risk.FIELDS}
+        data = {field:0 for field in goat.FIELDS}
     else:
-        data = {field:1 for field in risk.FIELDS}
+        data = {field:1 for field in goat.FIELDS}
     with app.test_request_context(path):
         if clear_session:
             with client:
                 with client.session_transaction() as sess:
                     sess.clear()
         client.get(path)
-        with app.test_request_context(f"/tasks/risk/check/?job_id={job_id}&woker_id={worker_id}"):
+        with app.test_request_context(f"/tasks/goat/check/?job_id={job_id}&woker_id={worker_id}"):
             for key, value in data.items():
                 if value:
-                    client.get(f"/tasks/risk/check/?job_id={job_id}&worker_id={worker_id}&cell={key}")
+                    client.get(f"/tasks/goat/check/?job_id={job_id}&worker_id={worker_id}&cell={key}")
         return client.post(path, data=data, follow_redirects=True).data
 
-def test_risk(client):
-    res = _process_risk(client)
-    assert b"risk:" in res
+def test_goat(client):
+    res = _process_goat(client)
+    assert b"goat:" in res
 
-def test_risk_bonus(client):
+def test_goat_bonus(client):
     with app.app_context():
-        worker_id = generate_worker_id("risk")
-        res = _process_risk(client, worker_id=worker_id, bonus_mode="full")
-        assert b"risk:" in res
-        assert get_worker_bonus("test", worker_id) == risk.MAX_BONUS
-        worker_id = generate_worker_id("risk")
-        res = _process_risk(client, worker_id=worker_id, bonus_mode="random")
-        assert b"risk:" in res
-        worker_id = generate_worker_id("risk")
-        res = _process_risk(client, worker_id=worker_id, bonus_mode="none")
-        assert b"risk:" in res
+        worker_id = generate_worker_id("goat")
+        res = _process_goat(client, worker_id=worker_id, bonus_mode="full")
+        assert b"goat:" in res
+        assert get_worker_bonus("test", worker_id) == goat.MAX_BONUS
+        worker_id = generate_worker_id("goat")
+        res = _process_goat(client, worker_id=worker_id, bonus_mode="random")
+        assert b"goat:" in res
+        worker_id = generate_worker_id("goat")
+        res = _process_goat(client, worker_id=worker_id, bonus_mode="none")
+        assert b"goat:" in res
         assert get_worker_bonus("test", worker_id) == 0
 
 def test_tasks_bonus(client):
@@ -254,8 +257,8 @@ def test_tasks_bonus(client):
         _process_hexaco(client, worker_id=worker_id)
         exp_bonus += 0  #NO bonus for hexaco actually
         assert get_worker_bonus(job_id, worker_id) == exp_bonus
-        _process_risk(client, worker_id=worker_id, bonus_mode="full")
-        exp_bonus += risk.MAX_BONUS
+        _process_goat(client, worker_id=worker_id, bonus_mode="full")
+        exp_bonus += goat.MAX_BONUS
         assert get_worker_bonus(job_id, worker_id) == exp_bonus
     # worker_id = generate_worker_id("tasks")
     # with app.app_context():
@@ -271,6 +274,112 @@ def test_tasks_bonus(client):
     #     _process_hexaco(client, worker_id=worker_id)
     #     exp_bonus += 0  #NO bonus for hexaco actually
     #     assert get_worker_bonus(job_id, worker_id) == exp_bonus
-    #     _process_risk(client, worker_id=worker_id, bonus_mode="full")
-    #     exp_bonus += risk.MAX_BONUS
+    #     _process_goat(client, worker_id=worker_id, bonus_mode="full")
+    #     exp_bonus += goat.MAX_BONUS
     #     assert get_worker_bonus(job_id, worker_id) == exp_bonus
+
+
+def _process_cpc(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True, url_kwargs=None):
+    """
+    :param client: (flask.testclient)
+    :param job_id: (str)
+    :param worker_id: (str)
+    :param bonus_mode: (str: random|full|none)
+    :param clear_session: (bool)
+    """
+    if worker_id is None:
+        worker_id = generate_worker_id("cpc")
+    path = f"/tasks/cpc/?job_id={job_id}&worker_id={worker_id}"
+    if url_kwargs:
+        for k,v in url_kwargs.items():
+            path += f"&{k}={v}"
+        app.logger.debug("PATH: " + str(path))
+    if bonus_mode=="random":
+        data = {field:random.choice(["A", "B"]) for field in cpc.FIELDS}
+    elif bonus_mode=="none":
+        data = {field:"A" for field in cpc.FIELDS}
+    else:
+        data = {field:"B" for field in cpc.FIELDS}
+    with app.test_request_context(path):
+        if clear_session:
+            with client:
+                with client.session_transaction() as sess:
+                    sess.clear()
+        client.get(path)
+        return client.post(path, data=data, follow_redirects=True).data
+
+def test_cpc(client):
+    res = _process_cpc(client)
+    assert b"cpc:" in res
+
+
+def _process_exp(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True, url_kwargs=None):
+    """
+    :param client: (flask.testclient)
+    :param job_id: (str)
+    :param worker_id: (str)
+    :param bonus_mode: (str: random|full|none)
+    :param clear_session: (bool)
+    """
+    if worker_id is None:
+        worker_id = generate_worker_id("exp")
+    path = f"/tasks/exp/?job_id={job_id}&worker_id={worker_id}"
+    if url_kwargs:
+        for k,v in url_kwargs.items():
+            path += f"&{k}={v}"
+        app.logger.debug("PATH: " + str(path))
+    data = {field:random.choice(["0", "1", "2", "3"]) for field in exp.FIELDS}
+    with app.test_request_context(path):
+        if clear_session:
+            with client:
+                with client.session_transaction() as sess:
+                    sess.clear()
+        client.get(path)
+        return client.post(path, data=data, follow_redirects=True).data
+
+def test_exp(client):
+    res = _process_exp(client)
+    assert b"exp:" in res
+
+
+def _process_risk(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True, url_kwargs=None):
+    """
+    :param client: (flask.testclient)
+    :param job_id: (str)
+    :param worker_id: (str)
+    :param bonus_mode: (str: random|full|none)
+    :param clear_session: (bool)
+    """
+    if worker_id is None:
+        worker_id = generate_worker_id("risk")
+    path = f"/tasks/risk/?job_id={job_id}&worker_id={worker_id}"
+    if url_kwargs:
+        for k,v in url_kwargs.items():
+            path += f"&{k}={v}"
+        app.logger.debug("PATH: " + str(path))
+    data = {field:random.randint(1, len(risk.FIELDS)) for field in risk.FIELDS}
+    with app.test_request_context(path):
+        if clear_session:
+            with client:
+                with client.session_transaction() as sess:
+                    sess.clear()
+        client.get(path)
+        return client.post(path, data=data, follow_redirects=True).data
+
+def test_risk(client):
+    res = _process_risk(client)
+    assert b"risk:" in res
+
+# def test_cpc_bonus(client):
+#     with app.app_context():
+#         worker_id = generate_worker_id("cpc")
+#         res = _process_cpc(client, worker_id=worker_id, bonus_mode="full")
+#         assert b"cpc:" in res
+#         assert get_worker_bonus("test", worker_id) == cpc.MAX_BONUS
+#         worker_id = generate_worker_id("cpc")
+#         res = _process_cpc(client, worker_id=worker_id, bonus_mode="random")
+#         assert b"cpc:" in res
+#         worker_id = generate_worker_id("cpc")
+#         res = _process_cpc(client, worker_id=worker_id, bonus_mode="none")
+#         assert b"cpc:" in res
+#         assert get_worker_bonus("test", worker_id) == 0
