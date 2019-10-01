@@ -1,12 +1,12 @@
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html>
-<head>
+{% block head %}
     <link rel="stylesheet" href="{{url_for('static', filename='hexaco.css')}}">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <title> A Few Things About You! </title>
-</head>
-<body>
+
+{% endblock %}
+{% block content %} 
 
 <h1 align="center"> Questionnaire </h1>
 
@@ -555,7 +555,5 @@ Then indicate your response using the following scale:
                 <input type="submit" value="Submit" style="margin:50"></div>
             </form>
     </div>
-    </body>
-    </html>
-    
-    
+
+    {% endblock %}

@@ -1,17 +1,16 @@
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html>
-<head>
+{% block head %}
     <link rel="stylesheet" href="{{url_for('static', filename='crt.css')}}">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <title>Questions</title>
-</head>
-<body>
 
+{% endblock %}
+{% block content %} 
 <div>
 <h1 align="center">Answer the following questions!</h1>
 
-<h2>For each question that you correctly answer, you will receive 15 USD cents. <br>You have 2 minutes and 30 seconds to answer these questions.</h2>
+<h3 align="center">For each question that you correctly answer, you will receive 15 USD cents. <br>You have 2 minutes and 30 seconds to answer these questions.</h3>
 
 <script type="text/javascript">
 	function startTimer(duration, display) {
@@ -64,11 +63,8 @@ window.onload = function () {
 
   <br>
     <div style="text-align:center">
-    <input class="button" type="submit" value="Submit" style="margin:50"></div>
+    <input class="submit" type="submit" value="Submit" style="margin:50"></div>
 </form>
 </div>
 </div>
-</body>
-</html>
-    
-    
+{% endblock %}

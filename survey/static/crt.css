@@ -1,9 +1,3 @@
-div {
-    padding-top: 50px;
-    padding-right: 30px;
-    padding-bottom: 50px;
-    padding-left: 80px;
-}
 
 h2 { color: #111; 
     font-family: 'Open Sans', sans-serif; 
@@ -49,4 +43,4 @@ h2 { color: #111;
  	line-height: 25px; 
 	text-align: left; 
 	text-shadow: 0 1px 1px #fff; 
-	padding-top: 10px; }
+}

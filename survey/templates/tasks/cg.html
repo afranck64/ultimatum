@@ -1,12 +1,12 @@
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html>
+{% block head %}
 <head>
-    <link rel="stylesheet" href="{{url_for('static', filename='cg.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script>
             $(document).ready(function() {
-                document.getElementById('money_remaining').innerHTML=50;
+                document.getElementById('money_remaining').innerHTML=60;
                 var money_a=0;
                 console.log('money_a :'+money_a);
                 var money_b=0;
@@ -16,8 +16,8 @@
     function calcRemainingMoney() {
         var e = document.getElementById("donation_a");
         var money = e.options[e.selectedIndex].value;
-        document.getElementById('money_remaining').innerHTML=50-money;
-        money_a=50-money;
+        document.getElementById('money_remaining').innerHTML=60-money;
+        money_a=60-money;
         /*if(money_a=0){
             $("#donation_b").val("0").trigger('change');
             $("#donation_c").val("0").trigger('change');
@@ -31,7 +31,7 @@
         document.getElementById('money_remaining').innerHTML=money_a-money;
         money_b=money_a-money;
         if(money_b<0){
-            alert('Please NOTE that you have *ONLY* 50 USD cents to distribute among charities. You have exceeded this amount! You have '
+            alert('Please NOTE that you have *ONLY* 60 USD cents to distribute among charities. You have exceeded this amount! You have '
             +money_a+ ' USD cents left after your selection for the WWF charity.');
             document.getElementById('money_remaining').innerHTML=money_a;
             money_b=0;
@@ -46,7 +46,7 @@
         document.getElementById('money_remaining').innerHTML=money_b-money;
         money_c=money_b-money;
         if(money_c<0){
-            alert('Please NOTE that you have *ONLY* 50 USD cents to distribute among charities. You have exceeded this amount! You have '
+            alert('Please NOTE that you have *ONLY* 60 USD cents to distribute among charities. You have exceeded this amount! You have '
             +money_b+ ' USD cents left after your selection for the WWF and UNICEF charities.');
             document.getElementById('money_remaining').innerHTML=money_b;
             money_c=0;
@@ -54,19 +54,20 @@
     }
 </script>
 <title>Charitable Giving</title>
-</head>
-<body>
+{% endblock %}
+{% block content %}
 
 <div>
 <h1 align="center">Charitable Giving</h1>
+<div align="center" class="questions">
+
+ <h3>In this task, we will provide you with another 60 USD cents. which you may partly or completely spend to charities or keep to yourself.</h3>
+     <!-- <b>You can either (i) choose to keep all of the money, (ii) donate it to one or more of the charities listed below, or (iii) split it among yourself and the charities. </b> <br>
+     If you choose to donate, the corresponding money will be transferred to the charity or charities of your choice after you complete the job successfully.</p> -->
+
+</div>  
 
 <form action="{{url_for('tasks.cg.index')}}" method="POST" id="cg">
-  <div class="questions">
-
-   <h2> In this task, we will provide you with another 60 USD cents. <b>You can either (i) choose to keep all of the money, (ii) donate it to one or more of the charities listed below, or (iii) split it among yourself and the charities. </b> <br>
-       If you choose to donate, the corresponding money will be transferred to the charity or charities of your choice after you complete the job successfully.</h2>
-
-  </div>  
 
   <div style="text-align: right; margin: 1% 25%;" >
 
@@ -107,12 +108,10 @@
 <a class="summary">MONEY LEFT FOR YOU (in USD CENTS):</a> <p class="total" id="money_remaining"> </p> 
 </div> -->
   <br>
+  <br>
+  <br>
     <div style="text-align:center">
     <input class="button" type="submit" value="Submit" style="margin:50"></div>
 </form>
 </div>
-</div>
-</body>
-</html>
-    
-    
+{% endblock %}
