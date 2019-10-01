@@ -157,27 +157,6 @@
 
     <fieldset>
       <div>
-        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.gender.errors)}}</div>
-        {{form.gender.label}}<br>
-        {{form.gender}}<br>
-
-        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.age.errors)}}</div>
-        {{form.age.label}}<br>
-        {{form.age}}<br>
-
-        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.ethnicity.errors)}}</div>
-        {{form.ethnicity.label}}<br>
-        {{form.ethnicity}}<br>
-
-        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.income.errors)}}</div>
-        {{form.income.label}}<br>
-        {{form.income}}<br>
-
-        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.ultimatum_game_experience.errors)}}</div>
-        {{form.ultimatum_game_experience.label}}<br>
-        {{form.ultimatum_game_experience}}<br>
-
-        <hr>
         <h3> CONTROL QUESTIONS </h3>
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.proposer.errors)}}</div>
         <div style="background-color:lightskyblue;" id="{{form.proposer.id}}-info"></div>
@@ -208,21 +187,52 @@
         <!-- <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.data}}" onchange="update_tasks()"><br> -->
 
         <div id="features">
-          <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+            <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+            <a href="{{url_for('tasks.risk.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the risk task...</button></a><br>
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_risk.errors)}}</div>
+            {{form.code_risk.label}}<br>
+            {{form.code_risk}}<br>
+  
+
             <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
             <a href="{{url_for('tasks.exp.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the experience task...</button></a><br>
             <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_exp.errors)}}</div>
             {{form.code_exp.label}}<br>
             {{form.code_exp}}<br>
+  
+    
+          <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+          <a href="{{url_for('tasks.cpc.index')}}?job_id={{job_id}}&worker_id={{worker_id}}&treatment={{treatment}}&auto_finalize=1" target="_blank"><button class="button"  type="button">Click here to start the choice task...</button></a><br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_cpc.errors)}}</div>
           {{form.code_cpc.label}}<br>
           {{form.code_cpc}}<br>
         </div>
+        <hr>
+        <div name="demography">
+          <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.gender.errors)}}</div>
+            {{form.gender.label}}<br>
+            {{form.gender}}<br>
+  
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.age.errors)}}</div>
+            {{form.age.label}}<br>
+            {{form.age}}<br>
+  
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.ethnicity.errors)}}</div>
+            {{form.ethnicity.label}}<br>
+            {{form.ethnicity}}<br>
+  
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.income.errors)}}</div>
+            {{form.income.label}}<br>
+            {{form.income}}<br>
+          </div>
+        </div>
+        <hr>
 
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.test.errors)}}</div>
         {{form.test.label}}<br>
         {{form.test}}<br>
 
+        <hr>
         {{form.please_enter_your_comments_feedback_or_suggestions_below.label}}<br>
         <textarea rows="3" cols="100" id="{{form.please_enter_your_comments_feedback_or_suggestions_below.id}}" value={{form.please_enter_your_comments_feedback_or_suggestions_below.value}}></textarea>
       </div>
