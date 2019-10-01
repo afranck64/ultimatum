@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Thank your for participating on this task</h1>
-    {% if worker_bonus %}
+    <div  align="center">
+        <h1 align="center">Thank you for your participating on this task.</h1>
+        {% if worker_bonus %}
+            <br>
+            Your bonus for this task amount to: <strong>{{worker_bonus}}</strong>
+        {% endif %}
         <br>
-        Your bonus for this task amount to: <strong>{{worker_bonus}}</strong>
-    {% endif %}
-    <br>
-    Your completion code is: <strong>{{worker_code}}</strong>
+        Your completion code is: <strong>{{worker_code}}</strong>
+    </div>
 {% endblock %}
