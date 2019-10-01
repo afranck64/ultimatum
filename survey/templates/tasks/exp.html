@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <!-- <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}"> -->
+    <title>Experience</title>
+{% endblock %}
+{% block content %}
+
+<div align="center">
+<h1 align="center">Please answer the following question.</h1>
+<h3 align="center">How many ultimatum games have you played in your whole life prior to today?</h3>
+<br>
+<form method="POST" name="form" id="form">
+    <div align="center">
+        <select class="ultimatum_game_experience" id="ultimatum_game_experience" name="ultimatum_game_experience" required>
+            <option value="" selected disabled hidden>Select a value</option>
+            {% for key, label in exp_values.items() %}
+                <option value={{key}}>{{label}}</option>
+            {% endfor %}
+            <!-- <option id="ultimatum_game_experience" value=0>No games</option>
+            <option id="ultimatum_game_experience" value=1>1 to 9 games</option>
+            <option id="ultimatum_game_experience" value=10>10 to 99 games</option>
+            <option id="ultimatum_game_experience" value=100>100 or more</option> -->
+        </select>
+
+    </div>
+    <br>
+    <br>
+    <div align="center">
+        <input class="submit" type="submit" value="Submit" style="margin:50">
+    </div>
+    
+</form>
+</div>
+{% endblock %}
+    
+    

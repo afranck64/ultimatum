@@ -72,6 +72,7 @@ def handle_task_index(base, validate_response=None, template_kwargs=None):
         if validate_response is not None and validate_response(response):
             response["time_stop"] = time.time()
             response["time_start"] = cookie_obj["time_start"]
+            response["time_spent"] = round(response["time_stop"] - response["time_start"])
             req_response = make_response(redirect(url_for(f"tasks.{base}.done", **request.args)))
             cookie_obj["response"] = response
             set_cookie_obj(req_response, base, cookie_obj)

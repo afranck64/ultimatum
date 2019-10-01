@@ -209,7 +209,11 @@
 
         <div id="features">
           <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
-          <a href="{{url_for('tasks.cpc.index')}}?job_id={{job_id}}&worker_id={{worker_id}}&treatment={{treatment}}&auto_finalize=1" target="_blank"><button class="button"  type="button">Click here to start the hexaco task...</button></a><br>
+            <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+            <a href="{{url_for('tasks.exp.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the experience task...</button></a><br>
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_exp.errors)}}</div>
+            {{form.code_exp.label}}<br>
+            {{form.code_exp}}<br>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_cpc.errors)}}</div>
           {{form.code_cpc.label}}<br>
           {{form.code_cpc}}<br>
