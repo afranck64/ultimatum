@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+        function shuffle(a) {
+            var j, x, i;
+            for (i = a.length - 1; i > 0; i--) {
+                j = Math.floor(Math.random() * (i + 1));
+                x = a[i];
+                a[i] = a[j];
+                a[j] = x;
+            }
+            return a;
+        }
+        ACTION_ACTIVE = false;
+        var start_pause = 4000;
+        var t_show = 100;
+        var t_hide = 500;
+        var t_wait = 500;
+        var t_round = start_pause + t_show + t_hide + t_wait;
+        window.count = 0;
+        window.last_letter = "";
+        window.start_wait_time = 0;
+        window.rounds_clicked = new Set();
+        window.items = ["M"];   //, "M", "M", "W", "W"];
+        var nb_items = window.items.length;
+        window.result = {"letters":new Array(nb_items), "delays":new Array(nb_items), "clicked":new Array(nb_items)};
+        window.remaining_rounds = window.items.length;
+        shuffle(window.items);
+        // $(document).ready(function() {
+        //     window.started = false;
+        //     window.count = 0;
+        //     var count=0;
+        //     logClicks(count);
+        //     console.log("READY!!!");
+        // });
+        /**
+         * Shuffles array in place.
+         * @param {Array} a items An array containing the items.
+         * url: https://stackoverflow.com/a/6274381
+         */
+
+        function startTimer(duration, callback) {
+            var timer = duration, minutes, seconds;
+            var millis = seconds * 10;
+            setInterval(function () {
+            minutes = parseInt(timer / 60, 10)
+            seconds = parseInt(timer % 60, 10);
+    
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+    
+            // callback();
+            // if (--timer < 0) {
+            //     document.getElementById("form").submit();
+            // }
+        }, 100);
+    }
+
+    function handle_click () {
+        var btn = document.getElementById('action_button');
+        // Start the game ^_^
+        if (!window.started) {
+            window.started =  true;
+            play_all_rounds();
+            btn.style.fontSize = 32;
+            btn.textContent = "";
+        } else {
+            // handle user input 
+            var actual_round = window.count;
+            if (!window.rounds_clicked.has(actual_round)) {
+                var click_time = new Date().getTime() - window.start_wait_time;
+                letter = window.items[actual_round];
+                window.result["letters"][actual_round] = letter;
+                window.result["delays"][actual_round] = click_time;
+                window.result["clicked"][actual_round] = true;
+                console.log("you did well", letter, click_time);
+            }
+            window.rounds_clicked.add(actual_round)
+
+
+        }
+    }
+
+    function send_result() {
+        var result = window.result;
+        console.log("RESULT: ", result);
+        var request = new XMLHttpRequest();
+        var url = "{{callback_url}}";
+        request.open("POST", url, true);
+        request.setRequestHeader("Content-Type", "application/json");
+        request.send(JSON.stringify(result));
+    }
+    function play_all_rounds () {
+        console.log("play_all_rounds");
+        if (window.remaining_rounds > 0) {
+            window.remaining_rounds -= 1;
+            play_one_round();
+            setTimeout(play_all_rounds, t_round);
+        } else {
+            // document.getElementById("form").submit();
+            console.log("DONE!!!!!!!!")
+        }
+    }
+
+    function play_one_round () {
+        display = document.getElementById('action_button');
+        btn = document.getElementById('action_button');
+        var show_go_nogo = function() {
+            console.log("show");
+            btn.disabled = true;
+            var letter = window.items[window.count];
+            display.textContent = letter;
+            setTimeout(hide, t_show);
+        }
+        var hide = function() {
+            console.log("hide");
+            display.textContent = ""
+            display.style.backgroundColor = "#dddddd";
+            setTimeout(wait_action, t_hide);
+        }
+        var wait_action = function() {
+            console.log("wait");
+            window.start_wait_time = new Date().getTime();
+            btn.disabled = false;
+            btn.style.backgroundColor = "#00ff00";
+            display.textContent = "";
+            setTimeout(deactivate, t_wait);
+        }
+        var deactivate = function() {
+            console.log("deactivate");
+            btn.style.backgroundColor = "#dddddd";
+            btn.disabled = true;
+            var actual_round = window.count;
+            // The user didn'T clicked ==> miss;
+            if (!window.rounds_clicked.has(actual_round)) {
+                letter = window.items[actual_round];
+                window.result["letters"][actual_round] = letter;
+                window.result["delays"][actual_round] = t_wait * 2;
+                window.result["clicked"][actual_round] = false;
+                console.log("You missed round: ", actual_round, letter);
+                if (window.remaining_rounds <= 0) {
+                    send_result();
+                }
+            }
+            window.count += 1;
+        }
+        setTimeout(show_go_nogo, window.start_pause);
+    }
+    
+    window.onload = function () {
+    };
+    </script>
+    <title>Play and Earn Money!</title>
+
+{% endblock %}
+{% block content %}    
+<div align="center">
+<h1 align="center">Play and Earn Money!</h1>
+
+<p class="instructions" align="center">
+    In the following, you will see in the box containing the text <b>"START"</b> two possible letters: Either <b>M</b> or <b>W</b>.
+    The letter <b>M</b> is associated with a gain of 10 USD cents and the letter <b>W</b> is associated with a lost of 5 USD cents.
+    After a letter is presented, you will have one second to click on the box to get the value corresponding to the letter.
+    By clicking only after seeing the letter M the bonus can be maximize. If your gain at the end is negative it will be resetted to 0 USD cents
+
+    <br> <br> <br>
+
+    <b>Click on "START" to begin once you are ready.</b>
+</p>
+
+<form id="form" action="{{url_for('tasks.go.index')}}" method="POST">
+
+<br> <br>
+
+<div style="text-align: center">
+    <button type="button" name="action_button" style="width: 100px; height: 40px; font-weight: bold" id="action_button" onmousedown="handle_click()">START</a>    
+</div>
+
+{% endblock %}

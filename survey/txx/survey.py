@@ -49,12 +49,6 @@ class MainForm(FlaskForm):
         ("I earn nearly equal incomes from crowdsourced microtasks and other job(s)", "I earn nearly equal incomes from crowdsourced microtasks and other job(s)")],
         validators=[DataRequired("Please choose a value")]
     )
-    ultimatum_game_experience = RadioField("How many times have you played the ultimatum game?", choices=[
-        ("0", "0 games played"),
-        ("1", "1 to 9 games played"),
-        ("10", "10 to 99 games played"),
-        ("100", "100 or more games played")
-    ])
     proposer = RadioField("The PROPOSER...", choices=[
         ("incorrect1", "decides the amount of money that the RESPONDER is paid"),
         ("correct", f"proposes a division of the {MAX_GAIN / 100:.2f} USD with the RESPONDER"),
@@ -81,6 +75,7 @@ class MainForm(FlaskForm):
     )
     code_resp_prop = StringField("Completion Code: main task", validators=[DataRequired(), Regexp(regex="prop:|resp:")])
     code_cpc = StringField("Completion Code: choice task", validators=[Optional()])
+    code_risk = StringField("Completion Code: risk task", validators=[Optional()])
     code_exp = StringField("Completion Code: experience task", validators=[Optional()])
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
@@ -88,7 +83,7 @@ class MainForm(FlaskForm):
 def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None):
     app.logger.info("handle_survey")
     if code_prefixes is None:
-        code_prefixes = {"code_cpc": "cpc:", "code_exp": "exp:"}
+        code_prefixes = {"code_cpc": "cpc:", "code_exp": "exp:", "code_risk": "risk:"}
     if form_class is None:
         form_class = MainForm
     if template is None:
