@@ -10,7 +10,12 @@ from survey.tasks.task import handle_task_done, handle_task_index
 bp = Blueprint("tasks.hexaco", __name__)
 
 FIELDS = {f"q{i}" for i in range(1, 31)}
-
+FEATURES = {
+    "Honesty_Humility",
+    "Extraversion",
+    "Agreeableness",
+    "time_spent_hexaco"
+}
 MAX_BONUS = 0
 
 def validate_response(response):

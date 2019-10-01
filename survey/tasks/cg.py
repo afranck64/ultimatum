@@ -12,6 +12,10 @@ from survey.tasks.task import handle_task_done, handle_task_index
 bp = Blueprint("tasks.cg", __name__)
 
 FIELDS = {"donation_a", "donation_b", "donation_c"}
+FEATURES = set(FIELDS) | {
+    "selfish",
+    "time_spent_cg"
+}
 
 MAX_BONUS = 60
 

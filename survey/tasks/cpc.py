@@ -11,11 +11,12 @@ from flask import (
     Blueprint, render_template, session, url_for, redirect, request, flash
 )
 
-from survey._app import csrf_protect, app
+from survey._app import csrf_protect, app, CODE_DIR
 from survey.tasks.task import handle_task_done, handle_task_index
 
 
 #### helpers
+BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 bp = Blueprint("tasks.cpc", __name__)
 
 def CPC18_getDist(H, pH, L, lot_shape, lot_num):
@@ -63,7 +64,13 @@ def CPC18_getDist(H, pH, L, lot_shape, lot_num):
         elif pH < 1:
             dist = np.vstack((dist, [L, 1-pH]))
 
-        dist = dist[np.argsort(dist[:, 0])]
+    if dist[:, 1].sum() < 1:
+        if dist.shape[0] < lot_num:
+            dist = np.vstack((dist, [L, 1-pH]))
+        else:
+            dist[-1][0] = L
+            dist[-1][1] = 1 - dist[:-1, 1].sum()
+    dist = dist[np.argsort(dist[:, 0])]
     return dist
 
 def generate_problems(filename):
@@ -101,13 +108,17 @@ def generate_problems(filename):
     return problems, distributions
 
 
-PROBLEMS, DISTRIBUTIONS = generate_problems("data/t00/ug2cpc.csv")
-
+PROBLEMS, DISTRIBUTIONS = generate_problems(os.path.join(CODE_DIR, "data/t00/ug2cpc.csv"))
 FIELDS = {k for k in DISTRIBUTIONS}
+FEATURES = set(f"cpc_{k}" for k in FIELDS) | {
+    "cpc_expected_value",   #expected value of the user's selected lotteries
+    "cpc_expected_value_max",   #expected value of the user's selected lotteries' highest bonus
+    "cpc_expected_value_min",   #expected value of the user's selected lotteries' lowest bonus
+    "cpc_time_spent",       #time spent by the user on this task
+}
 
-MAX_BONUS = 0
-
-
+max_lotteries = ([max(item["distA"][:, 0].max(), item["distB"][:,0].max()) for item in DISTRIBUTIONS.values()])
+MAX_BONUS = sum(max_lotteries) / len(max_lotteries)
 def validate_response(response):
     for key in FIELDS:
         if key not in response:
@@ -116,7 +127,7 @@ def validate_response(response):
 
 def response_to_bonus(response):
     #0: A, 1: B
-    bonus = 0
+    tmp_bonus = 0
     for k in FIELDS:
         choice = response[k]
         if choice == "A":
@@ -132,10 +143,37 @@ def response_to_bonus(response):
                 break
         if gain is None:
             gain = dist[-1][0]
-        bonus += gain
-
-    print("WORKER_BONUS: ", bonus)
+        tmp_bonus += gain
+    bonus = tmp_bonus / len(FIELDS)
     return int(bonus)
+
+def response_to_expected_values(response):
+    #0: A, 1: B
+    tmp_expected_value = 0.0
+    tmp_expected_value_max = 0.0
+    tmp_expected_value_min = 0.0
+    result = dict()
+    for k in FIELDS:
+        choice = response[k]
+        if choice == "A":
+            dist = DISTRIBUTIONS[k]["distA"]
+        else:
+            dist = DISTRIBUTIONS[k]["distB"]
+        #cum_p = np.cumsum(dist[:, 1])
+        dist *= 1.0
+        dist_p = dist[:, 1]
+        dist_gain = dist[:, 0]
+        product = dist_p * dist_gain
+        tmp_expected_value_max += product[-1]
+        tmp_expected_value_min += product[0]
+        tmp_expected_value += np.mean(product)
+        result[f"{BASE}_{k}"] = round(np.mean(product), 4)
+    result.update({
+        "cpc_expected_value": round(tmp_expected_value / len(FIELDS), 4),
+        "cpc_expected_value_max": round(tmp_expected_value_max / len(FIELDS), 4),
+        "cpc_expected_value_min": round(tmp_expected_value_min / len(FIELDS), 4),
+    })
+    return result
 
 def response_to_result(response, job_id=None, worker_id=None):
     """
@@ -147,6 +185,8 @@ def response_to_result(response, job_id=None, worker_id=None):
     }
     """
     result = dict(response)
+    result.update(response_to_expected_values(response))
+    result["cpc_time_spent"] = result["time_spent"]
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id

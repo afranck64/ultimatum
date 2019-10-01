@@ -34,6 +34,10 @@ SOLUTIONS = {
 }
 
 MAX_BONUS = 40
+FEATURES = {
+    "count_effort",
+    "time_spent_eff"
+}
 
 def validate_response(response):
     for key in SOLUTIONS:
