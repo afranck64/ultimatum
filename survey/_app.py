@@ -21,6 +21,11 @@ csrf_protect = CSRFProtect(app)
 
 TREATMENTS = ["T00", "T10", "T11", "T12", "T13", "T20", "T21", "T22"]
 
+TREATMENTS_AUTO_DSS = {
+    "T20"
+    "T21",
+    "T22"
+}
 TREATMENTS_MODEL_REFS= {
     "T00": None,
     "T10": "T00",
@@ -91,6 +96,7 @@ for treatment in TREATMENTS:
             except Exception as err:
                 app.logger.warning(err)
 app.config["TREATMENTS"] = _treatments
+app.config["TREATMENTS_AUTO_DSS"] = TREATMENTS_AUTO_DSS
 app.config["OUTPUT_DIR"] = os.getenv("OUTPUT_DIR", "./data/output")
 os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)
 
