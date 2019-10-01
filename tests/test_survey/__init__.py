@@ -7,6 +7,7 @@ import hashlib
 import time
 
 import pytest
+from core.models.metrics import MAX_GAIN
 from survey.app import app
 from survey import db
 from survey.db import get_db
@@ -17,8 +18,7 @@ BASE_DIR = os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0]
 
 KEEP_TESTS_RESULTS = False
 
-@pytest.fixture
-def client():
+def _client():
     app.config["ADMIN_SECRET"] = "secret"
     app.config["OUTPUT_DIR"] = os.path.join(BASE_DIR, "data", "output", "test")
     os.makedirs(app.config["OUTPUT_DIR"], exist_ok=True)
@@ -32,12 +32,12 @@ def client():
         dbs_fds.append(_fd)
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False
-    client = app.test_client()
+    test_client = app.test_client()
 
     with app.app_context():
         db.init_db()
 
-    yield client
+    yield test_client
 
     if not KEEP_TESTS_RESULTS:
         for _fd in dbs_fds:
@@ -46,13 +46,23 @@ def client():
             os.unlink(app.config[_db])
 
 
+@pytest.fixture
+def client():
+    for test_client in _client():
+        yield test_client
+
+def get_client():
+    return next(_client())
+            
+
+
 webhook_data_template =  {
     "signal": "new_judgments",
     "payload":{
         "id":2329205222,
         "data":{
-            "ai_offer":"100",
-            "min_offer":"100"
+            "ai_offer": f"{MAX_GAIN//2}",
+            "min_offer":f"{MAX_GAIN//2}"
         },
         "judgments_count":1,
         "state":"finalized",
@@ -94,8 +104,8 @@ webhook_data_template =  {
                         "_clicks":["http://tube.ddns.net/ultimatum/hhi_prop_adm?job_id=1392288&worker_id=45314141&unit_id=na"]
                     },
                     "unit_data":{
-                        "ai_offer":"100",
-                        "min_offer":"100"
+                        "ai_offer":f"{MAX_GAIN//2}",
+                        "min_offer":f"{MAX_GAIN//2}"
                     }
                 }
             ],

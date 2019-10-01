@@ -45,6 +45,8 @@ def test_prop_check(client):
 def test_prop_done(client):
     txx.test_prop_done(client, TREATMENT)
 
+def test_prop_check_done(client):
+    txx.test_prop_check_done(client, TREATMENT)
 
 def test_bonus_delayed(client, synchron=False):
     txx.test_bonus_delayed(client, TREATMENT, synchron)
@@ -66,9 +68,6 @@ def test_survey_resp(client):
 
 def test_survey_prop(client):
     txx.test_survey_prop(client, TREATMENT)
-
-def test_prop_check_done(client):
-    txx.test_prop_check_done(client, TREATMENT)
 
 def test_survey_drop(client):
     txx.test_survey_drop(client, TREATMENT)
