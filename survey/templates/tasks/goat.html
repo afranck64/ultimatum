@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{url_for('static', filename='risk.css')}}">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+                $(document).ready(function() {
+		    var count=0;
+                    logClicks(count);
+                });
+
+function GetURLParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+        {
+            return sParameterName[1];
+        }
+    }
+}
+
+        function logClicks(counter) {
+	        $(".box*").on("click", function() {
+		counter++;
+                var cell = $(this).attr('id');
+                $("#"+cell).css("background-color", "#E68B8B");
+                $("#"+cell).css("pointer-events", "none");
+                document.getElementById('total').innerHTML=counter*2;
+                document.getElementById('cell_count').innerHTML=counter;
+                document.getElementById('cells_unopened').innerHTML=50-counter;
+
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("GET", "check?cell=" +cell, true);
+                xmlhttp.send();
+                
+                /*if(cell=="cell1"){
+                    console.log('Entered Cell 1')
+                    $("#cell1").css("background-color", "#E68B8B");
+                }
+                else if (cell=="cell2") {
+                    console.log('Entered Cell 2');
+                    $("#cell2").css("background-color", "#E68B8B");
+                }*/
+                
+            });
+        }
+    </script>
+    <title>Play and Earn Money!</title>
+
+{% endblock %}
+{% block content %}    
+<div align="center">
+<h1 align="center">Play and Earn Money!</h1>
+
+<p class="instructions" align="center">
+    There are 50 cells in the matrix below. Behind one of these 50 cells, there is one GOAT. You can open each of the cells by clicking on it. For each opened cell that does not contain the GOAT, you will be rewarded with 2 USD cents. In case you open the cell that contains the GOAT, you will earn 0 USD and lose all the money priorly earned in this game. <br> <br> <br>
+    <b> YOU CAN BEGIN WHEN YOU ARE READY . . . </b>
+</p>
+
+<form id="form" action="{{url_for('tasks.goat.index')}}" method="POST">
+
+<div class="wrapper" id="wrapper">
+    <div class="box 1" id="cell1">1</div>
+    <div class="box 2" id="cell2">2</div> 
+    <div class="box 3" id="cell3">3</div>
+    <div class="box 4" id="cell4">4</div>
+    <div class="box 5" id="cell5">5</div>
+    <div class="box 6" id="cell6">6</div>
+    <div class="box 7" id="cell7">7</div>
+    <div class="box 8" id="cell8">8</div>
+    <div class="box 9" id="cell9">9</div>
+    <div class="box 10" id="cell10">10</div>
+    <div class="box 11" id="cell11">11</div>
+    <div class="box 12" id="cell12">12</div>
+    <div class="box 13" id="cell13">13</div>
+    <div class="box 14" id="cell14">14</div>
+    <div class="box 15" id="cell15">15</div>
+    <div class="box 16" id="cell16">16</div>
+    <div class="box 17" id="cell17">17</div>
+    <div class="box 18" id="cell18">18</div>
+    <div class="box 19" id="cell19">19</div>
+    <div class="box 20" id="cell20">20</div>
+    <div class="box 21" id="cell21">21</div>
+    <div class="box 22" id="cell22">22</div>
+    <div class="box 23" id="cell23">23</div>
+    <div class="box 24" id="cell24">24</div>
+    <div class="box 25" id="cell25">25</div>
+    <div class="box 26" id="cell26">26</div>
+    <div class="box 27" id="cell27">27</div>
+    <div class="box 28" id="cell28">28</div>
+    <div class="box 29" id="cell29">29</div>
+    <div class="box 30" id="cell30">30</div>
+    <div class="box 31" id="cell31">31</div>
+    <div class="box 32" id="cell32">32</div>
+    <div class="box 33" id="cell33">33</div>
+    <div class="box 34" id="cell34">34</div>
+    <div class="box 35" id="cell35">35</div>
+    <div class="box 36" id="cell36">36</div>
+    <div class="box 37" id="cell37">37</div>
+    <div class="box 38" id="cell38">38</div>
+    <div class="box 39" id="cell39">39</div>
+    <div class="box 40" id="cell40">40</div>
+    <div class="box 41" id="cell41">41</div>
+    <div class="box 42" id="cell42">42</div>
+    <div class="box 43" id="cell43">43</div>
+    <div class="box 44" id="cell44">44</div>
+    <div class="box 45" id="cell45">45</div>
+    <div class="box 46" id="cell46">46</div>
+    <div class="box 47" id="cell47">47</div>
+    <div class="box 48" id="cell48">48</div>
+    <div class="box 49" id="cell49">49</div>
+    <div class="box 50" id="cell50">50</div>
+</div>
+
+<br> <br>
+
+<div style="text-align: center">
+    <a class="summary">PRELIMINARY MONEY EARNED (in USD cents):</a> <p class="total" id="total"> </p> <br><br>
+    <a class="summary">CELLS OPENED SO FAR:</a> <p class="total" id="cell_count"> </p> <br><br>
+    <a class="summary">CELLS REMAINING:</a> <p class="total" id="cells_unopened"> </p> <br><br>
+    
+</div>
+
+<br>
+<br>
+<br>
+<div style="text-align:center">
+<input type="submit" value="DONE" class="submit" style="margin:50"></div>
+</form>
+</div>
+{% endblock %}

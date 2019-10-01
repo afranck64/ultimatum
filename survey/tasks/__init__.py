@@ -1,5 +1,5 @@
 from flask import Blueprint
-from survey.tasks import (cg, crt, eff, hexaco, risk, cpc, exp)
+from survey.tasks import (cg, crt, eff, hexaco, risk, cpc, exp, goat)
 from survey._app import app
 bp = Blueprint("tasks", __name__)
 

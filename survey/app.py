@@ -16,6 +16,7 @@ app.register_blueprint(tasks.crt.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.cpc.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.eff.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.exp.bp, url_prefix='/tasks')
+app.register_blueprint(tasks.goat.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.hexaco.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.risk.bp, url_prefix='/tasks')
 
