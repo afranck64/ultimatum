@@ -77,13 +77,14 @@ class MainForm(FlaskForm):
     code_cpc = StringField("Completion Code: choice task", validators=[Optional()])
     code_risk = StringField("Completion Code: risk task", validators=[Optional()])
     code_exp = StringField("Completion Code: experience task", validators=[Optional()])
+    code_cc = StringField("Completion Code: cognitive task", validators=[Optional()])
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
 def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None):
     app.logger.info("handle_survey")
     if code_prefixes is None:
-        code_prefixes = {"code_cpc": "cpc:", "code_exp": "exp:", "code_risk": "risk:"}
+        code_prefixes = {"code_cpc": "cpc:", "code_exp": "exp:", "code_risk": "risk:", "code_go": "cc:"}
     if form_class is None:
         form_class = MainForm
     if template is None:

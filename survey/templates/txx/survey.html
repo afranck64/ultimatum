@@ -200,6 +200,13 @@
             {{form.code_exp.label}}<br>
             {{form.code_exp}}<br>
   
+
+            <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
+            <a href="{{url_for('tasks.cc.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the go/nogo task...</button></a><br>
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_cc.errors)}}</div>
+            {{form.code_cc.label}}<br>
+            {{form.code_cc}}<br>
+  
     
           <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
           <a href="{{url_for('tasks.cpc.index')}}?job_id={{job_id}}&worker_id={{worker_id}}&treatment={{treatment}}&auto_finalize=1" target="_blank"><button class="button"  type="button">Click here to start the choice task...</button></a><br>
