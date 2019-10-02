@@ -235,7 +235,7 @@ def approve_and_reject_assignments(job_id, treatment):
     #     where {table_assignment}.job_id like ?"""
     sql = f"select * from {table_assignment} where {table_assignment}.job_id like ?"
     df = pd.read_sql(sql, con=get_db(), params=(job_id,))
-    api = MTurk(job_id)
+    api = MTurk(job_id, sandbox=app.config["MTURK_SANDBOX"])
     con = get_db("DB")
     payment_count = 0
     validation_count = 0
@@ -264,7 +264,7 @@ def pay_bonus_assignments(job_id):
     table = get_table("txx", "all", schema=None)
     df = pd.read_sql(f"select * from {table}", get_db("result"))
     df = df[df["job_id"] == job_id]
-    api = MTurk(job_id)
+    api = MTurk(job_id, sandbox=app.config["MTURK_SANDBOX"])
 
     con = get_db("DB")
     payment_count = 0
@@ -466,5 +466,11 @@ def _pay_bonus_assignments_command():
 
 app.cli.add_command(_pay_bonus_assignments_command)
 
-
-
+@click.command('add_assignments')
+@with_appcontext
+def _add_assignments():
+    job_id = input("job_id: ")
+    nb_assignments = int(input("number new assignments: "))
+    api = MTurk(job_id, sandbox=app.config["MTURK_SANDBOX"])
+    api.create_additional_assignments(nb_assignments)
+app.cli.add_command(_add_assignments)

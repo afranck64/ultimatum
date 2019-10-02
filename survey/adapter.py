@@ -116,8 +116,8 @@ class MTurkAdapter(DefaultAdapter):
         obj_dict["_adapter"] = "mturk"
         return obj_dict
     
-    def get_api(self):
-        return MTurk(self.get_job_id())
+    def get_api(self, sandbox=None):
+        return MTurk(self.get_job_id(), sandbox=sandbox)
 
     @classmethod
     def has_api(cls):
