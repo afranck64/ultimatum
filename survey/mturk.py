@@ -385,6 +385,30 @@ class MTurk(object):
         except ClientError as e:
             warnings.warn(f"{e}")
         return 0
+    
+    def get_expected_judgments(self):
+        try:
+            response = self.client.get_hit(
+                HITId=self.job_id
+            )
+            max_judgments = response['HIT']['MaxAssignments']
+            return max_judgments
+        except ClientError as e:
+            warnings.warn(f"{e}")
+        return 0
+
+    def create_additional_assignments(self, number_of_additional_assignments=1):
+        
+        try:
+            self.client.get_hit(
+                HITId=self.job_id,
+                NumberOfAdditionalAssignments=number_of_additional_assignments
+            )
+            return True
+        except ClientError as e:
+            warnings.warn(f"{e}")
+        return False
+        
     # def contributor_flag(self, worker_id, reason):
     #     """
     #     Flag a contributor for the current job
