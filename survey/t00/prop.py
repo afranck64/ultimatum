@@ -58,7 +58,7 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
     result["timestamp"] = str(datetime.datetime.now())
     result["offer"] = proposal["offer"]
     result["offer_final"] = proposal["offer"]
-    result["time_spent_prop"] = proposal["time_stop"] - proposal["time_start"]
+    result["prop_time_spent"] = round(proposal["time_stop"] - proposal["time_start"])
     result["job_id"] = job_id
     result["worker_id"] = worker_id
     result["prop_worker_id"] = worker_id
