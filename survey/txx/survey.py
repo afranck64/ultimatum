@@ -67,10 +67,10 @@ class MainForm(FlaskForm):
         ("incorrect2", "Your decisions do not affect another worker.")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
     )
-    money_division = RadioField("Choose the correct answer", choices=[
-        ("incorrect1", "The money is divided 50/50 between the RESPONDER and the PROPOSER"),
-        ("incorrect2", "The money is divided according to the RESPONDER's minimum offer"),
-        ("correct", "The money is divided according to the PROPOSER's offer")],
+    money_division = RadioField("If the Responder accepts the PROPOSER's offer...", choices=[
+        ("incorrect1", "the money is divided 50/50 between the RESPONDER and the PROPOSER"),
+        ("incorrect2", "the money is divided according to the RESPONDER's minimum offer"),
+        ("correct", "the money is divided according to the PROPOSER's offer")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
     )
     code_resp_prop = StringField("Completion Code: main task", validators=[DataRequired(), Regexp(regex="prop:|resp:")])
