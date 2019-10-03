@@ -12,17 +12,7 @@
 <br>
 <form method="POST" name="form" id="form">
     <div align="center">
-        <select class="ultimatum_game_experience" id="ultimatum_game_experience" name="ultimatum_game_experience" required>
-            <option value="" selected disabled hidden>Select a value</option>
-            {% for key, label in exp_values.items() %}
-                <option value={{key}}>{{label}}</option>
-            {% endfor %}
-            <!-- <option id="ultimatum_game_experience" value=0>No games</option>
-            <option id="ultimatum_game_experience" value=1>1 to 9 games</option>
-            <option id="ultimatum_game_experience" value=10>10 to 99 games</option>
-            <option id="ultimatum_game_experience" value=100>100 or more</option> -->
-        </select>
-
+        <input class="ultimatum_game_experience" id="ultimatum_game_experience" name="ultimatum_game_experience" required type="number" min="0">
     </div>
     <br>
     <br>
