@@ -215,6 +215,12 @@
           {{form.code_cpc}}<br>
         </div>
         <hr>
+
+        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.test.errors)}}</div>
+        {{form.test.label}}<br>
+        {{form.test}}
+        <hr>
+        <h3> Demography </h3>
         <div name="demography">
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.gender.errors)}}</div>
             {{form.gender.label}}<br>
@@ -224,20 +230,15 @@
             {{form.age.label}}<br>
             {{form.age}}<br>
   
-            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.ethnicity.errors)}}</div>
-            {{form.ethnicity.label}}<br>
-            {{form.ethnicity}}<br>
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.location.errors)}}</div>
+            {{form.location.label}}<br>
+            {{form.location}}<br><br>
   
             <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.income.errors)}}</div>
             {{form.income.label}}<br>
             {{form.income}}<br>
           </div>
         </div>
-        <hr>
-
-        <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.test.errors)}}</div>
-        {{form.test.label}}<br>
-        {{form.test}}<br>
 
         <hr>
         {{form.please_enter_your_comments_feedback_or_suggestions_below.label}}<br>
