@@ -102,7 +102,7 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
         row_data = {}
     result = {}
     result["timestamp"] = str(datetime.datetime.now())
-    #result["offer"] = proposal["offer"]
+    result["offer"] = proposal["offer"]
     result["offer_dss"] = proposal.get("offer_dss") #Disabled/None for T00
     result["offer_final"] = proposal.get("offer_dss", proposal["offer"])
     result["prop_time_spent"] = round(proposal["time_stop"] - proposal["time_start"])
@@ -417,8 +417,10 @@ def handle_index_dss(treatment, template=None, proposal_class=None, messages=Non
         req_response =  make_response(redirect(url_for(f"{treatment}.prop.done", **request.args)))
         return req_response
 
-    if request.method == "GET":        
+    if request.method == "GET":
         #TODO: check if worker_id has started answering this unit
+        proposal = cookie_obj["proposal"]
+        proposal["time_start_dss"] = time.time()
         if not row_info:
             warnings.warn(f"ERROR: The row can no longer be processed. job_id: {job_id} - worker_id: {worker_id}")
 
@@ -428,7 +430,7 @@ def handle_index_dss(treatment, template=None, proposal_class=None, messages=Non
             flash(message)
     if request.method == "POST":
         proposal = cookie_obj["proposal"]
-        proposal["time_stop"] = time.time()
+        proposal["time_stop_dss"] = time.time()
         offer_dss = request.form["offer_dss"]
         try:
             offer_dss = int(offer_dss)
