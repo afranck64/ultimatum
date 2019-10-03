@@ -5,7 +5,7 @@ import requests
 from flask import render_template, request, flash, url_for, redirect, make_response, session
 from flask_wtf.form import FlaskForm
 from wtforms.validators import DataRequired, Optional, Regexp
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField, RadioField, TextAreaField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField, RadioField, TextAreaField, SelectMultipleField
 
 from survey.utils import (
     get_table, save_result2db, save_result2file, get_output_filename, get_latest_treatment, generate_completion_code, save_worker_id,
@@ -35,8 +35,8 @@ class MainForm(FlaskForm):
         ("older_than_65_years", "Older than 65 Years")],
         validators=[DataRequired("Please choose a value")]
     )
-    ethnicity = RadioField("What is your ethnicity?", choices=[
-        ("african_american", "African American"),
+    ethnicity = SelectMultipleField("What is your ethnicity?", choices=[
+        ("african", "African"),
         ("american_indian", "American Indian"),
         ("asian", "Asian"),
         ("hispanic", "Hispanic/Latino"),
@@ -144,8 +144,9 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
 
     if request.method == "POST" and (drop=="1" or form.validate_on_submit()):
         form = form_class(request.form)
-        cookie_obj["response"] = request.form.to_dict()
         response = request.form.to_dict()
+        response["ethnicity"] = VALUES_SEPARATOR.join(sorted(request.form.getlist(form.ethnicity.name)))
+        cookie_obj["response"] = response        
         is_codes_valid = True
         # Responders have to fill and submit tasks
         if "resp:" in response.get("code_resp_prop", ""):
@@ -159,12 +160,12 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
             cookie_obj["response"] = response
             req_response = make_response(redirect(url_for("survey_done")))
             set_cookie_obj(req_response, BASE, cookie_obj)
-            app.logger.debug(f"RESPONSE: {response}")
             return req_response
         elif is_codes_valid:
             flash("Your data was validated and submitted. But not saved as this is a test task")
-    else:
+    elif request.method == "POST":
         response = request.form.to_dict()
+        # Responders have to fill and submit tasks
         if "resp:" in response.get("code_resp_prop", ""):
             for fieldname, prefix in code_prefixes.items():
                 if not response.get(fieldname) or not prefix in response[fieldname]:
