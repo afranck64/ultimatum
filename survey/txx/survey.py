@@ -13,7 +13,7 @@ from survey.utils import (
 
 from core.models.metrics import MAX_GAIN
 from survey.db import insert, get_db
-from survey._app import app
+from survey._app import app, VALUES_SEPARATOR, MAXIMUM_CONTROL_MISTAKES
 from survey.adapter import get_adapter, get_adapter_from_dict
 from survey.txx.index import check_is_proposer_next, NEXT_IS_PROPOSER_WAITING
 
@@ -173,7 +173,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
                     field.errors = field.errors + ["Invalid code"]
                     is_codes_valid = False
 
-    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments, max_gain=MAX_GAIN))
+    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments, max_gain=MAX_GAIN, maximum_control_mistakes=MAXIMUM_CONTROL_MISTAKES))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
@@ -198,7 +198,7 @@ def handle_survey_done(template=None):
         dropped = response.get("drop")
         if dropped=="1":
             worker_code = WORKER_CODE_DROPPED
-            flash("You have been disqualified as failed 3 times to correctly answer the control questions.")
+            flash(f"You have been disqualified as you made more than {MAXIMUM_CONTROL_MISTAKES} mistakes on the control questions.")
         response["worker_id"] = worker_id
         response["job_id"] = job_id
         result = {k:v for k,v in response.items() if k not in {'csrf_token', 'drop'}}

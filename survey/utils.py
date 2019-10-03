@@ -16,7 +16,7 @@ from flask.cli import with_appcontext
 from werkzeug.contrib.securecookie import SecureCookie
 
 
-from survey._app import app
+from survey._app import app, MAXIMUM_CONTROL_MISTAKES
 from survey.db import get_db, insert, table_exists, update
 from survey.admin import get_job_config
 from survey.mturk import MTurk
@@ -248,14 +248,14 @@ def approve_and_reject_assignments(job_id, treatment):
         print("worker_id", worker_id, type(worker_id), "assignment_id", assignment_id, type(assignment_id))
         success = True
         if row["worker_code"] != WORKER_CODE_DROPPED and has_worker_submitted(con, job_id, worker_id, treatment):
-                success &= api.approve_assignment(row["assignment_id"], "Thank you")
+                success &= api.approve_assignment(row["assignment_id"], "Thank you for your work.")
                 validation_count += success
                 if success:
                     success &= pay_worker_bonus(job_id, worker_id, api=api, con=con, assignment_id=assignment_id)
                     payment_count += success
             
         else:   #if row["worker_code"] == WORKER_CODE_DROPPED:
-            success &= api.reject_assignment(row["assignment_id"], "You exceeded the number of 3 failures")
+            success &= api.reject_assignment(row["assignment_id"], f"You exceeded the number of {MAXIMUM_CONTROL_MISTAKES} mistakes on the control questions.")
             rejection_count += success
             
     app.logger.info(f"validations: {validation_count}, rejections: {rejection_count}, payments: {payment_count}, rows: {df.shape[0]}")
