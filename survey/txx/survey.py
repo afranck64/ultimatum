@@ -35,7 +35,7 @@ class MainForm(FlaskForm):
         ("older_than_65_years", "Older than 65 Years")],
         validators=[DataRequired("Please choose a value")]
     )
-    location = SelectField("What is your location?", choices=[
+    location = SelectField("What is your main location?", choices=[
         ("africa_east", "Eastern Africa"),
         ("africa_middle", "Middle Africa"),
         ("africa_north", "Northern Africa"),
