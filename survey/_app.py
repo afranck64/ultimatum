@@ -37,6 +37,9 @@ TREATMENTS_MODEL_REFS= {
     "T22": "T10",    
 }
 
+VALUES_SEPARATOR = ":"
+MAXIMUM_CONTROL_MISTAKES = 4
+
 class FakeModel(object):
     _warned = False
     def predict(self, *args, **kwargs):
