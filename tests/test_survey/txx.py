@@ -24,6 +24,9 @@ TASK_REPETITION = 8
 
 OFFER = MAX_GAIN//2
 MIN_OFFER = MAX_GAIN//2
+SURVEY_MAIN_TASK_CODE_FIELD = "code_resp_prop"
+SURVEY_CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
+SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "location", "test"}
 
 @urlmatch(netloc=r'api.figure-eight.com$')
 def figure_eight_mock(url, request):
@@ -314,9 +317,6 @@ def test_payment(client, treatment):
 
 
 def test_survey_resp(client, treatment):
-    CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
-    CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
-    codes = {"code_cpc": "cpc:", "code_resp_prop": "resp:", "code_exp": "exp:", "code_risk": "risk:"}
     with app.app_context():
         worker_id = generate_worker_id("survey")
         assignment_id = worker_id.upper().replace("_", "")
@@ -326,22 +326,22 @@ def test_survey_resp(client, treatment):
             form = MainForm()
             form_data = {}
             for field, item in form._fields.items():
-                if field in CONTROL_FIELDS:
+                if field in SURVEY_CONTROL_FIELDS:
                     form_data[field] = "correct"
-                elif field in CHOICE_FIELDS:
+                elif field == SURVEY_MAIN_TASK_CODE_FIELD:
+                    form_data[field] = "resp:"
+                elif field.startswith("code_"):
+                    form_data[field] = f"{field}:"
+                elif field in SURVEY_CHOICE_FIELDS:
                     form_data[field] = random.choice(item.choices)[0]
                 else:
                     form_data[field] = "abc"
-            form_data.update(codes)
             res = client.post(path, data=form_data, follow_redirects=True)
             print("DADTA: ", res.data)
             assert b"Your survey completion code is:" in res.data
             assert b"dropped" not in res.data
 
 def test_survey_prop(client, treatment):
-    CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
-    CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
-    codes = {"code_cpc": "", "code_resp_prop": "prop:", "code_exp": "", "code_risk": ""}
     with app.app_context():
         worker_id = generate_worker_id("survey")
         assignment_id = worker_id.upper().replace("_", "")
@@ -351,13 +351,16 @@ def test_survey_prop(client, treatment):
             form = MainForm()
             form_data = {}
             for field, item in form._fields.items():
-                if field in CONTROL_FIELDS:
+                if field in SURVEY_CONTROL_FIELDS:
                     form_data[field] = "correct"
-                elif field in CHOICE_FIELDS:
+                elif field == SURVEY_MAIN_TASK_CODE_FIELD:
+                    form_data[field] = "prop:"
+                elif field.startswith("code_"):
+                    form_data[field] = ""
+                elif field in SURVEY_CHOICE_FIELDS:
                     form_data[field] = random.choice(item.choices)[0]
                 else:
                     form_data[field] = "abc"
-            form_data.update(codes)
             res = client.post(path, data=form_data, follow_redirects=True)
             assert b"Your survey completion code is:" in res.data
             assert b"dropped" not in res.data
