@@ -32,6 +32,11 @@ SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "location", "test"}
 def figure_eight_mock(url, request):
     return response()
 
+def get_completion_code(field):
+    # field is assumed to be named: "code_" + $TASK_NAME
+    # codes are then: $TASK_NAME + ":" + random-part
+    return f"{field[5:]}:"
+
 
 def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, clear_session=True, path=None):
     if worker_id is None:
@@ -69,7 +74,6 @@ def test_index(client, treatment, prefix=""):
         path = f"/{treatment}/?worker_id={resp_worker_id}"
         with app.test_request_context(path):
             res = client.get(path, follow_redirects=True)
-            print(res.data)
             assert b"RESPONDER" in res.data
             # res = _process_resp_tasks(client, worker_id=worker_id)
 
@@ -282,7 +286,6 @@ def test_auto_finalize(client, treatment):
     process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": treatment})
     time.sleep(WEBHOOK_DELAY)
     res = _process_prop(client, treatment, job_id=job_id, worker_id=prop_worker_id, offer=OFFER, response_available=True, auto_finalize=True)
-    print("RES_PROP: ", res.data)
     time.sleep(WEBHOOK_DELAY)
     with app.app_context():
         bonus_resp = get_worker_bonus(job_id, resp_worker_id)
@@ -309,7 +312,6 @@ def test_payment(client, treatment):
             with app.app_context():
                 bonus_resp = get_worker_bonus(job_id, resp_worker_id)
                 assert 0 == get_worker_bonus(job_id, resp_worker_id)
-                print(MIN_OFFER, bonus_resp)
                 assert MIN_OFFER <= get_worker_paid_bonus(job_id, resp_worker_id) <= tasks.MAX_BONUS + (MAX_GAIN - OFFER)
                 assert 0 == get_worker_bonus(job_id, prop_worker_id)
                 assert get_worker_paid_bonus(job_id, prop_worker_id) == OFFER
@@ -331,13 +333,12 @@ def test_survey_resp(client, treatment):
                 elif field == SURVEY_MAIN_TASK_CODE_FIELD:
                     form_data[field] = "resp:"
                 elif field.startswith("code_"):
-                    form_data[field] = f"{field}:"
+                    form_data[field] = get_completion_code(field)
                 elif field in SURVEY_CHOICE_FIELDS:
                     form_data[field] = random.choice(item.choices)[0]
                 else:
                     form_data[field] = "abc"
             res = client.post(path, data=form_data, follow_redirects=True)
-            print("DADTA: ", res.data)
             assert b"Your survey completion code is:" in res.data
             assert b"dropped" not in res.data
 
