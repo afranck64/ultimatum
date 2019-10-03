@@ -25,7 +25,10 @@ bp = Blueprint(f"{TREATMENT}.resp", __name__)
 @csrf_protect.exempt
 @bp.route("/resp/", methods=["GET", "POST"])
 def index():
-    return handle_index(TREATMENT)
+    messages = [
+        """An AI Recommendation System (Machine-Learning System) will face you in the name of the RESPONDER. The system was trained using prior interactions of comparable bargaining situations. The gains of the AI-System will be transfered to the human RESPONDER."""
+    ]
+    return handle_index(TREATMENT, messages=messages)
 
 @bp.route("/resp/done")
 def done():
