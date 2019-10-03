@@ -3,14 +3,19 @@
 {% block head%}
 <title>Responder - The Ultimatum Bargaining Experiment</title>
 {% endblock %}
+
+{% block header %}
+    <h1 align="center">You have been randomly assigned the role of a RESPONDER</h1>
+{% endblock %}
 {% block content %}
    
     <!-- <form method="GET" action=""> -->
     <!-- </form> -->
+    <br>
+    <br>
 
     <form action="" method="post">
-            <h1 align="center">You have been randomly assigned the role of a RESPONDER</h1>
-            <h3 align="center">Select the Minimum Offer that You are Willing to Accept From the Dropdown Menu Below</h3>
+            <p align="center">Select the Minimum Offer that You are Willing to Accept From the Dropdown Menu Below</p>
             {{ form.hidden_tag() }}
             <div align="center">
                 <select name="min_offer" id="min_offer" required id="min_offer">

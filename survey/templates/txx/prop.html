@@ -5,37 +5,46 @@
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script> -->
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
 <title>Proposer - The Ultimatum Bargaining Experiment</title>
+
+<script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+   
+    function drawChart() {
+        responder = parseInt(document.getElementById('offer').value);
+        proposer = {{max_gain}}-responder;
+        
+        var data = google.visualization.arrayToDataTable([
+            ['Actor', 'Share'],
+            ['Proposer', proposer],
+            ['Responder', responder]
+        ]);
+        var options = {
+            title: '',    
+            'backgroundColor': 'transparent',
+            'is3D': 'true',
+            legend: {position: 'bottom', textStyle: {fontSize: 18}},
+            pieSliceText: 'value'
+        };
+        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+        chart.draw(data, options);
+    };
+</script>
 {% endblock %}
+
+{% block header %}
+    <h1 align="center">You have been randomly assigned the role of a PROPOSER.</h1>
+{% endblock %}
+
 {% block content %}
 
-    <script type="text/javascript">
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(drawChart);
-       
-        function drawChart() {
-            responder = parseInt(document.getElementById('offer').value);
-            proposer = {{max_gain}}-responder;
-            
-            var data = google.visualization.arrayToDataTable([
-                ['Actor', 'Share'],
-                ['Proposer', proposer],
-                ['Responder', responder]
-            ]);
-            var options = {
-                title: '',    
-                'backgroundColor': 'transparent',
-                'is3D': 'true',
-                legend: {position: 'bottom', textStyle: {fontSize: 18}},
-                pieSliceText: 'value'
-            };
-            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
-            chart.draw(data, options);
-        };
-    </script>
+<br>
+<br>
+<br>
 
-    <h1 align="center">You have been randomly assigned the role of a PROPOSER.</h1>
-    <h3 align="center">Select the offer you want to make to the RESPONDER from the dropdown menu below.</h3>
+    <p align="center">Select the offer you want to make to the RESPONDER from the dropdown menu below.</p>
 
     <!-- <h3>In this tasks, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER</h3>
     <h3>The RESPONDER doesn't know about the existence of the Artificial intelligence</h3> -->

@@ -5,8 +5,6 @@
 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script> -->
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <title>Proposer - The Ultimatum Bargaining Experiment</title>
-{% endblock %}
-{% block content %}
 
     <script type="text/javascript">
         google.charts.load('current', {'packages':['corechart']});
@@ -117,9 +115,15 @@
         chart2.draw(data2, options);
       }
     </script>
+{% endblock %}
 
+{% block header %}
     <h1 align="center">You have been randomly assigned the role of a PROPOSER.</h1>
-    <h3 align="center">Select the test offer you want to submit to the AI-System from the dropdown menu below.</h3>
+{% endblock %}
+
+{% block content %}
+
+    <p align="center">Select the test offer you want to submit to the AI-System from the dropdown menu below.</p>
 
     <!-- <h2>In this tasks, you will be helped by an Artificial intelligence which can help you get insights on how good your offer in respect to maximum you can gain from it before sending it to the RESPONDER</h2>
     <h2>The RESPONDER doesn't know about the existence of the Artificial intelligence</h2> -->
