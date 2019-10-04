@@ -7,9 +7,10 @@ from flask import session
 
 from survey._app import app
 from . import cg, crt, eff, goat, cpc, exp, risk, cc
+
 #NOTE:
-# - The hexaco tasks is run as the last one for feature generation
 # - The tasks are run after the responder task and the responder round can therefore be finalize at the end of the hexaco task
+# - The responder's turn is internaly closed on the last task: by passing the query-parms auto_finalize=1 and treatment=$TXX
 
 def process_tasks(client, job_id="test", worker_id=None, bonus_mode="full", url_kwargs=None):
     """
