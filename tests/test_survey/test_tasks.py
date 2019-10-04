@@ -1,11 +1,12 @@
 import unittest
 import random
 import string
+import json
 
 from flask import session
 
 from tests.test_survey import client, app, generate_worker_id
-from survey.tasks import cg, crt, eff, goat, cpc, exp, risk
+from survey.tasks import cg, crt, eff, goat, cpc, exp, risk, cc
 from survey.utils import get_worker_bonus
 
 #NOTE:
@@ -27,9 +28,10 @@ def process_tasks(client, job_id="test", worker_id=None, bonus_mode="full", url_
     # _process_eff(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     # _process_goat(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     # _process_hexaco(client, job_id, worker_id=worker_id, url_kwargs=url_kwargs)
+    _process_cc(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     _process_exp(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
     _process_risk(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    _process_cpc(client, job_id, worker_id=worker_id, url_kwargs=url_kwargs)
+    _process_cpc(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode, url_kwargs=url_kwargs)
 
 def _process_cg(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True):
     """
@@ -311,6 +313,52 @@ def _process_cpc(client, job_id="test", worker_id=None, bonus_mode="random", cle
 def test_cpc(client):
     res = _process_cpc(client)
     assert b"cpc:" in res
+
+
+
+def _process_cc(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True, url_kwargs=None):
+    """
+    :param client: (flask.testclient)
+    :param job_id: (str)
+    :param worker_id: (str)
+    :param bonus_mode: (str: random|full|none)
+    :param clear_session: (bool)
+    """
+    if worker_id is None:
+        worker_id = generate_worker_id("cc")
+    path = f"/tasks/cc/?job_id={job_id}&worker_id={worker_id}"
+    path_check = f"/tasks/cc/check?job_id={job_id}&worker_id={worker_id}"
+    if url_kwargs:
+        for k,v in url_kwargs.items():
+            path += f"&{k}={v}"
+        app.logger.debug("PATH: " + str(path))
+    letters = list(cc.ITEMS)
+    random.shuffle(letters)
+    delays = [random.randint(0, 1000) for _ in letters]
+    data = dict()
+    if bonus_mode=="random":
+        clicked = [random.choice([True, False]) for _ in letters]
+    elif bonus_mode=="none":
+        clicked = [False] * len(letters)
+    else:
+        clicked = [letter==cc.LETTER_M for letter in letters]
+    data = json.dumps({
+        "letters": letters,
+        "delays": delays,
+        "clicked": clicked,
+    })
+    with app.test_request_context(path):
+        if clear_session:
+            with client:
+                with client.session_transaction() as sess:
+                    sess.clear()
+        client.get(path)
+        client.post(path_check, data=data, follow_redirects=True)
+        return client.post(path, follow_redirects=True).data
+
+def test_cc(client):
+    res = _process_cc(client)
+    assert b"cc:" in res
 
 
 def _process_exp(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True, url_kwargs=None):
