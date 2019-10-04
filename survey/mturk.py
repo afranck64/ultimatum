@@ -397,10 +397,10 @@ class MTurk(object):
             warnings.warn(f"{e}")
         return 0
 
-    def create_additional_assignments_for_hit(self, number_of_additional_assignments=1):
+    def create_additional_assignments(self, number_of_additional_assignments=1):
         
         try:
-            self.client.get_hit(
+            self.client.create_additional_assignments_for_hit(
                 HITId=self.job_id,
                 NumberOfAdditionalAssignments=number_of_additional_assignments
             )
