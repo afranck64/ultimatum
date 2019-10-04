@@ -8,6 +8,7 @@ import time
 import datetime
 import io
 import hashlib
+import uuid
 
 import pandas as pd
 
@@ -21,7 +22,7 @@ from wtforms.widgets import html5
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
-from survey._app import app, csrf_protect
+from survey._app import app, csrf_protect, TREATMENTS_AUTO_DSS
 from survey.figure_eight import FigureEight, RowState
 from core.utils.explanation import get_acceptance_probability, get_best_offer_probability
 from core.utils import cents_repr
@@ -29,7 +30,6 @@ from core.models.metrics import gain, MAX_GAIN
 
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists
-from .prop import insert_row
 from survey.utils import (
     save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, get_cookie_obj, set_cookie_obj,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus
@@ -177,15 +177,3 @@ def handle_done(treatment, template=None):
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
-
-def finalize_resp(job_id, worker_id, treatment):
-    app.logger.debug("finalize_resp")
-    table = get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment)
-    con = get_db("RESULT")
-    with con:
-        res = con.execute(f"SELECT * from {table} where job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
-        if res:
-            resp_result = dict(res)
-            insert_row(job_id, resp_result, treatment)
-        else:
-            app.logger.warn(f"finalize_resp: worker_id {worker_id} not found - job_id: {job_id}")

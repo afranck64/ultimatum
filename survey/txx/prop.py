@@ -8,6 +8,7 @@ import time
 import datetime
 import io
 import hashlib
+import uuid
 
 import pandas as pd
 
@@ -32,7 +33,7 @@ from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists, update
 from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table, predict_weak, predict_strong,
-    generate_completion_code, increase_worker_bonus, get_cookie_obj, set_cookie_obj,
+    generate_completion_code, increase_worker_bonus, get_cookie_obj, set_cookie_obj, get_secret_key_hash,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
 #from survey.tasks import MAX_BONUS as TASKS_FEATURES
 
@@ -479,7 +480,10 @@ def handle_check(treatment):
         ai_proposal["ai_calls_acceptance_probability"].append(round(acceptance_probability, 4))
     ai_cookie_obj["ai_proposal"] = ai_proposal
     
-    req_response = make_response(jsonify({"offer": offer, "acceptance_probability": acceptance_probability, "best_offer_probability": best_offer_probability}))
+    resp_data = {"offer": offer, "acceptance_probability": acceptance_probability, "best_offer_probability": best_offer_probability}
+    if request.args.get("secret_key_hash") == get_secret_key_hash():
+        resp_data["ai_offer"] = ai_offer
+    req_response = make_response(jsonify(resp_data))
     set_cookie_obj(req_response, AI_COOKIE_KEY, ai_cookie_obj)
     return req_response
 

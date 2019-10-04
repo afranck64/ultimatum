@@ -233,19 +233,19 @@ def handle_survey_done(template=None):
         #adapter = get_adapter()
         app.logger.debug(f"adapter: {cookie_obj['adapter']}")
         cookie_obj.clear()
-        # cookie_obj[BASE] = True
-        # cookie_obj["worker_id"] = worker_id
-        # cookie_obj[worker_code_key] = worker_code
-        # cookie_obj.clear()
 
-        # submit_to_URL = adapter.get_submit_to_URL()
-        # if submit_to_URL is not None:
-        #     try:
-        #         response = requests.post(submit_to_URL, json=adapter.get_submit_to_kwargs())
-        #         app.logger.debug
-        #     except Exception as err:
-        #         app.logger.warn(f"{err}")
         save_worker_id(job_id=job_id, worker_id=worker_id, worker_code=worker_code, assignment_id=adapter.assignment_id)
+        app.logger.debug(f"request-args: {request.args}, adapter: {adapter.to_dict()} ")
+        try:
+            expected_max_judgments = request.args.get("expected_max_judgments")
+            if expected_max_judgments is not None:
+                expected_max_judgments = int(expected_max_judgments)
+                max_judgments = adapter.get_api().get_max_judgments()
+                app.logger.debug(f"survey.done: max_judgments: {max_judgments}, expected_max_judgments: {expected_max_judgments}")
+                if expected_max_judgments < max_judgments:
+                    api.create_additional_assignments(job_id, 1)
+        except Exception as err:
+            app.log_exception(err)
         app.logger.info(f"handle_survey_done: saved new survey - job_id: {job_id}, worker_id: {worker_id}")
     req_response = make_response(render_template(template, worker_code=worker_code, dropped=True))
     set_cookie_obj(req_response, BASE, cookie_obj)

@@ -26,7 +26,7 @@ from survey.utils import (
     get_cookie_obj, set_cookie_obj, value_to_numeric, get_output_filename, get_table, increase_worker_bonus, save_result2db, save_result2file,
     save_worker_id, generate_completion_code
 )
-from survey.txx.resp import finalize_resp
+from survey.txx.helpers import finalize_resp
 
 
 def response_to_result(response, job_id=None, worker_id=None):

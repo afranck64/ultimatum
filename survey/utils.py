@@ -53,7 +53,8 @@ def get_latest_treatment():
         raise ValueError("No selectable treatment detected. ")
     return treatment
 
-
+def get_secret_key_hash():
+    return str(hash(app.config["SECRET_KEY"]))
 
 def predict_weak(min_offer):
     return max(min(min_offer-10, MAX_GAIN), 0)

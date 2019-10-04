@@ -22,7 +22,9 @@ from survey.db import get_db, table_exists
 from survey.figure_eight import RowState
 from survey.utils import get_table, increase_worker_bonus, pay_worker_bonus, get_resp_worker_id
 from .prop import BASE as prop_BASE, finalize_round, JUDGING_TIMEOUT_SEC, LAST_MODIFIED_KEY, STATUS_KEY, WORKER_KEY
-from .resp import BASE as resp_BASE, finalize_resp
+from .resp import BASE as resp_BASE
+
+from survey.txx.helpers import finalize_resp 
 
 BASE = "txx"
 
@@ -58,10 +60,10 @@ def check_is_proposer_next(job_id, worker_id, treatment, max_judgments=None):
                 nb_prop = tmp["count"]
     
     #TODO: if nb_resp >= expected row/2, should only take props
-    if max_judgments is None:
+    if max_judgments is None or max_judgments==0:
         max_judgments = job_config["expected_judgments"]
     if max_judgments > 0:
-        if (max_judgments // 2) >= nb_resp and (max_judgments // 2) > nb_prop:
+        if (max_judgments // 2) <= nb_resp and (max_judgments // 2) > nb_prop:
             if nb_prop_open > 0:
                 is_proposer = NEXT_IS_PROPOSER
             else:
