@@ -327,7 +327,7 @@ def _process_cc(client, job_id="test", worker_id=None, bonus_mode="random", clea
     if worker_id is None:
         worker_id = generate_worker_id("cc")
     path = f"/tasks/cc/?job_id={job_id}&worker_id={worker_id}"
-    path_check = f"/tasks/cc/check?job_id={job_id}&worker_id={worker_id}"
+    path_check = f"/tasks/cc/check/?job_id={job_id}&worker_id={worker_id}"
     if url_kwargs:
         for k,v in url_kwargs.items():
             path += f"&{k}={v}"
