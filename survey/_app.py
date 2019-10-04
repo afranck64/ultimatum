@@ -54,7 +54,7 @@ def _env2bool(env_value):
     return env_value.upper() in {"YES", "TRUE", "ENABLED"}
 
 app.config["DEBUG"] = _env2bool(os.getenv("DEBUG"))
-app.config["MTURK_SANDBOX"] = _env2bool(os.getenv("MTURK_SANDBOX"))
+app.config["MTURK_SANDBOX"] = _env2bool(os.getenv("MTURK_SANDBOX")) or app.config["DEBUG"]
 app.logger.info(f"M_TURK_SANDBOX: {app.config['MTURK_SANDBOX']}")
 app.config["TASKS"] = ["cpc", "exp", "risk"]
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", os.urandom(32))
