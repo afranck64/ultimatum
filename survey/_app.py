@@ -22,7 +22,7 @@ csrf_protect = CSRFProtect(app)
 TREATMENTS = ["T00", "T10", "T11", "T12", "T13", "T20", "T21", "T22"]
 
 TREATMENTS_AUTO_DSS = {
-    "T20"
+    "T20",
     "T21",
     "T22"
 }
