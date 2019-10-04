@@ -12,16 +12,16 @@
 {% block content %}
 
 <div align="center">
-<h1 align="center">Please make your choices between option A and option B.</h1>
+<h1 align="center">Please make your choices between for each table</h1>
 <br>
-<h3 align="center">For each choice a reward is randomly drawn according to the presented probabilities and your profit is the mean of the reward for each question.</h3>
+<h3 align="center">For each choice the probability to gain the associated bonus is proportional to the associatied probability. Your bonus for this task is the average of all your gains.</h3>
 <br>
 <br>
 <form method="POST" id="cg">
   {% for key, panel_options in options.items() %}
   <table width="800px" border="1" align="center">
       <tr>
-          <td>Prob.</td>
+          <td>Probability</td>
           {% for probability, _ in panel_options %}
             <td>
                {{probability}}
