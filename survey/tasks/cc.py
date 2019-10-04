@@ -7,7 +7,7 @@ from flask import (
     Blueprint, render_template, request, redirect, flash, url_for, make_response, g
 )
 
-from survey._app import csrf_protect
+from survey._app import csrf_protect, app, VALUES_SEPARATOR
 from survey.utils import set_cookie_obj, get_cookie_obj
 
 from survey.tasks.task import handle_task_done, handle_task_index
@@ -67,6 +67,9 @@ def response_to_result(response, job_id=None, worker_id=None):
     letters = response["letters"]
     clicked = response["clicked"]
     delays = response["delays"]
+    result["letters"] = VALUES_SEPARATOR.join(letters)
+    result["clicked"] = VALUES_SEPARATOR.join(str(int(v)) for v in clicked)
+    result["delays"] = VALUES_SEPARATOR.join(str(round(delay, 4)) for delay in delays)
     result["go_m_count"] = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_M and click])
     result["go_m_avg_click_delay"] = sum([delay if (letter==LETTER_M and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (result["go_m_count"] or 1)
     result["go_w_count"] = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_W and click])
@@ -81,6 +84,7 @@ def response_to_result(response, job_id=None, worker_id=None):
 @csrf_protect.exempt
 @bp.route(f"/{BASE}/", methods=["GET", "POST"])
 def index():
+    app.logger.debug("index cc")
     # return handle_task_index(f"{BASE}", validate_response=validate_response, template_kwargs={"callback_url": url_for(f"tasks.{BASE}.check")})
 
     cookie_obj = get_cookie_obj(BASE)
@@ -92,11 +96,13 @@ def index():
         req_response =  make_response(redirect(url_for(f"tasks.{BASE}.done")))
         return req_response
     if request.method == "GET":
+        app.logger.debug("index cc get")
         cookie_obj[BASE] = True
         cookie_obj["worker_id"] = worker_id
         cookie_obj["job_id"] = job_id
         cookie_obj["time_start"] = time.time()
     if request.method == "POST":
+        app.logger.debug("index cc post")
         #response = request.form.to_dict()
         response = cookie_obj["result"]
         if validate_response is not None and validate_response(response):
@@ -121,6 +127,7 @@ def done():
 @csrf_protect.exempt
 @bp.route(f"/{BASE}/check/", methods=["GET", "POST"])
 def check():
+    app.logger.debug("index cc check")
     cookie_obj = get_cookie_obj(BASE)
     if not cookie_obj.get(BASE, None):
         flash("Sorry, you are not allowed to use this service. ^_^")
@@ -130,4 +137,5 @@ def check():
     cookie_obj["result"] = result
     req_response = make_response("")
     set_cookie_obj(req_response, BASE, cookie_obj)
+    app.logger.debug("index cc check - done")
     return req_response
