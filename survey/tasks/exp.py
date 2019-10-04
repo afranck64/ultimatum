@@ -13,18 +13,6 @@ from survey.tasks.task import handle_task_done, handle_task_index
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 bp = Blueprint(f"tasks.{BASE}", __name__)
 
-EXP_VALUES = {
-    "0": "No game",
-    "1": "1 to 4 games",
-    "2": "5 to 9 games",
-    "3": "10 to 19 games",
-    "4": "20 to 99 games",
-    "5": "100 or mores games",
-}
-
-
-OFFER_VALUES = {str(val):f"{val} cents" for val in range(0, 0+1, 5)}
-
 FIELDS = {"ultimatum_game_experience"}
 FEATURES = {f"{BASE}_{k}" for k in FIELDS}
 
@@ -61,7 +49,7 @@ def response_to_result(response, job_id=None, worker_id=None):
 @csrf_protect.exempt
 @bp.route(f"/{BASE}/", methods=["GET", "POST"])
 def index():
-    return handle_task_index(BASE, validate_response=validate_response, template_kwargs={"exp_values": EXP_VALUES})
+    return handle_task_index(BASE, validate_response=validate_response)
 
 
 @bp.route("/exp/done")
