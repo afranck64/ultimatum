@@ -66,7 +66,17 @@ app.config["DATABASE_DATA"] = os.getenv("DATABASE_DATA", "./db.data.sqlite3")
 # Results (job based) database
 app.config["DATABASE_RESULT"] = os.getenv("DATABASE_RESULT", "./db.result.sqlite3")
 app.config["ADMIN_SECRET"] = os.getenv("ADMIN_SECRET", "")
-app.config["THREADS_POOL"] = pool.ThreadPool(processes=1)
+
+class FakePool(object):
+    def starmap_async(self, func, args_list):
+        for args in args_list:
+            func(*args)
+
+if app.config["TESTING"]:
+    app.config["THREADS_POOL"] = FakePool()
+else:
+    app.config["THREADS_POOL"] = pool.ThreadPool(processes=1)
+
 _treatments = []
 for treatment in TREATMENTS:
     app.config[treatment] = _env2bool(os.getenv(treatment)) or _env2bool(os.getenv("TXX"))
