@@ -39,6 +39,8 @@ PK_KEY = 'rowid'
 WORKER_CODE_DROPPED = "dropped"
 
 ALL_COOKIES_KEY = "all_cookies"
+
+FAKE_MODEL_OFFSET_RATIO = 0.05
 ######
 def get_latest_treatment():
     """
@@ -57,10 +59,10 @@ def get_secret_key_hash():
     return str(hash(app.config["SECRET_KEY"]))
 
 def predict_weak(min_offer):
-    return max(min(min_offer-10, MAX_GAIN), 0)
+    return max(min(min_offer-MAX_GAIN*FAKE_MODEL_OFFSET_RATIO, MAX_GAIN), 0)
 
 def predict_strong(min_offer):
-    return max(min(min_offer+10, MAX_GAIN), 0)
+    return max(min(min_offer+MAX_GAIN*FAKE_MODEL_OFFSET_RATIO, MAX_GAIN), 0)
 
 def generate_completion_code(base, job_id):
     """
