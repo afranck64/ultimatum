@@ -138,7 +138,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
     table_all = get_table("txx", "all", schema=None)
     # The task was already completed, so we skip to the completion code display
     if cookie_obj.get(BASE) and cookie_obj.get(worker_code_key):        
-        req_response = make_response(redirect(url_for("survey_done")))
+        req_response = make_response(redirect(url_for(f"{treatment}.survey.survey_done", **request.args)))
         set_cookie_obj(req_response, BASE, cookie_obj)
         return req_response
     if treatment is None:
@@ -175,7 +175,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
                     is_codes_valid = False
         if is_codes_valid and job_id != "na" and worker_id != "na":
             cookie_obj["response"] = response
-            req_response = make_response(redirect(url_for("survey_done")))
+            req_response = make_response(redirect(url_for(f"{treatment}.survey.survey_done", **request.args)))
             set_cookie_obj(req_response, BASE, cookie_obj)
             return req_response
         elif is_codes_valid:
