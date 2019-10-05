@@ -8,7 +8,6 @@ from flask import (
 )
 from survey._app import app, csrf_protect
 from survey.txx.resp import handle_done, handle_index
-from survey.txx.helpers import finalize_resp
 
 ############ Consts #################################
 

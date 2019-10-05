@@ -19,10 +19,7 @@ from survey.db import get_db
 from survey.txx.prop import insert_row
 from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED, get_table, get_secret_key_hash
 
-# from survey.tasks.helpers import process_tasks
-
-def process_tasks():
-    raise NotImplementedError
+from survey.tasks.helpers import process_tasks, generate_worker_id
 
 
 

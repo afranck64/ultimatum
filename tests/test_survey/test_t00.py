@@ -12,8 +12,7 @@ from survey import tasks
 from survey.txx.survey import MainForm
 from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED
 
-from tests.test_survey import app, client, generate_worker_id, emit_webhook
-from tests.test_survey.test_tasks import process_tasks
+from tests.test_survey import client
 from tests.test_survey import txx
 
 

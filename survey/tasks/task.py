@@ -26,7 +26,6 @@ from survey.utils import (
     get_cookie_obj, set_cookie_obj, value_to_numeric, get_output_filename, get_table, increase_worker_bonus, save_result2db, save_result2file,
     save_worker_id, generate_completion_code
 )
-from survey.txx.helpers import finalize_resp
 
 
 def response_to_result(response, job_id=None, worker_id=None):
@@ -137,6 +136,8 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
         #NOTE: hexaco is the LAST task required from the user!!!
         auto_finalize = cookie_obj.get("auto_finalize")
         if auto_finalize:# and base=="hexaco":
+            #NOTE: there is an import here ^_^
+            from survey.txx.helpers import finalize_resp
             treatment = cookie_obj.get("treatment")
             finalize_resp(job_id, worker_id, treatment)
             # client = app.test_client()
