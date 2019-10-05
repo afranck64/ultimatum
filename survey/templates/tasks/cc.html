@@ -19,27 +19,20 @@
             return a;
         }
         ACTION_ACTIVE = false;
-        var start_pause = 4000;
+        var start_pause = 1000;
         var t_show = 100;
         var t_hide = 500;
         var t_wait = 500;
         var t_round = start_pause + t_show + t_hide + t_wait;
-        window.count = 0;
+        window.actual_round = 0;
         window.last_letter = "";
         window.start_wait_time = 0;
         window.rounds_clicked = new Set();
         window.items = {{items | safe}};   //loaded using templated parameters
         var nb_items = window.items.length;
         window.result = {"letters":new Array(nb_items), "delays":new Array(nb_items), "clicked":new Array(nb_items)};
-        window.remaining_rounds = window.items.length;
+        window.nb_rounds = nb_items;
         shuffle(window.items);
-        // $(document).ready(function() {
-        //     window.started = false;
-        //     window.count = 0;
-        //     var count=0;
-        //     logClicks(count);
-        //     console.log("READY!!!");
-        // });
 
         function handle_click () {
             var btn = document.getElementById('action_button');
@@ -52,7 +45,7 @@
                 btn.textContent = "";
             } else {
                 // handle user input 
-                var actual_round = window.count;
+                var actual_round = window.actual_round;
                 if (!window.rounds_clicked.has(actual_round)) {
                     var click_time = new Date().getTime() - window.start_wait_time;
                     letter = window.items[actual_round];
@@ -68,18 +61,25 @@
 
         function send_result() {
             var result = window.result;
-            console.log("RESULT: ", result);
             var request = new XMLHttpRequest();
             var url = "{{callback_url}}";
-            request.open("POST", url, false);
+            request.open("POST", url, true);
+            request.onload = function (e) {
+                if (request.readyState === 4) {
+                    document.getElementById("form").submit();
+                    if (request.status === 200) {
+                        console.log(request.responseText);
+                    } else {
+                        console.error(request.statusText);
+                    }
+                }
+            };
             request.setRequestHeader("Content-Type", "application/json");
             request.send(JSON.stringify(result));
-            document.getElementById("form").submit();
         }
         function play_all_rounds () {
             console.log("play_all_rounds");
-            if (window.remaining_rounds > 0) {
-                window.remaining_rounds -= 1;
+            if (window.actual_round + 1 < window.nb_rounds) {
                 play_one_round();
                 setTimeout(play_all_rounds, t_round);
             }
@@ -91,7 +91,7 @@
             var show_go_nogo = function() {
                 console.log("show");
                 btn.disabled = true;
-                var letter = window.items[window.count];
+                var letter = window.items[window.actual_round];
                 display.textContent = letter;
                 setTimeout(hide, t_show);
             }
@@ -113,7 +113,7 @@
                 console.log("deactivate");
                 btn.style.backgroundColor = "#dddddd";
                 btn.disabled = true;
-                var actual_round = window.count;
+                var actual_round = window.actual_round;
                 // The user didn'T clicked ==> miss;
                 if (!window.rounds_clicked.has(actual_round)) {
                     letter = window.items[actual_round];
@@ -121,11 +121,11 @@
                     window.result["delays"][actual_round] = t_wait * 2;
                     window.result["clicked"][actual_round] = false;
                     console.log("You missed round: ", actual_round, letter);
-                    if (window.remaining_rounds <= 0) {
-                        send_result();
-                    }
                 }
-                window.count += 1;
+                if (actual_round + 1 >= window.nb_rounds) {
+                    send_result();
+                }
+                window.actual_round += 1;
             }
             setTimeout(show_go_nogo, window.start_pause);
         }
