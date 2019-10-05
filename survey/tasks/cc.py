@@ -29,10 +29,10 @@ ITEMS = [LETTER_M] * 3 + [LETTER_W] * 2
 
 FIELDS = {}
 FEATURES = {
-    "go_m_count",  #how often the user clicked on cc
-    "go_m_avg_click_delay", #the average time after which the user clicked on m
-    "go_w_count",
-    "go_w_avg_click_delay",
+    "cc_m_count",  #how often the user clicked on cc
+    "cc_m_avg_click_delay", #the average time after which the user clicked on m
+    "cc_w_count",
+    "cc_w_avg_click_delay",
 }
 def validate_response(response):
     for field in FIELDS:
@@ -70,10 +70,11 @@ def response_to_result(response, job_id=None, worker_id=None):
     result["letters"] = VALUES_SEPARATOR.join(letters)
     result["clicked"] = VALUES_SEPARATOR.join(str(int(v)) for v in clicked)
     result["delays"] = VALUES_SEPARATOR.join(str(round(delay, 4)) for delay in delays)
-    result["go_m_count"] = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_M and click])
-    result["go_m_avg_click_delay"] = sum([delay if (letter==LETTER_M and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (result["go_m_count"] or 1)
-    result["go_w_count"] = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_W and click])
-    result["go_w_avg_click_delay"] = sum([delay if (letter==LETTER_W and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (result["go_w_count"] or 1)
+    result["cc_m_count"] = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_M and click])
+    result["cc_m_avg_click_delay"] = sum([delay if (letter==LETTER_M and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (result["cc_m_count"] or 1)
+    result["cc_w_count"] = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_W and click])
+    result["cc_w_avg_click_delay"] = sum([delay if (letter==LETTER_W and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (result["cc_w_count"] or 1)
+    result["cc_time_spent"] = response["time_spent"]
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id
