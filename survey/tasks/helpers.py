@@ -2,6 +2,7 @@ import unittest
 import random
 import string
 import json
+import numpy as np
 
 from flask import session
 
@@ -230,6 +231,7 @@ def _process_exp(client, job_id="test", worker_id=None, bonus_mode="random", cle
     :param bonus_mode: (str: random|full|none)
     :param clear_session: (bool)
     """
+    exp_value = int(100 * (1 - np.random.power(10)))
     if worker_id is None:
         worker_id = generate_worker_id("exp")
     path = f"/tasks/exp/?job_id={job_id}&worker_id={worker_id}"
@@ -237,7 +239,7 @@ def _process_exp(client, job_id="test", worker_id=None, bonus_mode="random", cle
         for k,v in url_kwargs.items():
             path += f"&{k}={v}"
         app.logger.debug("PATH: " + str(path))
-    data = {field:random.choice(["0", "1", "2", "3"]) for field in exp.FIELDS}
+    data = {field:str(exp_value) for field in exp.FIELDS}
     with app.test_request_context(path):
         if clear_session:
             with client:
