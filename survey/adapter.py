@@ -33,7 +33,7 @@ class BaseAdapter(object):
     def from_dict(self, dict_obj):
         raise NotImplementedError
 
-    def get_api(self):
+    def get_api(self, sandbox=None):
         raise NotImplementedError
 
     @classmethod
@@ -117,6 +117,8 @@ class MTurkAdapter(DefaultAdapter):
         return obj_dict
     
     def get_api(self, sandbox=None):
+        if sandbox is None:
+            sandbox = app.config.get("MTURK_SANDBOX")
         return MTurk(self.get_job_id(), sandbox=sandbox)
 
     @classmethod
