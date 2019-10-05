@@ -30,46 +30,6 @@
 
             <hr>
             
-            {% if ask_others %}
-                <br> <br>
-                <h3 align="center" style="color:#000000">
-                    On average what do you think is the MINIMUM OFFER that other RESPONDERS would accept?
-                </h3>
-                <!-- <br>PLEASE SELECT YOUR EXPECTATION.  -->
-                
-                <br>
-                <div align="center">
-                    <select name="other_resp" required id="other_resp">
-                        <option value="" selected disabled hidden>Select a value</option>
-                        {% for value, label in offer_values.items() %}
-                            <option value={{value}}>{{label}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <br> <br>
-
-                <hr>
-                
-                <h3 align="center" style="color:#000000">
-                    On average what do you think is the minimum OFFER that other PROPOSERS make?
-                </h3>
-                <!-- <br>PLEASE SELECT YOUR EXPECTATION. -->
-
-                <br>
-                <div align="center">
-                    <select name="other_prop" required id="other_prop">
-                        <option value="" selected disabled hidden>Select a value</option>
-                        {% for value, label in offer_values.items() %}
-                            <option value={{value}}>{{label}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <br>
-                <br> <br>
-            {% endif %}
-
-
             <div align="center"> 
                     {{form.submit()}}
             </div>
