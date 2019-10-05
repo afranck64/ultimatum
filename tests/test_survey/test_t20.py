@@ -12,13 +12,13 @@ from survey import tasks
 from survey.txx.survey import MainForm
 from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED
 
-from tests.test_survey import app, client, generate_worker_id, emit_webhook
-from tests.test_survey.test_tasks import process_tasks
+from tests.test_survey import client
 from tests.test_survey import txx
 
 
 TREATMENT = os.path.splitext(os.path.split(__file__)[1])[0][-3:]
 
+# NOTE: no proposal should be externally triggered in treatments t2x
 
 def test_available():
     txx.test_available(TREATMENT)
@@ -45,8 +45,6 @@ def test_prop_check(client):
 def test_prop_done(client):
     txx.test_prop_done(client, TREATMENT)
 
-def test_prop_check_done(client):
-    txx.test_prop_check_done(client, TREATMENT)
 
 def test_bonus_delayed(client, synchron=False):
     txx.test_bonus_delayed(client, TREATMENT, synchron)
@@ -68,6 +66,9 @@ def test_survey_resp(client):
 
 def test_survey_prop(client):
     txx.test_survey_prop(client, TREATMENT)
+
+def test_prop_check_done(client):
+    txx.test_prop_check_done(client, TREATMENT)
 
 def test_survey_drop(client):
     txx.test_survey_drop(client, TREATMENT)
