@@ -97,8 +97,6 @@ def resp_to_resp_result(response, job_id=None, worker_id=None):
 
 class ProposerForm(FlaskForm):
     min_offer = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
-    other_prop = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
-    other_resp = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
 def handle_index(treatment, template=None, messages=None):
@@ -127,8 +125,6 @@ def handle_index(treatment, template=None, messages=None):
         response = cookie_obj["response"]
         response["time_stop"] = time.time()
         response["min_offer"] = int(request.form["min_offer"])
-        response["other_resp"] = int(request.form.get("other_resp", OTHERS_MISSING_VALUE))
-        response["other_prop"] = int(request.form.get("other_prop", OTHERS_MISSING_VALUE))
         cookie_obj['response'] = response
         req_response = make_response(redirect(url_for(f"{treatment}.resp.done")))
         set_cookie_obj(req_response, BASE, cookie_obj)

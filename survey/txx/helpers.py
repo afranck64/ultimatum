@@ -50,7 +50,7 @@ def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MI
                 with client.session_transaction() as sess:
                     sess.clear()
         client.get(path, follow_redirects=True)
-        return client.post(path, data={"min_offer":min_offer, "other_prop":min_offer, "other_resp": min_offer}, follow_redirects=True)
+        return client.post(path, data={"min_offer":min_offer}, follow_redirects=True)
 
 def _process_resp_tasks(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, bonus_mode="random", clear_session=True, synchron=True, path=None):
     app.logger.debug("_process_resp_tasks")
