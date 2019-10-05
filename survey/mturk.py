@@ -1,9 +1,12 @@
 import math
 import os
 import requests
-import warnings
+import logging
 import boto3
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger('mturk')
+logger.setLevel(logging.DEBUG)
 
 
 class Status(object):
@@ -117,7 +120,7 @@ class MTurk(object):
     #     resp = requests.get(url)
     #     if resp.status_code == Status.SUCCESS:
     #         return resp.json()
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return {}
 
     
@@ -149,7 +152,7 @@ class MTurk(object):
     #         with open(filename, "wb") as out_f:
     #             out_f.write(resp.content)
     #     else:
-    #         warnings.warn("Something went wrong: %s" % resp)
+    #         logger.warning("Something went wrong: %s" % resp)
     
     # def job_rows(self, page=None):
     #     page = page or "1"
@@ -173,7 +176,7 @@ class MTurk(object):
     #                 break
     #         if err == 0:
     #             return result
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return {}
     
     # def job_rows_count(self):
@@ -181,7 +184,7 @@ class MTurk(object):
     #     resp = requests.get(url)
     #     if resp.status_code == Status.SUCCESS:
     #         return resp.json()["count"]
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return None
     
     # def jobs_user(self, page=None):
@@ -196,7 +199,7 @@ class MTurk(object):
     #     resp = requests.get(url)
     #     if resp.status_code == Status.SUCCESS:
     #         return resp.json()
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return {}
     
     # def jobs_team(self, team_id, page=None):
@@ -213,7 +216,7 @@ class MTurk(object):
     #     resp = requests.get(url)
     #     if resp.status_code == Status.SUCCESS:
     #         return resp.json()
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return {}
     
 
@@ -222,7 +225,7 @@ class MTurk(object):
     #     resp = requests.get(url)
     #     if resp.status_code == Status.SUCCESS:
     #         return resp.json()
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return {}
 
     
@@ -236,7 +239,7 @@ class MTurk(object):
     #     resp = requests.get(url)
     #     if resp.status_code == Status.SUCCESS:
     #         return resp.json()
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return {}
     
     # def row_get_data(self, unit_id):
@@ -266,7 +269,7 @@ class MTurk(object):
     #     resp = requests.get(url)
     #     if resp.status_code == Status.SUCCESS:
     #         return resp.json()
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return {}
     
     # def row_result(self, unit_id):
@@ -278,7 +281,7 @@ class MTurk(object):
     #     resp = requests.get(url)
     #     if resp.status_code == Status.SUCCESS:
     #         return resp.json()
-    #     warnings.warn(resp.text)
+    #     logger.warning(resp.text)
     #     return {}
 
 
@@ -305,7 +308,7 @@ class MTurk(object):
             return True
         except ClientError as e:
             if e.response['Error']['Code'] == 'RequestError':
-                warnings.warn(f"{e}")
+                logger.warning(f"{e}")
             else:
                 raise e
         return False
@@ -330,7 +333,7 @@ class MTurk(object):
             return True
         except ClientError as e:
             if e.response['Error']['Code'] == 'RequestError':
-                warnings.warn(f"{e}")
+                logger.warning(f"{e}")
             else:
                 raise e
         return False
@@ -345,11 +348,11 @@ class MTurk(object):
             if len(response)==1 and response.get('ResponseMetadata'):
                 return True
             else:
-                warnings.warn(str(response))
+                logger.warning(str(response))
                 return False
         except ClientError as e:
             if e.response['Error']['Code'] == 'RequestError':
-                warnings.warn(f"{e}")
+                logger.warning(f"{e}")
             else:
                 raise e
         return False
@@ -363,11 +366,11 @@ class MTurk(object):
             if not response:
                 return True
             else:
-                warnings.warn(str(response))
+                logger.warning(str(response))
                 return False
         except ClientError as e:
             if e.response['Error']['Code'] == 'RequestError':
-                warnings.warn(f"{e}")
+                logger.warning(f"{e}")
             else:
                 raise e
         return False
@@ -376,14 +379,17 @@ class MTurk(object):
         return self.client.get_account_balance()
     
     def get_max_judgments(self):
-        try:
+        # try:
+        if True:
             response = self.client.get_hit(
                 HITId=self.job_id
             )
             max_judgments = response['HIT']['MaxAssignments']
+            logger.warning(f"RESPONSE: {response}")
             return max_judgments
-        except ClientError as e:
-            warnings.warn(f"{e}")
+        # except ClientError as e:
+        else:
+            logger.warning(f"ClientError: {e}")
         return 0
     
     def get_expected_judgments(self):
@@ -392,21 +398,24 @@ class MTurk(object):
                 HITId=self.job_id
             )
             max_judgments = response['HIT']['MaxAssignments']
+            logger.warning(f"RESPONSE: {response}")
             return max_judgments
         except ClientError as e:
-            warnings.warn(f"{e}")
+            logger.warning(f"{e}")
         return 0
 
     def create_additional_assignments(self, number_of_additional_assignments=1):
         
-        try:
+        # try:
+        if True:
             self.client.create_additional_assignments_for_hit(
                 HITId=self.job_id,
                 NumberOfAdditionalAssignments=number_of_additional_assignments
             )
             return True
-        except ClientError as e:
-            warnings.warn(f"{e}")
+        else:
+        # except ClientError as e:
+            logger.warning(f"{e}")
         return False
         
     # def contributor_flag(self, worker_id, reason):
