@@ -109,6 +109,7 @@ def index():
         if validate_response is not None and validate_response(response):
             response["time_stop"] = time.time()
             response["time_start"] = cookie_obj.get("time_start")
+            response["time_spent"] = response["time_stop"] - response["time_start"] 
             cookie_obj["response"] = response
             req_response = make_response(redirect(url_for(f"tasks.{BASE}.done")))
             set_cookie_obj(req_response, BASE, cookie_obj)
