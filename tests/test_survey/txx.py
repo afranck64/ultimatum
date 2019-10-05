@@ -10,13 +10,23 @@ from httmock import urlmatch, HTTMock, response
 from core.models.metrics import MAX_GAIN
 from survey._app import TREATMENTS_MODEL_REFS
 from survey import tasks
+from survey.db import get_db
 from survey.txx.survey import MainForm
-from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED
+from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED, WORKER_KEY, get_table
+
+from survey.tasks.helpers import process_tasks
+
+from survey.txx.helpers import _process_prop, _process_prop_round, _process_resp, _process_resp_tasks
 
 from tests.test_survey import app, client, get_client, generate_worker_id, emit_webhook
-from tests.test_survey.test_tasks import process_tasks
+from tests.test_survey.txx_data import MIN_OFFERS_RATIO, OFFERS_RATIO
 
 
+def get_offer():
+    return int(random.choice(OFFERS_RATIO) * MAX_GAIN)
+
+def get_min_offer():
+    return int(random.choice(MIN_OFFERS_RATIO) * MAX_GAIN)
 
 WEBHOOK_DELAY = 0.25
 
@@ -28,6 +38,17 @@ SURVEY_MAIN_TASK_CODE_FIELD = "code_resp_prop"
 SURVEY_CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
 SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "location", "test"}
 
+def is_worker_available(worker_id, table):
+    con = get_db()
+    sql = f"SELECT * FROM {table} WHERE {WORKER_KEY}=?"
+    res = con.execute(sql, [worker_id]).fetchone()
+    if res is None:
+        return False
+    else:
+        return True
+
+    
+
 @urlmatch(netloc=r'api.figure-eight.com$')
 def figure_eight_mock(url, request):
     return response()
@@ -36,31 +57,6 @@ def get_completion_code(field):
     # field is assumed to be named: "code_" + $TASK_NAME
     # codes are then: $TASK_NAME + ":" + random-part
     return f"{field[5:]}:"
-
-
-def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, clear_session=True, path=None):
-    if worker_id is None:
-        worker_id = generate_worker_id()
-    if path is None:
-        path = f"/{treatment}/resp/?job_id={job_id}&worker_id={worker_id}"
-    with app.test_request_context(path):
-        if clear_session:
-            with client:
-                with client.session_transaction() as sess:
-                    sess.clear()
-        client.get(path, follow_redirects=True)
-        return client.post(path, data={"min_offer":min_offer, "other_prop":min_offer, "other_resp": min_offer}, follow_redirects=True)
-
-def _process_resp_tasks(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, bonus_mode="random", clear_session=True, synchron=True, path=None):
-    if worker_id is None:
-        worker_id = generate_worker_id("resp")
-    process_tasks(client, job_id=job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    res = _process_resp(client, treatment, job_id=job_id, worker_id=worker_id, min_offer=min_offer, clear_session=clear_session, path=path)
-    if synchron:
-        emit_webhook(client, url=f"/{treatment}/webhook/?synchron=1", treatment=treatment, job_id=job_id, worker_id=worker_id)
-    else:
-        emit_webhook(client, url=f"/{treatment}/webhook/", treatment=treatment, job_id=job_id, worker_id=worker_id)
-    return res
 
 def test_available(treatment):
     assert treatment.upper() in app.config["TREATMENTS"]
@@ -77,8 +73,8 @@ def test_index(client, treatment, prefix=""):
             assert b"RESPONDER" in res.data
             # res = _process_resp_tasks(client, worker_id=worker_id)
 
-            res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=MIN_OFFER)
-            process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": treatment})
+            res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+            process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
             assert b"resp:" in res.data
         prop_worker_id = generate_worker_id(f"{prefix}index_prop")
         time.sleep(WEBHOOK_DELAY)
@@ -86,7 +82,7 @@ def test_index(client, treatment, prefix=""):
         with app.test_request_context(path):
             res = client.get(path, follow_redirects=True)
             # assert b"PROPOSER" in res.data
-            res = _process_prop_round(client, treatment, worker_id=prop_worker_id, response_available=True)
+            res = _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=get_offer(), response_available=True)
             assert b"prop:" in res.data
 
 def test_index_auto(client, treatment="t10", prefix=""):
@@ -104,13 +100,13 @@ def test_index_auto(client, treatment="t10", prefix=""):
             if b"role of a RESPONDER" in res.data:
                 # res = _process_resp(client, treatment, job_id=job_id, worker_id=auto_worker_id, min_offer=MIN_OFFER)
                 # process_tasks(client, job_id=job_id, worker_id=auto_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": treatment})
-                res = _process_resp_tasks(client, treatment, job_id=job_id, worker_id=auto_worker_id, min_offer=MIN_OFFER)
+                res = _process_resp_tasks(client, treatment, job_id=job_id, worker_id=auto_worker_id, min_offer=get_min_offer())
                 assert b"resp:" in res.data
             # Play a proposer
             elif b"role of a PROPOSER" in res.data:
                 app.logger.warn("PROPOSER")
                 res = client.get(path, follow_redirects=True)
-                res = _process_prop_round(client, treatment, job_id=job_id, worker_id=auto_worker_id, response_available=True)
+                res = _process_prop_round(client, treatment, job_id=job_id, worker_id=auto_worker_id, offer=get_offer(), response_available=True)
                 # assert b"prop:" in res.data
             else:
                 assert False, "Nooooooooooooooo"
@@ -125,25 +121,25 @@ def test_resp_index(client, treatment):
 def test_resp_done_success(client, treatment):
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
-    res = _process_resp(client, treatment, worker_id=worker_id).data
+    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
     assert b"resp:" in res
 
 def test_resp_done_both_models(client, treatment):
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
-    res = _process_resp(client, treatment, worker_id=worker_id).data
+    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
     assert b"resp:" in res
 
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
-    res = _process_resp(client, treatment, worker_id=worker_id).data
+    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
     assert b"resp:" in res
 
 def test_prop_index(client, treatment):
     resp_worker_id = generate_worker_id("resp")
     job_id = "test"
-    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=MIN_OFFER)
-    process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": treatment})
+    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+    process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
     time.sleep(WEBHOOK_DELAY)
     prop_worker_id = generate_worker_id("prop")
     res = client.get(f"/{treatment}/prop/?job_id={job_id}&worker_id={prop_worker_id}").data
@@ -152,75 +148,20 @@ def test_prop_index(client, treatment):
 def test_prop_check(client, treatment):
     worker_id = generate_worker_id("prop_check")
     path = f"/{treatment}/prop/?job_id=test&worker_id={worker_id}"
-    _process_resp_tasks(client, treatment, worker_id=None)
+    _process_resp_tasks(client, treatment, worker_id=None, min_offer=get_min_offer())
     with app.test_request_context(path):
         client.get(path)
         res = client.get(f"{treatment}/prop/check/?offer={OFFER}").data
         assert b"acceptance_probability" in res
         assert b"best_offer_probability" in res
 
-def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER, clear_session=True, response_available=False, path=None, auto_finalize=False, nb_dss_check=None):
-    MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
-    dss_available = bool(app.config.get(MODEL_KEY))
-    if worker_id is None:
-        worker_id = generate_worker_id("prop")
-    path2 = None
-    if path is None:
-        path = f"/{treatment}/prop/?job_id={job_id}&worker_id={worker_id}"
-    if path2 is None:
-        path2 = f"/{treatment}/prop_dss/?job_id={job_id}&worker_id={worker_id}"
-
-    if auto_finalize is True:
-        path += "&auto_finalize=1"
-        path2 += "&auto_finalize=1"
-    if not response_available:
-        _process_resp_tasks(client, treatment, job_id=job_id)
-    with app.test_request_context(path):
-        if clear_session:
-            with client:
-                with client.session_transaction() as sess:
-                    sess.clear()
-        client.get(path)
-        if dss_available:
-            res = client.post(path, data={"offer":offer}, follow_redirects=False)
-            if nb_dss_check is None:
-                res = client.post(path2, data={"offer_dss":offer}, follow_redirects=True)
-            else:
-                check_path = f"{treatment}/prop/check/"
-                client.get(path2, follow_redirects=True)
-                client.get(check_path)
-                for _ in range(nb_dss_check):
-                    tmp = client.get(f"{check_path}?offer={random.choice(list(range(0, MAX_GAIN+1, 5)))}")
-                res = client.post(path2, data={"offer_dss":offer}, follow_redirects=True)
-        else:
-            res = client.post(path, data={"offer":offer}, follow_redirects=True)
-        return res
-
-
-def _process_prop_round(client, treatment, job_id="test", worker_id=None, offer=OFFER, clear_session=True, response_available=False, synchron=False, path=None):
-    if worker_id is None:
-        worker_id = generate_worker_id("prop")
-    if synchron:
-        webhook_url = f"/{treatment}/webhook/?synchron=1"
-    else:
-        webhook_url = f"/{treatment}/webhook/"
-        
-    if not response_available:
-        _process_resp_tasks(client, treatment, worker_id=None, min_offer=MIN_OFFER, bonus_mode="full")
-    res = _process_prop(client, treatment, worker_id=worker_id, offer=offer, response_available=True, path=path)
-    time.sleep(WEBHOOK_DELAY)
-    emit_webhook(client, url=webhook_url, treatment=treatment, job_id=job_id, worker_id=worker_id)
-    return res
-
-
-
 def test_prop_done(client, treatment):
-    res = _process_prop(client, treatment)
+    res = _process_prop(client, treatment, offer=get_offer())
     assert b"prop:" in res.data
 
 def test_prop_check_done(client, treatment):
     nb_dss_check = random.randint(1, 20)
-    res = _process_prop(client, treatment, nb_dss_check=nb_dss_check)
+    res = _process_prop(client, treatment, offer=get_offer(), nb_dss_check=nb_dss_check)
     assert b"prop:" in res.data
 
 
@@ -231,7 +172,7 @@ def test_bonus_delayed(client, treatment, synchron=False):
         job_id = "test"
         resp_worker_id = generate_worker_id("bonus_resp")
         prop_worker_id = generate_worker_id("bonus_prop")
-        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=MIN_OFFER, bonus_mode="full", synchron=synchron)
+        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=MIN_OFFER, bonus_mode="random", synchron=synchron)
         time.sleep(WEBHOOK_DELAY)
         _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=OFFER, response_available=True, synchron=synchron)
         time.sleep(WEBHOOK_DELAY)
@@ -249,7 +190,7 @@ def test_bonus_nodelay(client, treatment, synchron=True):
         job_id = "test"
         resp_worker_id = generate_worker_id("bonus_resp")
         prop_worker_id = generate_worker_id("bonus_prop")
-        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=MIN_OFFER, bonus_mode="full", synchron=synchron)
+        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=MIN_OFFER, bonus_mode="random", synchron=synchron)
         _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=OFFER, response_available=True, synchron=synchron)
         with app.app_context():
             bonus_resp = get_worker_bonus(job_id, resp_worker_id)
@@ -263,36 +204,30 @@ def test_webhook(client, treatment):
     job_id = "test"
     resp_worker_id = generate_worker_id("webhook_resp")
     prop_worker_id = generate_worker_id("webhook_prop")
-    process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="full")
-    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=MIN_OFFER)
+    process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random")
+    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
     emit_webhook(client, url=f"/{treatment}/webhook/", treatment=treatment, worker_id=resp_worker_id, by_get=True)
     time.sleep(WEBHOOK_DELAY)
-    _process_prop(client, treatment, job_id=job_id, worker_id=prop_worker_id, offer=OFFER, response_available=True)
+    _process_prop(client, treatment, job_id=job_id, worker_id=prop_worker_id, offer=get_offer(), response_available=True)
     emit_webhook(client, url=f"/{treatment}/webhook/", treatment=treatment, worker_id=prop_worker_id, by_get=True)
     time.sleep(WEBHOOK_DELAY)
     with app.app_context():
-        bonus_resp = get_worker_bonus(job_id, resp_worker_id)
-        assert MIN_OFFER <= bonus_resp
-        assert bonus_resp <=  tasks.MAX_BONUS + (MAX_GAIN - OFFER)
-        bonus_prop = get_worker_bonus(job_id, prop_worker_id)
-        assert bonus_prop == OFFER
+        assert is_worker_available(resp_worker_id, get_table("resp", job_id=job_id, schema="result", treatment=treatment))
+        assert is_worker_available(prop_worker_id, get_table("prop", job_id=job_id, schema="result", treatment=treatment))
 
 def test_auto_finalize(client, treatment):
     # Test automatic webhook triggering to finalize tasks
     job_id = "test"
     resp_worker_id = generate_worker_id("auto_resp")
     prop_worker_id = generate_worker_id("auto_prop")
-    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=MIN_OFFER)
-    process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": treatment})
+    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+    process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
     time.sleep(WEBHOOK_DELAY)
-    res = _process_prop(client, treatment, job_id=job_id, worker_id=prop_worker_id, offer=OFFER, response_available=True, auto_finalize=True)
+    res = _process_prop(client, treatment, job_id=job_id, worker_id=prop_worker_id, offer=get_offer(), response_available=True, auto_finalize=True)
     time.sleep(WEBHOOK_DELAY)
     with app.app_context():
-        bonus_resp = get_worker_bonus(job_id, resp_worker_id)
-        assert MIN_OFFER <= bonus_resp
-        assert bonus_resp <=  tasks.MAX_BONUS + (MAX_GAIN - OFFER)
-        bonus_prop = get_worker_bonus(job_id, prop_worker_id)
-        assert bonus_prop == OFFER
+        assert is_worker_available(resp_worker_id, get_table("resp", job_id=job_id, schema="result", treatment=treatment))
+        assert is_worker_available(prop_worker_id, get_table("prop", job_id=job_id, schema="result", treatment=treatment))
 
 
 def test_payment(client, treatment):
