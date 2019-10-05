@@ -240,10 +240,13 @@ def handle_survey_done(template=None):
             expected_max_judgments = request.args.get("expected_max_judgments")
             if expected_max_judgments is not None:
                 expected_max_judgments = int(expected_max_judgments)
-                max_judgments = adapter.get_api().get_max_judgments()
-                app.logger.debug(f"survey.done: max_judgments: {max_judgments}, expected_max_judgments: {expected_max_judgments}")
-                if expected_max_judgments < max_judgments:
-                    api.create_additional_assignments(job_id, 1)
+                api = adapter.get_api()
+                max_judgments = api.get_max_judgments()
+                app.logger.debug(f"survey.done: max_judgments: {max_judgments} - {type(max_judgments)}, expected_max_judgments: {expected_max_judgments} - {type(expected_max_judgments)}")
+                if max_judgments < expected_max_judgments:
+                    app.logger.debug(f"try create new assignments")
+                    create_res = api.create_additional_assignments(1)
+                    app.logger.debug(f"post assignment creation: new-max: {api.get_max_judgments()} , mturk-api-res: {create_res}")
         except Exception as err:
             app.log_exception(err)
         app.logger.info(f"handle_survey_done: saved new survey - job_id: {job_id}, worker_id: {worker_id}")
