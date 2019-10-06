@@ -19,16 +19,17 @@
             return a;
         }
         ACTION_ACTIVE = false;
-        var start_pause = 1000;
-        var t_show = 100;
-        var t_hide = 500;
-        var t_wait = 500;
-        var t_round = start_pause + t_show + t_hide + t_wait;
+        //time_show, time_hid, time_wait, window.items, window.start_delays, delay_missed are initialized with values passed to a template on page generation!!!
+        var t_show = {{time_show}};
+        var t_hide = {{time_hide}};
+        var t_wait = {{time_wait}};
+        var t_round_no_delay = t_show + t_hide + t_wait;
         window.actual_round = 0;
         window.last_letter = "";
         window.start_wait_time = 0;
         window.rounds_clicked = new Set();
         window.items = {{items | safe}};   //loaded using templated parameters
+        window.start_delays = {{start_delays | safe}};
         var nb_items = window.items.length;
         window.result = {"letters":new Array(nb_items), "delays":new Array(nb_items), "clicked":new Array(nb_items)};
         window.nb_rounds = nb_items;
@@ -41,7 +42,7 @@
             if (!window.started) {
                 window.started =  true;
                 play_all_rounds();
-                btn.style.fontSize = 32;
+                btn.style.fontSize = "32px";
                 btn.textContent = "";
             } else {
                 // handle user input 
@@ -81,7 +82,7 @@
             console.log("play_all_rounds");
             if (window.actual_round + 1 < window.nb_rounds) {
                 play_one_round();
-                setTimeout(play_all_rounds, t_round);
+                setTimeout(play_all_rounds, t_round_no_delay+window.start_delays[window.actual_round]);
             }
         }
 
@@ -118,7 +119,7 @@
                 if (!window.rounds_clicked.has(actual_round)) {
                     letter = window.items[actual_round];
                     window.result["letters"][actual_round] = letter;
-                    window.result["delays"][actual_round] = t_wait * 2;
+                    window.result["delays"][actual_round] = {{delay_missed}};
                     window.result["clicked"][actual_round] = false;
                     console.log("You missed round: ", actual_round, letter);
                 }
@@ -127,7 +128,8 @@
                 }
                 window.actual_round += 1;
             }
-            setTimeout(show_go_nogo, window.start_pause);
+            start_delay = window.start_delays[window.actual_round]
+            setTimeout(show_go_nogo, start_delay);
         }
         
         window.onload = function () {

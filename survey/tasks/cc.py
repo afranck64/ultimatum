@@ -2,6 +2,7 @@ import os
 import datetime
 import time
 import json
+import random
 
 from flask import (
     Blueprint, render_template, request, redirect, flash, url_for, make_response, g
@@ -17,15 +18,27 @@ from survey.tasks.task import handle_task_done, handle_task_index
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 bp = Blueprint(f"tasks.{BASE}", __name__)
 
-CELL_BONUS_CENTS = 2
-NB_CELLS = 50
-MAX_BONUS = NB_CELLS * CELL_BONUS_CENTS
 LETTER_M = "M"
 LETTER_W = "W"
 LETTER_M_BONUS = 10
 LETTER_W_BONUS = -5
 ITEMS = [LETTER_M] * 3 + [LETTER_W] * 2
+## Following, delays are expressed in milliseconds
+# how long the stimulus is shown
+TIME_SHOW = 100
+# how long to wait before activation of the button
+TIME_HIDE = 500
+# how long the button should remain active
+TIME_WAIT = 500
+# the assigned time in case the user didn't clicked on time
+DELAY_MISSED = TIME_WAIT * 2
+# the minimum delay before starting a round
+START_DELAY_MIN = 500
+# the maximum delay before starting a round
+START_DELAY_MAX = 3000
+START_DELAYS = [random.randint(START_DELAY_MIN, START_DELAY_MAX) for _ in ITEMS]
 
+MAX_BONUS = sum(LETTER_M_BONUS for letter in ITEMS if letter==LETTER_M)
 
 FIELDS = {}
 FEATURES = {
@@ -115,7 +128,7 @@ def index():
             set_cookie_obj(req_response, BASE, cookie_obj)
             return req_response
 
-    req_response = make_response(render_template(f"tasks/{BASE}.html", callback_url=url_for(f"tasks.{BASE}.check"), items=ITEMS))
+    req_response = make_response(render_template(f"tasks/{BASE}.html", callback_url=url_for(f"tasks.{BASE}.check"), items=ITEMS, start_delays=START_DELAYS, time_show=TIME_SHOW, time_wait=TIME_WAIT, time_hide=TIME_HIDE, delay_missed=DELAY_MISSED))
     cookie_obj[BASE] = True
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
