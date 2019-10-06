@@ -12,7 +12,7 @@ from survey._app import TREATMENTS_MODEL_REFS
 from survey import tasks
 from survey.db import get_db
 from survey.txx.survey import MainForm
-from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED, WORKER_KEY, get_table
+from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED, WORKER_KEY, get_table, is_worker_available
 
 from survey.tasks.helpers import process_tasks
 
@@ -37,15 +37,6 @@ MIN_OFFER = MAX_GAIN//2
 SURVEY_MAIN_TASK_CODE_FIELD = "code_resp_prop"
 SURVEY_CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
 SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "location", "test"}
-
-def is_worker_available(worker_id, table):
-    con = get_db()
-    sql = f"SELECT * FROM {table} WHERE {WORKER_KEY}=?"
-    res = con.execute(sql, [worker_id]).fetchone()
-    if res is None:
-        return False
-    else:
-        return True
 
     
 

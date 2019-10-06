@@ -106,6 +106,23 @@ def get_table(base, job_id, schema, category=None, treatment=None, is_task=False
 
     return res
 
+
+def is_worker_available(worker_id, table):
+    """
+    Returns True if <table> exist and contains a column "worker_id" which has the value <worker_id>
+    """
+    con = get_db()
+    sql = f"SELECT * FROM {table} WHERE {WORKER_KEY}=?"
+    try:
+        res = con.execute(sql, [worker_id]).fetchone()
+        if res is None:
+            return False
+        else:
+            return True
+    except Exception as err:
+        pass
+    return False
+
 def save_worker_id(job_id, worker_id, worker_code, assignment_id, base=None):
     """
     Save the given information in a general table
