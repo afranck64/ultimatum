@@ -35,8 +35,8 @@ SOLUTIONS = {
 
 MAX_BONUS = 40
 FEATURES = {
-    "count_effort",
-    "time_spent_eff"
+    "eff_count_effort",
+    "eff_time_spent"
 }
 
 def validate_response(response):
@@ -62,7 +62,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     }
     """
     result = dict(response)
-    result["count_effort"] = response_to_bonus(response) // 2
+    result["eff_count_effort"] = response_to_bonus(response) // 2
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id

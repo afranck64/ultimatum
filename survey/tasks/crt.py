@@ -24,10 +24,10 @@ SOLUTIONS = {
     "q2": 10,
     "q3": 23
 }
-FIELDS = {"donation_a", "donation_b", "donation_c"}
-FEATURES = set(FIELDS) | {
+FIELDS = {"q1", "q1", "q1"}
+FEATURES = {
     "crt_performance",
-    "time_spent_crt"
+    "crt_time_spent"
 }
 def response_to_bonus(response):
     bonus = 0

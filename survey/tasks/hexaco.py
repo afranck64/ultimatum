@@ -11,10 +11,10 @@ bp = Blueprint("tasks.hexaco", __name__)
 
 FIELDS = {f"q{i}" for i in range(1, 31)}
 FEATURES = {
-    "Honesty_Humility",
-    "Extraversion",
-    "Agreeableness",
-    "time_spent_hexaco"
+    "hexaco_Honesty_Humility",
+    "hexaco_Extraversion",
+    "hexaco_Agreeableness",
+    "hexaco_time_spent"
 }
 MAX_BONUS = 0
 
@@ -45,9 +45,9 @@ def response_to_result(response, job_id=None, worker_id=None):
     result = dict(response)
     for key in REVERSE_SCORED_QUESTIONS:
         response[key] = 6 - response[key]
-    result["Honesty_Humility"] = sum(response[key] for key in Honesty_Humility_qxx)/10
-    result["Extraversion"] = sum(response[key] for key in Extraversion_qxx)/10
-    result["Agreeableness"] = sum(response[key] for key in Agreeableness_qxx)/10
+    result["hexaco_Honesty_Humility"] = sum(response[key] for key in Honesty_Humility_qxx)/10
+    result["hexaco_Extraversion"] = sum(response[key] for key in Extraversion_qxx)/10
+    result["hexaco_Agreeableness"] = sum(response[key] for key in Agreeableness_qxx)/10
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id
