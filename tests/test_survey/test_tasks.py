@@ -5,15 +5,20 @@ import json
 
 from flask import session
 
+from survey.utils import get_table
 from tests.test_survey import client, app, generate_worker_id
 from survey.tasks import cg, crt, eff, goat, cpc, exp, risk, cc
 from survey.tasks.helpers import (_process_cc, _process_cg, _process_cpc, _process_crt, _process_eff, _process_exp, _process_goat,
-    _process_hexaco, _process_risk)
-from survey.utils import get_worker_bonus
+    _process_hexaco, _process_risk, generate_worker_id)
+from survey.utils import get_worker_bonus, is_worker_available
 
 def test_cg(client):
-    res = _process_cg(client)
-    assert b"cg:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_cg(client, job_id=job_id, worker_id=worker_id)
+        assert b"cg:" in res
+        assert is_worker_available(worker_id, get_table("cg", job_id, "result"))
 
 def test_cg_bonus(client):
     with app.app_context():
@@ -31,8 +36,12 @@ def test_cg_bonus(client):
 
 
 def test_crt(client):
-    res = _process_crt(client)
-    assert b"crt:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_crt(client, job_id=job_id, worker_id=worker_id)
+        assert b"crt:" in res
+        assert is_worker_available(worker_id, get_table("crt", job_id, "result"))
 
 
 def test_crt_bonus(client):
@@ -51,8 +60,12 @@ def test_crt_bonus(client):
 
 
 def test_eff(client):
-    res = _process_eff(client)
-    assert b"eff:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_eff(client, job_id=job_id, worker_id=worker_id)
+        assert b"eff:" in res
+        assert is_worker_available(worker_id, get_table("eff", job_id, "result"))
 
 
 def test_eff_bonus(client):
@@ -71,8 +84,12 @@ def test_eff_bonus(client):
 
 
 def test_hexaco(client):
-    res = _process_hexaco(client)
-    assert b"hexaco:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_hexaco(client, job_id=job_id, worker_id=worker_id)
+        assert b"hexaco:" in res
+        assert is_worker_available(worker_id, get_table("hexaco", job_id, "result"))
 
 
 def disabled__test_hexaco_bonus():
@@ -91,8 +108,12 @@ def disabled__test_hexaco_bonus():
 
 
 def test_goat(client):
-    res = _process_goat(client)
-    assert b"goat:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_goat(client, job_id=job_id, worker_id=worker_id)
+        assert b"goat:" in res
+        assert is_worker_available(worker_id, get_table("goat", job_id, "result"))
 
 
 def test_goat_bonus(client):
@@ -133,20 +154,36 @@ def test_tasks_bonus(client):
 
 
 def test_cpc(client):
-    res = _process_cpc(client)
-    assert b"cpc:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_cpc(client, job_id=job_id, worker_id=worker_id)
+        assert b"cpc:" in res
+        assert is_worker_available(worker_id, get_table("cpc", job_id, "result"))
 
 
 def test_cc(client):
-    res = _process_cc(client)
-    assert b"cc:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_cc(client, job_id=job_id, worker_id=worker_id)
+        assert b"cc:" in res
+        assert is_worker_available(worker_id, get_table("cc", job_id, "result"))
 
 
 def test_exp(client):
-    res = _process_exp(client)
-    assert b"exp:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_exp(client, job_id=job_id, worker_id=worker_id)
+        assert b"exp:" in res
+        assert is_worker_available(worker_id, get_table("exp", job_id, "result"))
 
 
 def test_risk(client):
-    res = _process_risk(client)
-    assert b"risk:" in res
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_risk(client, job_id=job_id, worker_id=worker_id)
+        assert b"risk:" in res
+        assert is_worker_available(worker_id, get_table("risk", job_id, "result"))
