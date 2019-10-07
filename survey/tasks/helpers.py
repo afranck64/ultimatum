@@ -21,17 +21,33 @@ def process_tasks(client, job_id="test", worker_id=None, bonus_mode="full", url_
     :param bonus_mode: (str: random|full|none)
     :param url_kwars: (dict)
     """
+    non_final_tasks = app.config["TASKS"][:-1]
     if worker_id is None:
         worker_id = generate_worker_id("tasks")
-    # _process_cg(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    # _process_crt(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    # _process_eff(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    # _process_goat(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    # _process_hexaco(client, job_id, worker_id=worker_id, url_kwargs=url_kwargs)
-    _process_cc(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    _process_exp(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    _process_risk(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    _process_cpc(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode, url_kwargs=url_kwargs)
+    if "cc" in non_final_tasks:
+        _process_cc(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    if "cg" in non_final_tasks:
+        _process_cg(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    if "cpc" in non_final_tasks:
+        _process_cpc(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    if "crt" in non_final_tasks:
+        _process_crt(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    if "eff" in non_final_tasks:
+        _process_eff(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    if "goat" in non_final_tasks:
+        _process_goat(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    if "hexaco" in non_final_tasks:
+        _process_hexaco(client, job_id, worker_id=worker_id)
+    if "risk" in non_final_tasks:
+        _process_risk(client, job_id, worker_id=worker_id, bonus_mode=bonus_mode)
+    if "exp" in non_final_tasks:
+        _process_exp(client, job_id, worker_id=worker_id)
+    if "ras" in non_final_tasks:
+        _process_ras(client, job_id, worker_id=worker_id)
+    
+    final_task = app.config["TASKS"][-1]
+    handler = globals().get(f"_process_{final_task}")
+    handler(client, job_id=job_id, worker_id=worker_id, url_kwargs=url_kwargs)
 
 def _process_cg(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True):
     """
@@ -208,7 +224,7 @@ def _process_cc(client, job_id="test", worker_id=None, bonus_mode="random", clea
     elif bonus_mode=="none":
         clicked = [False] * len(letters)
     else:
-        clicked = [letter==cc.LETTER_M for letter in letters]
+        clicked = [letter==cc.LETTER_HIT for letter in letters]
     data = json.dumps({
         "letters": letters,
         "delays": delays,
