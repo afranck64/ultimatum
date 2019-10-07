@@ -56,7 +56,7 @@ def _env2bool(env_value):
 app.config["DEBUG"] = _env2bool(os.getenv("DEBUG"))
 app.config["MTURK_SANDBOX"] = _env2bool(os.getenv("MTURK_SANDBOX")) or app.config["DEBUG"]
 app.logger.info(f"M_TURK_SANDBOX: {app.config['MTURK_SANDBOX']}")
-app.config["TASKS"] = ["cpc", "exp", "risk", "cc"]
+app.config["TASKS"] = ["exp", "risk", "cc", "ras", "cpc"]
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", os.urandom(32))
 app.config["APPLICATION_ROOT"] = os.getenv("APPLICATION_ROOT", "/")
 # Main database

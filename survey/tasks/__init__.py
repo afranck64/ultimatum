@@ -1,5 +1,5 @@
 from flask import Blueprint
-from survey.tasks import (cg, crt, eff, hexaco, risk, cpc, exp, goat, cc)
+from survey.tasks import (cg, crt, eff, hexaco, risk, cpc, exp, goat, cc, ras)
 from survey._app import app
 bp = Blueprint("tasks", __name__)
 
@@ -16,6 +16,7 @@ TASKS_FEATURES = {
     "goat": goat.FEATURES,
     "risk": risk.FEATURES,
     "cc": cc.FEATURES,
+    "ras": ras.FEATURES,
 }
 
 app.config["TASKS_FEATURES"] = TASKS_FEATURES

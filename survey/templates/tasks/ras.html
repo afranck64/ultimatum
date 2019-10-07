@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{url_for('static', filename='ras.css')}}">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<title> A Few Things About You! </title>
+
+{% endblock %}
+{% block content %} 
+
+<h1 align="center"> Questionnaire </h1>
+
+
+<!--    <img src="http://www.techbucket.org/wp-content/uploads/2012/07/Search-Engine-Optimization.jpg" style="" width="600" align="middle">
+-->
+    <br>
+
+    <p> <h3 align="center">Thank you for willing to participate! Your participation will help us greatly and we appreciate your time.</h3> <br>
+<p align="justify">
+<ul>
+        <li> This will take most people between 3-6 minutes to complete.</li>
+        <li> You will find a series of statements about you. </li>
+        <li> Please read each statement and decide how much you agree or disagree with that statement. </li> </ul> 
+Then indicate your response using the following scale: 
+<ul>
+<li>5 = strongly agree</li>
+<li>4 = agree</li>
+<li>3 = neutral (neither agree nor disagree)</li>
+<li>2 = disagree</li>
+<li>1 = strongly disagree.</li>
+</ul>
+</p>
+
+<div class="wrap" style="border:3px solid black" >
+
+     <form action="{{url_for('tasks.ras.index')}}" method="POST" id="form" name="form">
+        <br>
+        {% for affirmation in affirmations %}
+            {% set outer_loop = loop %}
+                <label class="statement">{{affirmation}} </label>
+                <ul class='likert'>
+                    {% for value, label in scalas.items() %}               
+                    <li>
+                        <input type="radio" name="q{{outer_loop.index}}" value="{{value}}" required> <label>{{label}}</label>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <br>
+
+                {% endfor %}
+                <br>
+                <div style="text-align:center">
+                <input type="submit" value="Submit" style="margin:50"></div>
+            </form>
+    </div>
+    {% endblock %}

@@ -8,9 +8,9 @@ from flask import session
 from survey.db import get_db
 from survey.utils import get_table
 from tests.test_survey import client, app, generate_worker_id
-from survey.tasks import cg, crt, eff, goat, cpc, exp, risk, cc, hexaco
+from survey.tasks import cg, crt, eff, goat, cpc, exp, risk, cc, hexaco, ras
 from survey.tasks.helpers import (_process_cc, _process_cg, _process_cpc, _process_crt, _process_eff, _process_exp, _process_goat,
-    _process_hexaco, _process_risk, generate_worker_id)
+    _process_hexaco, _process_risk, generate_worker_id, _process_ras)
 from survey.utils import get_worker_bonus, is_worker_available
 
 def has_worker_and_features(base, task_module, job_id,  worker_id):
@@ -205,3 +205,13 @@ def test_risk(client):
         assert b"risk:" in res
         assert is_worker_available(worker_id, get_table("risk", job_id, "result"))
         assert has_worker_and_features("risk", risk, job_id, worker_id)
+
+
+def test_ras(client):
+    with app.app_context():
+        job_id = "test"
+        worker_id = generate_worker_id("task")
+        res = _process_ras(client, job_id=job_id, worker_id=worker_id)
+        assert b"ras:" in res
+        assert is_worker_available(worker_id, get_table("ras", job_id, "result"))
+        assert has_worker_and_features("ras", ras, job_id, worker_id)

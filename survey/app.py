@@ -19,6 +19,7 @@ app.register_blueprint(tasks.cc.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.goat.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.hexaco.bp, url_prefix='/tasks')
 app.register_blueprint(tasks.risk.bp, url_prefix='/tasks')
+app.register_blueprint(tasks.ras.bp, url_prefix='/tasks')
 
 for treatment in app.config["TREATMENTS"]:
     if app.config.get(treatment):

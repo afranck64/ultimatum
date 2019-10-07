@@ -7,7 +7,7 @@ import numpy as np
 from flask import session
 
 from survey._app import app
-from . import cg, crt, eff, goat, cpc, exp, risk, cc
+from . import cg, crt, eff, goat, cpc, exp, risk, cc, ras
 
 #NOTE:
 # - The tasks are run after the responder task and the responder round can therefore be finalize at the end of the hexaco task
@@ -273,6 +273,33 @@ def _process_risk(client, job_id="test", worker_id=None, bonus_mode="random", cl
         client.get(path)
         return client.post(path, data=data, follow_redirects=True).data
 
+def _process_ras(client, job_id="test", worker_id=None, bonus_mode="random", clear_session=True, url_kwargs=None):
+    """
+    :param client: (flask.testclient)
+    :param job_id: (str)
+    :param worker_id: (str)
+    :param bonus_mode: (str: random|full|none)
+    :param clear_session: (bool)
+    """
+    if worker_id is None:
+        worker_id = generate_worker_id("ras")
+    path = f"/tasks/ras/?job_id={job_id}&worker_id={worker_id}"
+    if url_kwargs:
+        for k,v in url_kwargs.items():
+            path += f"&{k}={v}"
+        app.logger.debug("PATH: " + str(path))
+    data = {field:random.choice(list(ras.SCALAS)) for field in ras.FIELDS}
+    with app.test_request_context(path):
+        if clear_session:
+            with client:
+                with client.session_transaction() as sess:
+                    sess.clear()
+        client.get(path)
+        return client.post(path, data=data, follow_redirects=True).data
+
 
 def generate_worker_id(base="test", k=10):
     return f"{base}_" + "".join(random.choices(string.ascii_lowercase+string.digits, k=k))
+
+
+__all__ = ["_process_cc", "_process_cg", "_process_cpc", "_process_crt", "_process_eff", "_process_exp", "_process_goat", "_process_hexaco", "_process_risk", "_process_ras", "process_tasks", "generate_worker_id"]
