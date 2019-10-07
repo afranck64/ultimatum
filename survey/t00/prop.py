@@ -78,12 +78,12 @@ def index():
 
 # @bp.route("/prop_dss/", methods=["GET", "POST"])
 # def index_dss():
-#     app.logger.warn(f"{TREATMENT}index_dss")
+#     app.logger.warning(f"{TREATMENT}index_dss")
 #     return handle_index_dss(TREATMENT)
 
 @bp.route("/prop/check/")
 def check():
-    app.logger.warn(f"{TREATMENT}index_dss")
+    app.logger.warning(f"{TREATMENT}index_dss")
     req_response = make_response(jsonify({"offer": 0, "acceptance_probability": 0, "best_offer_probability": 0}))    
     return req_response
 

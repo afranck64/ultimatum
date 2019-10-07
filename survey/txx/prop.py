@@ -381,7 +381,7 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None, d
         try:
             offer = int(offer)
         except ValueError as err:
-            app.logger.warn(f"Conversion error: {err}")
+            app.logger.warning(f"Conversion error: {err}")
             offer = None
         proposal["offer"] = offer
         cookie_obj['proposal'] = proposal
@@ -436,7 +436,7 @@ def handle_index_dss(treatment, template=None, proposal_class=None, messages=Non
         try:
             offer_dss = int(offer_dss)
         except ValueError as err:
-            app.logger.warn(f"Conversion error: {err}")
+            app.logger.warning(f"Conversion error: {err}")
             offer_dss = None
         proposal["offer_dss"] = offer_dss
         cookie_obj['proposal'] = proposal

@@ -141,7 +141,7 @@ def finalize_resp(job_id, worker_id, treatment):
             resp_result = dict(res)
             insert_row(job_id, resp_result, treatment)
         else:
-            app.logger.warn(f"finalize_resp: worker_id {worker_id} not found - job_id: {job_id}")
+            app.logger.warning(f"finalize_resp: worker_id {worker_id} not found - job_id: {job_id}")
 
     app.logger.debug(f"Treatment: {treatment}, auto_dss: {TREATMENTS_AUTO_DSS}")
     if treatment.upper() in TREATMENTS_AUTO_DSS:

@@ -148,7 +148,7 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
             # # response = requests.get(url)
             # # response = make_response(url)
             # if response.status_code != 200:
-            #     app.logger.warn(f"handle_task_done: Something went wrong when: auto: {auto_finalize}, base: {base}, resp-status: {response.data}")
+            #     app.logger.warning(f"handle_task_done: Something went wrong when: auto: {auto_finalize}, base: {base}, resp-status: {response.data}")
         cookie_obj.clear()
         cookie_obj[base] = True
         cookie_obj["worker_id"] = worker_id
