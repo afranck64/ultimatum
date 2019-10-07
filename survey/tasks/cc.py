@@ -13,39 +13,93 @@ from survey.utils import set_cookie_obj, get_cookie_obj
 
 from survey.tasks.task import handle_task_done, handle_task_index
 
+from scipy.stats import norm
+import math
+Z = norm.ppf
+ 
+def SDT(hits, misses, fas, crs):
+    """
+    :param hits: Number correct hits (M)
+    :param misses: Number of misses (M)
+    :param fas: false alarms, Number of wrong clicks (W)
+    :param crs: correct-rejections
+    returns a dict with d-prime measures given hits, misses, false alarms, and correct rejections
+    #Thanks: https://lindeloev.net/calculating-d-in-python-and-php/
+    """
+    # Floors an ceilings are replaced by half hits and half FA's
+    half_hit = 0.5 / (hits + misses)
+    half_fa = 0.5 / (fas + crs)
+ 
+    # Calculate hit_rate and avoid d' infinity
+    hit_rate = hits / (hits + misses)
+    if hit_rate == 1: 
+        hit_rate = 1 - half_hit
+    if hit_rate == 0: 
+        hit_rate = half_hit
+ 
+    # Calculate false alarm rate and avoid d' infinity
+    fa_rate = fas / (fas + crs)
+    if fa_rate == 1: 
+        fa_rate = 1 - half_fa
+    if fa_rate == 0: 
+        fa_rate = half_fa
+ 
+    # Return d', beta, c and Ad'
+    out = {}
+    out['cc_sensitivity'] = Z(hit_rate) - Z(fa_rate)
+    out['cc_beta'] = math.exp((Z(fa_rate)**2 - Z(hit_rate)**2) / 2)
+    out['cc_criterion'] = -(Z(hit_rate) + Z(fa_rate)) / 2
+    out['cc_Ad'] = norm.cdf(out['cc_sensitivity'] / math.sqrt(2))
+    out["cc_hit_rate"] = hits / (hits + misses)     #raw hit_rate
+    out["cc_false_alarm_rate"] = fas / (fas + crs)   #raw false_alarm rate
+    out["cc_hits"] = hits
+    out["cc_misses"] = misses
+    out["cc_false_alarms"] = fas
+    out["cc_correct_rejections"] = crs
+
+    
+    return(out)
 
 #### const
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 bp = Blueprint(f"tasks.{BASE}", __name__)
 
-LETTER_M = "M"
-LETTER_W = "W"
-LETTER_M_BONUS = 10
-LETTER_W_BONUS = -5
-ITEMS = [LETTER_M] * 3 + [LETTER_W] * 2
+LETTER_SIGNAL = "M"
+LETTER_NOISE = "W"
+LETTER_SIGNAL_BONUS = 5
+LETTER_NOISE_BONUS = -5
+NB_HIT_LETTERS = 10
+NB_NOISE_LETTERS = 5
+ITEMS = [LETTER_SIGNAL] * NB_HIT_LETTERS + [LETTER_NOISE] * NB_NOISE_LETTERS
 ## Following, delays are expressed in milliseconds
 # how long the stimulus is shown
 TIME_SHOW = 100
 # how long to wait before activation of the button
-TIME_HIDE = 500
+TIME_HIDE = 0
 # how long the button should remain active
 TIME_WAIT = 500
 # the assigned time in case the user didn't clicked on time
-DELAY_MISSED = TIME_WAIT * 2
+DELAY_MISSED = TIME_WAIT * 2 + TIME_HIDE
 # the minimum delay before starting a round
 START_DELAY_MIN = 500
 # the maximum delay before starting a round
 START_DELAY_MAX = 3000
 START_DELAYS = [random.randint(START_DELAY_MIN, START_DELAY_MAX) for _ in ITEMS]
 
-MAX_BONUS = sum(LETTER_M_BONUS for letter in ITEMS if letter==LETTER_M)
+MAX_BONUS = sum(LETTER_SIGNAL_BONUS for letter in ITEMS if letter==LETTER_SIGNAL)
 
 FIELDS = {}
 FEATURES = {
-    "cc_m_count",  #how often the user clicked on cc
-    "cc_m_avg_click_delay", #the average time after which the user clicked on m
-    "cc_w_count",
-    "cc_w_avg_click_delay",
+    "cc_hits",  #how often the user clicked on cc
+    "cc_hit_avg_click_delay", #the average time after which the user clicked on m
+    "cc_false_alarms",
+    "cc_false_alarm_avg_click_delay",
+    "cc_sensitivity",    #dprime/sensitivity, beta c and Ad of signal detection theory
+    "cc_beta",          # another measure of criterion
+    "cc_criterion",     # a measure of criterion
+    # "cc_Ad",
+    "cc_hit_rate",
+    "cc_false_alarm_rate",
 }
 def validate_response(response):
     for field in FIELDS:
@@ -56,10 +110,10 @@ def validate_response(response):
 def response_to_bonus(response):
     bonus = 0
     for letter, clicked in zip(response["letters"], response["clicked"]):
-        if letter==LETTER_M and clicked:
-            bonus += LETTER_M_BONUS
-        elif letter==LETTER_W and clicked:
-            bonus += LETTER_W_BONUS
+        if letter==LETTER_SIGNAL and clicked:
+            bonus += LETTER_SIGNAL_BONUS
+        elif letter==LETTER_NOISE and clicked:
+            bonus += LETTER_NOISE_BONUS
     if bonus < 0:
         bonus = 0
     return bonus
@@ -80,13 +134,16 @@ def response_to_result(response, job_id=None, worker_id=None):
     letters = response["letters"]
     clicked = response["clicked"]
     delays = response["delays"]
+    hits = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_SIGNAL and click])
+    misses = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_SIGNAL and not click])
+    false_alarms = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_NOISE and click])
+    correct_rejections = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_NOISE and not click])
     result["letters"] = VALUES_SEPARATOR.join(letters)
     result["clicked"] = VALUES_SEPARATOR.join(str(int(v)) for v in clicked)
     result["delays"] = VALUES_SEPARATOR.join(str(round(delay, 4)) for delay in delays)
-    result["cc_m_count"] = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_M and click])
-    result["cc_m_avg_click_delay"] = sum([delay if (letter==LETTER_M and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (result["cc_m_count"] or 1)
-    result["cc_w_count"] = len([letter for letter, click in zip(letters, clicked) if letter==LETTER_W and click])
-    result["cc_w_avg_click_delay"] = sum([delay if (letter==LETTER_W and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (result["cc_w_count"] or 1)
+    result["cc_hit_avg_click_delay"] = sum([delay if (letter==LETTER_SIGNAL and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (hits or 1)
+    result["cc_false_alarm_avg_click_delay"] = sum([delay if (letter==LETTER_NOISE and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (false_alarms or 1)
+    result.update(SDT(hits, misses, false_alarms, correct_rejections))
     result["cc_time_spent"] = response["time_spent"]
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
@@ -128,7 +185,7 @@ def index():
             set_cookie_obj(req_response, BASE, cookie_obj)
             return req_response
 
-    req_response = make_response(render_template(f"tasks/{BASE}.html", callback_url=url_for(f"tasks.{BASE}.check"), items=ITEMS, start_delays=START_DELAYS, time_show=TIME_SHOW, time_wait=TIME_WAIT, time_hide=TIME_HIDE, delay_missed=DELAY_MISSED))
+    req_response = make_response(render_template(f"tasks/{BASE}.html", callback_url=url_for(f"tasks.{BASE}.check"), items=ITEMS, start_delays=START_DELAYS, time_show=TIME_SHOW, time_wait=TIME_WAIT, time_hide=TIME_HIDE, delay_missed=DELAY_MISSED, letter_signal_bonus=LETTER_SIGNAL_BONUS, letter_noise_bonus=LETTER_NOISE_BONUS))
     cookie_obj[BASE] = True
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response

@@ -224,7 +224,7 @@ def _process_cc(client, job_id="test", worker_id=None, bonus_mode="random", clea
     elif bonus_mode=="none":
         clicked = [False] * len(letters)
     else:
-        clicked = [letter==cc.LETTER_HIT for letter in letters]
+        clicked = [letter==cc.LETTER_SIGNAL for letter in letters]
     data = json.dumps({
         "letters": letters,
         "delays": delays,
