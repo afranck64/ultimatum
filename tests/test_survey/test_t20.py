@@ -13,7 +13,7 @@ from survey.txx.survey import MainForm
 from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED
 
 from tests.test_survey import client
-from tests.test_survey import txx
+from tests.test_survey import txx_auto_prop as txx
 
 
 TREATMENT = os.path.splitext(os.path.split(__file__)[1])[0][-3:]
@@ -42,8 +42,8 @@ def test_prop_index(client):
 def test_prop_check(client):
     txx.test_prop_check(client, TREATMENT)
 
-def test_prop_done(client):
-    txx.test_prop_done(client, TREATMENT)
+# def test_prop_done(client):
+#     txx.test_prop_done(client, TREATMENT)
 
 
 def test_bonus_delayed(client, synchron=False):
@@ -67,8 +67,8 @@ def test_survey_resp(client):
 def test_survey_prop(client):
     txx.test_survey_prop(client, TREATMENT)
 
-def test_prop_check_done(client):
-    txx.test_prop_check_done(client, TREATMENT)
+# def test_prop_check_done(client):
+#     txx.test_prop_check_done(client, TREATMENT)
 
 def test_survey_drop(client):
     txx.test_survey_drop(client, TREATMENT)

@@ -1,3 +1,5 @@
+# The decision support system plays in place of the proposer!
+
 import os
 import time
 import unittest
@@ -21,36 +23,26 @@ from survey.txx.helpers import _process_prop, _process_prop_round, _process_resp
 from tests.test_survey import app, client, get_client, generate_worker_id, emit_webhook
 from tests.test_survey.txx_data import MIN_OFFERS_RATIO, OFFERS_RATIO
 
+from tests.test_survey.txx import get_offer, get_min_offer, WEBHOOK_DELAY, TASK_REPETITION, SURVEY_CHOICE_FIELDS, SURVEY_CONTROL_FIELDS, SURVEY_MAIN_TASK_CODE_FIELD, OFFER, MIN_OFFER, get_completion_code, test_available, figure_eight_mock
 
-def get_offer():
-    return int(random.choice(OFFERS_RATIO) * MAX_GAIN)
+AUTO_PROP_DELAY = 0.1
 
-def get_min_offer():
-    return int(random.choice(MIN_OFFERS_RATIO) * MAX_GAIN)
+def is_resp_in_prop_result(resp_worker_id, job_id, treatment):
+    con = get_db()
+    table = get_table("prop", job_id, "result", treatment=treatment)
+    sql = f"SELECT * FROM {table} WHERE job_id=? and resp_worker_id=?"
+    print("SQL: ", sql)
+    try:
+        with con:
+            res = con.execute(sql, [job_id, resp_worker_id]).fetchone()
+        if res is None:
+            return False
+        else:
+            return True
+    except Exception:
+        pass
+    return False
 
-WEBHOOK_DELAY = 0.25
-
-TASK_REPETITION = 8
-
-OFFER = MAX_GAIN//2
-MIN_OFFER = MAX_GAIN//2
-SURVEY_MAIN_TASK_CODE_FIELD = "code_resp_prop"
-SURVEY_CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
-SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "location", "test"}
-
-    
-
-@urlmatch(netloc=r'api.figure-eight.com$')
-def figure_eight_mock(url, request):
-    return response()
-
-def get_completion_code(field):
-    # field is assumed to be named: "code_" + $TASK_NAME
-    # codes are then: $TASK_NAME + ":" + random-part
-    return f"{field[5:]}:"
-
-def test_available(treatment):
-    assert treatment.upper() in app.config["TREATMENTS"]
 
 def test_index(client, treatment, prefix=""):
     client = None
@@ -67,14 +59,13 @@ def test_index(client, treatment, prefix=""):
             res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
             process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
             assert b"resp:" in res.data
-        prop_worker_id = generate_worker_id(f"{prefix}index_prop")
         time.sleep(WEBHOOK_DELAY)
-        path = f"/{treatment}/?worker_id={prop_worker_id}"
-        with app.test_request_context(path):
-            res = client.get(path, follow_redirects=True)
-            # assert b"PROPOSER" in res.data
-            res = _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=get_offer(), response_available=True)
-            assert b"prop:" in res.data
+        # let the auto-responder kick-in
+        time.sleep(AUTO_PROP_DELAY)
+        with app.app_context():
+            assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
+
+        
 
 def test_index_auto(client, treatment, prefix=""):
     #takes the role assigned by the system and solves the corresponding tasks
@@ -135,9 +126,11 @@ def test_prop_index(client, treatment):
     _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
     process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
     time.sleep(WEBHOOK_DELAY)
-    prop_worker_id = generate_worker_id("prop")
-    res = client.get(f"/{treatment}/prop/?job_id={job_id}&worker_id={prop_worker_id}").data
-    assert b"PROPOSER" in res
+    time.sleep(WEBHOOK_DELAY)
+    # let the auto-responder kick-in
+    time.sleep(AUTO_PROP_DELAY)
+    with app.app_context():
+        assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
 def test_prop_check(client, treatment):
     worker_id = generate_worker_id("prop_check")
@@ -149,101 +142,95 @@ def test_prop_check(client, treatment):
         assert b"acceptance_probability" in res
         assert b"best_offer_probability" in res
 
-def test_prop_done(client, treatment):
-    res = _process_prop(client, treatment, offer=get_offer())
-    assert b"prop:" in res.data
+# def test_prop_done(client, treatment):
+#     res = _process_prop(client, treatment, offer=get_offer())
+#     assert b"prop:" in res.data
 
-def test_prop_check_done(client, treatment):
-    nb_dss_check = random.randint(1, 20)
-    res = _process_prop(client, treatment, offer=get_offer(), nb_dss_check=nb_dss_check)
-    assert b"prop:" in res.data
+# def test_prop_check_done(client, treatment):
+#     nb_dss_check = random.randint(1, 20)
+#     res = _process_prop(client, treatment, offer=get_offer(), nb_dss_check=nb_dss_check)
+#     assert b"prop:" in res.data
 
 
 def test_bonus_delayed(client, treatment, synchron=False):
     # In real conditions, the tasks/webhook are delayed with +500 ms
+    # we make sure the offer is accepted!
+    min_offer = 0
     for _ in range(TASK_REPETITION):
         client = get_client()
         job_id = "test"
         resp_worker_id = generate_worker_id("bonus_resp")
-        prop_worker_id = generate_worker_id("bonus_prop")
-        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=MIN_OFFER, bonus_mode="random", synchron=synchron)
+        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=min_offer, bonus_mode="random", synchron=synchron)
         time.sleep(WEBHOOK_DELAY)
-        _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=OFFER, response_available=True, synchron=synchron)
+        # let the auto-responder kick-in
+        time.sleep(AUTO_PROP_DELAY)
+        # _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=OFFER, response_available=True, synchron=synchron)
         time.sleep(WEBHOOK_DELAY)
         with app.app_context():
             bonus_resp = get_worker_bonus(job_id, resp_worker_id)
-            assert MIN_OFFER <= bonus_resp
+            assert min_offer <= bonus_resp
             assert bonus_resp <=  tasks.MAX_BONUS + (MAX_GAIN - OFFER)
-            bonus_prop = get_worker_bonus(job_id, prop_worker_id)
-            assert bonus_prop == OFFER
+            assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
 def test_bonus_nodelay(client, treatment, synchron=True):
     # In real conditions, the tasks/webhook are delayed with +500 ms
+    # we make sure the offer is accepted!
+    min_offer = 0
     for _ in range(TASK_REPETITION):
         client = get_client()
         job_id = "test"
         resp_worker_id = generate_worker_id("bonus_resp")
-        prop_worker_id = generate_worker_id("bonus_prop")
-        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=MIN_OFFER, bonus_mode="random", synchron=synchron)
-        _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=OFFER, response_available=True, synchron=synchron)
+        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=min_offer, bonus_mode="random", synchron=synchron)
+
+        time.sleep(WEBHOOK_DELAY)
+        # let the auto-responder kick-in
+        time.sleep(AUTO_PROP_DELAY)
+
         with app.app_context():
             bonus_resp = get_worker_bonus(job_id, resp_worker_id)
-            assert MIN_OFFER <= bonus_resp
+            assert min_offer <= bonus_resp
             assert bonus_resp <=  tasks.MAX_BONUS + (MAX_GAIN - OFFER)
-            bonus_prop = get_worker_bonus(job_id, prop_worker_id)
-            assert bonus_prop == OFFER
+            assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
 def test_webhook(client, treatment):
     # In real conditions, the tasks/webhook are delayed with +500 ms
     job_id = "test"
     resp_worker_id = generate_worker_id("webhook_resp")
-    prop_worker_id = generate_worker_id("webhook_prop")
     process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random")
     _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
-    emit_webhook(client, url=f"/{treatment}/webhook/", treatment=treatment, worker_id=resp_worker_id, by_get=True)
+    emit_webhook(client, url=f"/{treatment}/webhook/", job_id=job_id, treatment=treatment, worker_id=resp_worker_id, by_get=True)
     time.sleep(WEBHOOK_DELAY)
-    _process_prop(client, treatment, job_id=job_id, worker_id=prop_worker_id, offer=get_offer(), response_available=True)
-    emit_webhook(client, url=f"/{treatment}/webhook/", treatment=treatment, worker_id=prop_worker_id, by_get=True)
-    time.sleep(WEBHOOK_DELAY)
+    # let the auto-responder kick-in
+    time.sleep(AUTO_PROP_DELAY)
     with app.app_context():
         assert is_worker_available(resp_worker_id, get_table("resp", job_id=job_id, schema="result", treatment=treatment))
-        assert is_worker_available(prop_worker_id, get_table("prop", job_id=job_id, schema="result", treatment=treatment))
+        assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
 def test_auto_finalize(client, treatment):
     # Test automatic webhook triggering to finalize tasks
     job_id = "test"
     resp_worker_id = generate_worker_id("auto_resp")
-    prop_worker_id = generate_worker_id("auto_prop")
     _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
     process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
     time.sleep(WEBHOOK_DELAY)
-    res = _process_prop(client, treatment, job_id=job_id, worker_id=prop_worker_id, offer=get_offer(), response_available=True, auto_finalize=True)
-    time.sleep(WEBHOOK_DELAY)
+    time.sleep(AUTO_PROP_DELAY)
     with app.app_context():
         assert is_worker_available(resp_worker_id, get_table("resp", job_id=job_id, schema="result", treatment=treatment))
-        assert is_worker_available(prop_worker_id, get_table("prop", job_id=job_id, schema="result", treatment=treatment))
+        assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
 
 def test_payment(client, treatment):
     with HTTMock(figure_eight_mock):
         job_id = "test"
         resp_worker_id = generate_worker_id("payment_resp")
-        prop_worker_id = generate_worker_id("payment_prop")
         _process_resp_tasks(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=MIN_OFFER)
         time.sleep(WEBHOOK_DELAY)
-        # _process_prop(client, treatment, job_id=job_id, worker_id=prop_worker_id, response_available=True, auto_finalize=True)
-        _process_prop_round(client, treatment, job_id=job_id, worker_id=prop_worker_id, response_available=True)
-        time.sleep(WEBHOOK_DELAY)
         for _ in range(5):
-            emit_webhook(client, url=f"/{treatment}/webhook/", treatment=treatment, job_id="test", worker_id=prop_worker_id, by_get=False)
             emit_webhook(client, url=f"/{treatment}/webhook/", treatment=treatment, job_id="test", worker_id=resp_worker_id, by_get=False)
             time.sleep(WEBHOOK_DELAY)
             with app.app_context():
-                bonus_resp = get_worker_bonus(job_id, resp_worker_id)
                 assert 0 == get_worker_bonus(job_id, resp_worker_id)
                 assert MIN_OFFER <= get_worker_paid_bonus(job_id, resp_worker_id) <= tasks.MAX_BONUS + (MAX_GAIN - OFFER)
-                assert 0 == get_worker_bonus(job_id, prop_worker_id)
-                assert get_worker_paid_bonus(job_id, prop_worker_id) == OFFER
 
 
 
