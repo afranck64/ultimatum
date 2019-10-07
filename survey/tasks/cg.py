@@ -13,8 +13,8 @@ bp = Blueprint("tasks.cg", __name__)
 
 FIELDS = {"donation_a", "donation_b", "donation_c"}
 FEATURES = set(FIELDS) | {
-    "selfish",
-    "time_spent_cg"
+    "cg_selfish",
+    "cg_time_spent"
 }
 
 MAX_BONUS = 60
@@ -42,7 +42,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     }
     """
     result = dict(response)
-    result["selfish"] = response_to_bonus(response)
+    result["cg_selfish"] = response_to_bonus(response)
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id
