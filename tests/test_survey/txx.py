@@ -77,11 +77,12 @@ def test_index(client, treatment, prefix=""):
             assert b"prop:" in res.data
 
 def test_index_auto(client, treatment="t10", prefix=""):
+    #takes the role assigned by the system and solves the corresponding tasks
     client = None
     job_id = "test_auto"
     for _ in range(TASK_REPETITION):
         auto_worker_id = generate_worker_id(f"{prefix}index_auto")
-        path = f"/{treatment}/?worker_id={auto_worker_id}"
+        path = f"/{treatment}/?worker_id={auto_worker_id}&job_id={job_id}"
         with app.test_request_context(path):
             client = get_client()
             res = client.get(path, follow_redirects=True)
@@ -93,12 +94,14 @@ def test_index_auto(client, treatment="t10", prefix=""):
                 # process_tasks(client, job_id=job_id, worker_id=auto_worker_id, bonus_mode="full", url_kwargs={"auto_finalize": 1, "treatment": treatment})
                 res = _process_resp_tasks(client, treatment, job_id=job_id, worker_id=auto_worker_id, min_offer=get_min_offer())
                 assert b"resp:" in res.data
+                assert is_worker_available(auto_worker_id, get_table("resp", job_id=job_id, schema="result"))
             # Play a proposer
             elif b"role of a PROPOSER" in res.data:
-                app.logger.warn("PROPOSER")
+                app.logger.warning("PROPOSER")
                 res = client.get(path, follow_redirects=True)
                 res = _process_prop_round(client, treatment, job_id=job_id, worker_id=auto_worker_id, offer=get_offer(), response_available=True)
-                # assert b"prop:" in res.data
+                assert b"prop:" in res.data
+                assert is_worker_available(auto_worker_id, get_table("resp", job_id=job_id, schema="result"))
             else:
                 assert False, "Nooooooooooooooo"
             time.sleep(WEBHOOK_DELAY)
