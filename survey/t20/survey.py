@@ -1,19 +1,30 @@
 import os
 from flask import (
-    render_template, Blueprint
+    render_template, Blueprint, url_for
 )
+from wtforms.validators import DataRequired, Optional, Regexp
+from wtforms import StringField, IntegerField, BooleanField, RadioField, TextAreaField, SelectMultipleField, SelectField
 
 from survey._app import app, csrf_protect
-from survey.txx.survey import handle_survey, handle_survey_done
+from survey.txx.survey import handle_survey, handle_survey_done, MainForm
 
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
 
 bp = Blueprint(f"{TREATMENT}.survey", __name__)
 
+class AutoPropSurveyMainForm(MainForm):
+    proposer_responder = RadioField("Choose the correct answer", choices=[
+        ("correct", "The PROPOSER offer will be determined by an AI-System."),
+        ("incorrect1", "Your matched worker is simulated by the computer and is not a real person."),
+        ("incorrect2", "Your decisions do not affect another worker.")],
+        validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
+    )
+
+
 @csrf_protect.exempt
 @bp.route(f"/", methods=["GET", "POST"])
 def survey():
-    return handle_survey(treatment=TREATMENT)
+    return handle_survey(treatment=TREATMENT, form_class=AutoPropSurveyMainForm, overview_url=url_for("overview_auto_prop"))
 
 @bp.route(f"/done")
 def survey_done():

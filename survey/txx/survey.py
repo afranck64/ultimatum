@@ -99,7 +99,7 @@ class MainForm(FlaskForm):
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
-def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None):
+def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None, overview_url=None):
     app.logger.info("handle_survey")
     if code_prefixes is None:
         code_prefixes = {"code_cpc": "cpc:", "code_exp": "exp:", "code_risk": "risk:", "code_cc": "cc:", "code_ras": "ras:"}
@@ -107,6 +107,8 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
         form_class = MainForm
     if template is None:
         template = "txx/survey.html"
+    if overview_url is None:
+        overview_url = url_for("overview")
     cookie_obj = get_cookie_obj(BASE)
     
     adapter_cookie = get_adapter_from_dict(cookie_obj.get("adapter", {}))
@@ -192,7 +194,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
                     field.errors = field.errors + ["Invalid code"]
                     is_codes_valid = False
 
-    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments, max_gain=MAX_GAIN, maximum_control_mistakes=MAXIMUM_CONTROL_MISTAKES))
+    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments, max_gain=MAX_GAIN, maximum_control_mistakes=MAXIMUM_CONTROL_MISTAKES, overview_url=overview_url))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 

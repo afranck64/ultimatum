@@ -53,6 +53,10 @@ def survey_done():
 def overview():
     return render_template("overview.html", max_gain=MAX_GAIN)
 
+@app.route("/survey/overview_auto_prop")
+def overview_auto_prop():
+    return render_template("overview_auto_prop.html", max_gain=MAX_GAIN)
+
 @csrf_protect.exempt
 @app.route("/survey_cpc/", methods=["GET", "POST"])
 def survey_cpc():
