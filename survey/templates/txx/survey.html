@@ -232,7 +232,13 @@
   
             <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.location.errors)}}</div>
             {{form.location.label}}<br>
-            {{form.location}}<br><br>
+            <select name="{{form.location.id}}" id="{{form.location.id}}" required>
+                <option value="" selected disabled hidden>Select a value</option>
+                {% for field_option in form.location %}
+                  {{field_option}}
+                {% endfor %}
+            </select>
+            <br><br>
   
             <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.income.errors)}}</div>
             {{form.income.label}}<br>
