@@ -26,7 +26,7 @@ bp = Blueprint(f"{TREATMENT}.resp", __name__)
 @bp.route("/resp/", methods=["GET", "POST"])
 def index():
     messages = [
-        """An AI Recommendation System (Machine-Learning System) will face you in the name of the PROPOSER. The system was trained using prior interactions of comparable bargaining situations. The gains of the AI-System will be transfered to the human PROPOSER."""
+        """An AI Machine-Learning System will autonomously make an offer to you on behalf of a human proposer. The system was trained using prior interactions of comparable bargaining situations. The human proposer does not make any decisions, he/she only receives whatever money the system earns from this task."""
     ]
     return handle_index(TREATMENT, messages=messages)
 
