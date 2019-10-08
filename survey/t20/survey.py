@@ -14,7 +14,7 @@ bp = Blueprint(f"{TREATMENT}.survey", __name__)
 
 class AutoPropSurveyMainForm(MainForm):
     proposer_responder = RadioField("Choose the correct answer", choices=[
-        ("correct", "The PROPOSER offer will be determined by an AI-System."),
+        ("correct", "The PROPOSER offer will be determined by an AI System."),
         ("incorrect1", "Your matched worker is simulated by the computer and is not a real person."),
         ("incorrect2", "Your decisions do not affect another worker.")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]

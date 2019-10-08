@@ -38,7 +38,7 @@ def index():
 @bp.route("/prop_dss/", methods=["GET", "POST"])
 def index_dss():
     messages = [
-        """You have been assigned the role of a PROPOSER. As a PROPOSER, you will make an offer to the RESPONDER. Instead of purely relying on your own intuition, you can use an AI Recommendation System (Machine-Learning System) to help you with your offer. The system was trained using prior interactions of comparable bargaining situations.""",
+        """You have been assigned the role of a PROPOSER. As a PROPOSER, you will make an offer to the RESPONDER. You have the option to use an AI Recommendation System (AI System) to help you decide which offer to make. The system was trained using prior interactions of comparable bargaining situations.""",
         """To use the AI System, simply select a test offer and submit it to the system. The system will tell you its estimates on:
 1. The probability that your offer will be accepted by your specific RESPONDER.
 2. The probability that your offer is the minimal offer accepted by your specific RESPONDER.
