@@ -52,6 +52,8 @@ AFFIRMATIONS = """1. Most people seem to be more aggressive and assertive than I
 29. I am quick to express an opinion.
 30. There are times when I just can’t say anything.*""".splitlines()
 
+AFFIRMATIONS_NO_STARS = [affirmation.replace("*", "") for affirmation in AFFIRMATIONS]
+
 REVERSED_ITEMS = {f"q{idx+1}" for idx, affirmation in enumerate(AFFIRMATIONS) if affirmation[-1]=="*"}
 FEATURES = {
     "ras_assertiveness",
@@ -101,7 +103,7 @@ def response_to_bonus(response):
 @csrf_protect.exempt
 @bp.route("/ras/", methods=["GET", "POST"])
 def index():
-    return handle_task_index("ras", validate_response, template_kwargs={"affirmations": AFFIRMATIONS, "scalas": SCALAS})
+    return handle_task_index("ras", validate_response, template_kwargs={"affirmations": AFFIRMATIONS_NO_STARS, "scalas": SCALAS})
 
 
 @bp.route("/ras/done")
