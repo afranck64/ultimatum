@@ -194,7 +194,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
                     field.errors = field.errors + ["Invalid code"]
                     is_codes_valid = False
 
-    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments, max_gain=MAX_GAIN, maximum_control_mistakes=MAXIMUM_CONTROL_MISTAKES, overview_url=overview_url))
+    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments, max_gain=MAX_GAIN, maximum_control_mistakes=MAXIMUM_CONTROL_MISTAKES, overview_url=overview_url, tasks=app.config["TASKS"]))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 

@@ -20,9 +20,16 @@
       window.error_counter = 0;
       document.getElementById("main_link").style.display='none';
       document.getElementById("features").style.display="none";
+      document.getElementById("demographics").style.display="none";
       update_tasks();
       update_main_link();
+      toggle_demographics();
       document.getElementById("{{form.code_resp_prop.id}}").onchange = update_tasks;
+      var tasks = {{tasks | safe}};
+      for (var idx=0; idx<tasks.length; idx++) {
+        var element = document.getElementById("code_" + tasks[idx]);
+        element.onchange = toggle_demographics;
+      }
       
       document.getElementById("{{form.proposer.id}}").onchange = countControlError;
       document.getElementById("{{form.proposer.id}}-info").style.display = "none";
@@ -73,7 +80,7 @@
           };
         }
       }
-      console.log(valid_ids);
+
       if (valid_ids == control_ids.length ) {
         document.getElementById("main_link").style.display='inline-block';
       } else {
@@ -109,6 +116,8 @@
       } else {
         document.getElementById("features").style.display='none';
       }
+      // demographics needs a refresh on main-code update.
+      toggle_demographics();
     }
 
     function toggle_overview() {
@@ -121,6 +130,29 @@
         document.getElementById("overview").style.display="none";
         document.getElementById("toggle_instructions").value="Show Instructions";
         setCookie("hide_instructions", true);
+      }
+    }
+
+    function toggle_demographics() {
+      var tasks = {{tasks | safe}};
+      var show_demographics = true;
+      var code_resp_prop = document.getElementById("{{form.code_resp_prop.id}}").value;
+      
+      if (code_resp_prop.indexOf("resp:") !== -1) {
+        for (var i=0; i<tasks.length; i++) {
+          var task_id = "code_" + tasks[i];
+          var task_expected_code = tasks[i] + ":";
+          var element = document.getElementById(task_id)
+          var task_code = element.value;
+          show_demographics &= task_code.indexOf(task_expected_code) !== -1;
+        }
+      } else {
+        show_demographics &= code_resp_prop.indexOf("prop:")!==-1;
+      }
+      if (show_demographics) {
+        document.getElementById("demographics").style.display = "block";
+      } else {
+        document.getElementById("demographics").style.display = "none";
       }
     }
 
@@ -226,9 +258,9 @@
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.test.errors)}}</div>
         {{form.test.label}}<br>
         {{form.test}}
-        <hr>
-        <h3> Demographics </h3>
-        <div name="demograpics">
+        <div name="demograpics" id="demographics">
+          <hr>
+          <h3> Demographics </h3>
           <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.gender.errors)}}</div>
             {{form.gender.label}}<br>
             {{form.gender}}<br>
