@@ -78,7 +78,7 @@ class MainForm(FlaskForm):
     code_cpc = StringField("Completion Code: choice task", validators=[Optional()])
     code_risk = StringField("Completion Code: risk task", validators=[Optional()])
     code_exp = StringField("Completion Code: experience task", validators=[Optional()])
-    code_cc = StringField("Completion Code: cognitive task", validators=[Optional()])
+    code_cc = StringField("Completion Code: letters selection task", validators=[Optional()])
     code_ras = StringField("Completion Code: Assertiveness task", validators=[Optional()])
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")

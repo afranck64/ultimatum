@@ -7,14 +7,15 @@
 {% block content %}
 
 <div align="center">
-<h1 align="center">Please make your choices between option A and option B.</h1>
+<h1 align="center">Choices</h1>
 <br>
 
-<h3 align="center">For each option you will gain one of the presented bonus. The chances of getting a bonus are proportional to the associated probability. Your bonus for this task is the average of all your gains. In case of a negative bonus, your bonus on this task will be reset to zero.</h3>
+<h3 align="center">Please select your most preferable lottery for each panel. The chances of getting a bonus are proportional to the associated probability. Your bonus for this task is the average gain on all panels. In case of a negative bonus, your bonus on this task will be reset to zero.</h3>
 <br>
 <br>
 <form action="{{url_for('tasks.cpc.index')}}" method="POST" id="cg">
   {% for problem in problems %}
+  <span align="center">Panel {{loop.index}}</span>
   <table width="800px" border="1" align="center">
       <tr>
           <td>

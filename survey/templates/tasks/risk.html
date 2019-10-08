@@ -2,23 +2,19 @@
 
 {% block head %}
     <!-- <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}"> -->
-    <title>Choices</title>
-    <style>
-        {
-            .row
-        }
-    </style>
+    <title>Risk assessment</title>
 {% endblock %}
 {% block content %}
 
 <div align="center">
-<h1 align="center">Please make your choices between for each table</h1>
+<h1 align="center">Risk assessment</h1>
 <br>
-<h3 align="center">For each choice the probability to gain the associated bonus is proportional to the associatied probability. Your bonus for this task is the average of all your gains.</h3>
+<h3 align="center">Please select your most preferable lottery for each panel. For each choice the probability to gain the associated reward is proportional to the presented probability. Your bonus for this task is the average gain on all panels.</h3>
 <br>
 <br>
 <form method="POST" id="cg">
   {% for key, panel_options in options.items() %}
+  <span align="center">Panel {{loop.index}}</span>
   <table width="800px" border="1" align="center">
       <tr>
           <td>Probability</td>
