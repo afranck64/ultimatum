@@ -90,7 +90,7 @@ class MainForm(FlaskForm):
         ("correct", "the money is divided according to the PROPOSER's offer")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
     )
-    code_resp_prop = StringField("Completion Code: main task", validators=[DataRequired(), Regexp(regex="prop:|resp:")])
+    code_resp_prop = StringField("Completion Code: main task", validators=[DataRequired(), Regexp(regex=" *prop:\w*| *resp:\w*")])
     code_cpc = StringField("Completion Code: choice task", validators=[Optional()])
     code_risk = StringField("Completion Code: risk task", validators=[Optional()])
     code_exp = StringField("Completion Code: experience task", validators=[Optional()])
