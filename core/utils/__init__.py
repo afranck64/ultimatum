@@ -6,7 +6,7 @@ import numpy as np
 
 def cents_repr(amout_in_cents, upper_case=True):
     if amout_in_cents < 100:
-        res = f"{amout_in_cents} CENTS"
+        res = f"{amout_in_cents} USD CENTS"
     else:
         res = f"{amout_in_cents/100} USD"
     if upper_case:
