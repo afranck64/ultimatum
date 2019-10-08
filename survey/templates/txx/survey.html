@@ -31,6 +31,8 @@
         element.onchange = toggle_demographics;
       }
       
+      document.getElementById("{{form.ethnicity.id}}").style.height = "130px";
+
       document.getElementById("{{form.proposer.id}}").onchange = countControlError;
       document.getElementById("{{form.proposer.id}}-info").style.display = "none";
       document.getElementById("{{form.proposer.id}}-info").textContent = "You seem to have misunderstood the instructions. The role of the PROPOSER is to make an offer to the RESPONDER regarding how to divide the {{ '%.2f'|format(max_gain / 100)}} USD. If you understand this now, please correct your answer to the statement regarding the PROPOSER below and continue."
@@ -269,15 +271,9 @@
             {{form.age.label}}<br>
             {{form.age}}<br>
   
-            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.location.errors)}}</div>
-            {{form.location.label}}<br>
-            <select name="{{form.location.id}}" id="{{form.location.id}}" required>
-                <option value="" selected disabled hidden>Select a value</option>
-                {% for field_option in form.location %}
-                  {{field_option}}
-                {% endfor %}
-            </select>
-            <br><br>
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.ethnicity.errors)}}</div>
+            {{form.ethnicity.label}}<br>
+            {{form.ethnicity}}<br><br>
   
             <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.income.errors)}}</div>
             {{form.income.label}}<br>

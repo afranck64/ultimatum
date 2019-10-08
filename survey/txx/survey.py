@@ -35,31 +35,15 @@ class MainForm(FlaskForm):
         ("older_than_65_years", "Older than 65 Years")],
         validators=[DataRequired("Please choose a value")]
     )
-    location = SelectField("What is your main location?", choices=[
-        ("africa_east", "Eastern Africa"),
-        ("africa_middle", "Middle Africa"),
-        ("africa_north", "Northern Africa"),
-        ("africa_south", "Southern Africa"),
-        ("africa_west", "Western Africa"),
-        ("america_central", "Central America"),
-        ("america_north", "Northern America"),
-        ("america_south", "South America"),
-        ("antartica", "Antartica"),
-        ("asia_central", "Central Asia"),
-        ("asia_east", "Eastern Asia"),
-        ("asia_south", "Southern Asia"),
-        ("asia_west", "Western Asia"),
-        ("asia_south_east", "Southeastern Asia"),
-        ("australia_new_zealand", "Australia and New Zealand"),
-        ("caribbean", "Carribean"),
-        ("europe_north", "Northern Europe"),
-        ("europe_west", "Western Europe"),
-        ("europe_east", "Eastern Europe"),
-        ("europe_south", "Southern Europe"),
-        ("melanesia", "Melanesia"),
-        ("micronesia", "Micronesia"),
-        ("polynesia", "Polynesia"),],
-        validators=[DataRequired("Please choose a value")])
+    ethnicity = SelectMultipleField("What is the ethnicity with which you most closely identify? You may choose multiple options.", choices=[
+        ("american_indian_or_alaska_native", "American Indian or Alaska Native"),
+        ("asian", "Asian"),
+        ("black_or_african_american", "Black or African American"),
+        ("hispanic_latino", "Hispanic/Latino"),
+        ("hawaiian_or_pacific_islander", "Native Hawaiian or Pacific Islander"),
+        ("white", "White/Caucasian"),
+        ("other", "Other")], validators=[DataRequired("Please choose a value")]
+    )
     income = RadioField("Which of the following describes the income you earn from crowdsourced microtasks?", choices=[
         ("Primary source of income", "Primary source of income"),
         ("Secondary source of income", "Secondary source of income"),
@@ -165,7 +149,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
     if request.method == "POST" and (drop=="1" or form.validate_on_submit()):
         form = form_class(request.form)
         response = request.form.to_dict()
-        response["location"] = VALUES_SEPARATOR.join(sorted(request.form.getlist(form.location.name)))
+        response["ethnicity"] = VALUES_SEPARATOR.join(sorted(request.form.getlist(form.ethnicity.name)))
         cookie_obj["response"] = response        
         is_codes_valid = True
         # Responders have to fill and submit tasks
