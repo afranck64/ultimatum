@@ -9,7 +9,7 @@
 <div align="center">
 <h1 align="center">Risk assessment</h1>
 <br>
-<h3 align="center">Please select your most preferable lottery for each panel. For each choice the probability to gain the associated reward is proportional to the presented probability. Your bonus for this task is the average gain on all panels.</h3>
+<h3 align="center">For each of the four panels of lotteries below, please indicate the lottery you would like to play.<br> The chances of getting a given reward are proportional to the associated probability. Your bonus for this task is your average gain on all panels.</h3>
 <br>
 <br>
 <form method="POST" id="cg">
@@ -17,15 +17,15 @@
   <span align="center">Panel {{loop.index}}</span>
   <table width="800px" border="1" align="center">
       <tr>
-          <td>Probability</td>
+          <td>Probability of winning</td>
           {% for probability, _ in panel_options %}
             <td>
-               {{probability}}
+               {{probability * 100}} %
             </td>
           {% endfor %}
       </tr>
       <tr>
-          <td>USD cents.</td>
+          <td>USD cents</td>
           {% for _, gain in panel_options %}
           <td>
               {{gain}}
@@ -33,7 +33,7 @@
           {% endfor %}
       </tr>
       <tr>
-          <td>Choice</td>
+          <td><b>I prefer</b></td>
           {% for _ in panel_options %}
           <td>
                 <input type="radio" name="{{key}}" value="{{loop.index0}}" required>
