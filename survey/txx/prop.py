@@ -179,7 +179,14 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None, tasks_features=N
             res = con.execute(sql, (resp_worker_id,)).fetchone()
             row_features.update(dict(res))
     tmp_df = pd.DataFrame(data=[row_features])
-    x, _ = df_to_xy(tmp_df, select_columns=app.config[MODEL_INFOS_KEY]["top_columns"])
+    
+    
+    REF_MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
+    dss_available = bool(app.config.get(REF_MODEL_KEY))
+    if dss_available:
+        x, _ = df_to_xy(tmp_df, select_columns=app.config[MODEL_INFOS_KEY]["top_columns"])
+    else:
+        x = None
     app.logger.debug("get_features - done")
     return x, row_features
 
