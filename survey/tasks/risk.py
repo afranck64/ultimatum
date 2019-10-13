@@ -31,9 +31,9 @@ CHOICES = {
 
 MAX_BONUS = sum(options[-1][1] for options in CHOICES.values()) / len(CHOICES)
 
-FEATURES = set(f"{BASE}_{k}" for k in FIELDS) | set({
-    f"{BASE}_expectated_value",
-    f"{BASE}_time_spent"
+FEATURES = set(f"risk_{k}" for k in FIELDS) | set({
+    "risk_expected_value",
+    "risk_time_spent"
 })
 
 def response_to_bonus(response):
@@ -69,7 +69,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     result = dict(response)
     result.update({f"{BASE}_{key}": CHOICES[key][response[key]][INDEX_PROBABILITY]*CHOICES[key][response[key]][INDEX_GAIN] for key in FIELDS})
     result["timestamp"] = str(datetime.datetime.now())
-    result["risk_expectated_value"] = get_expected_value_from_response(response)
+    result["risk_expected_value"] = get_expected_value_from_response(response)
     result["risk_time_spent"] = result["time_spent"]
     result["job_id"] = job_id
     result["worker_id"] = worker_id
