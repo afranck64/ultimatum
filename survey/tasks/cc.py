@@ -68,8 +68,8 @@ LETTER_SIGNAL = "M"
 LETTER_NOISE = "W"
 LETTER_SIGNAL_BONUS = 5
 LETTER_NOISE_BONUS = -5
-NB_HIT_LETTERS = 10
-NB_NOISE_LETTERS = 5
+NB_HIT_LETTERS = 6
+NB_NOISE_LETTERS = 4
 ITEMS = [LETTER_SIGNAL] * NB_HIT_LETTERS + [LETTER_NOISE] * NB_NOISE_LETTERS
 ## Following, delays are expressed in milliseconds
 # how long the stimulus is shown
