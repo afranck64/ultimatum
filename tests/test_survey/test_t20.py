@@ -39,8 +39,8 @@ def test_resp_done_both_models(client):
 def test_prop_index(client):
     txx.test_prop_index(client, TREATMENT)
 
-def test_prop_check(client):
-    txx.test_prop_check(client, TREATMENT)
+# def test_prop_check(client):
+#     txx.test_prop_check(client, TREATMENT)
 
 # def test_prop_done(client):
 #     txx.test_prop_done(client, TREATMENT)
