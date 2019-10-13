@@ -156,15 +156,8 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None, tasks_features=N
     MODEL_INFOS_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL_INFOS"
     if tasks is None:
         tasks = app.config["TASKS"]
-        #tasks = ["cg", "cpc", "crt", "eff", "hexaco", "risk"]
     con = get_db("RESULT")
-    # tasks_features = {
-    #     "cg":["selfish"],
-    #     "crt":["crt_performance"],
-    #     "eff":["count_effort"],
-    #     "hexaco": ["Honesty_Humility", "Extraversion", "Agreeableness"],
-    #     "risk":["cells", "time_spent_risk"]
-    # }
+
     if tasks_features is None:
         tasks_features = app.config["TASKS_FEATURES"]
 
@@ -177,7 +170,7 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None, tasks_features=N
                 res = con.execute(sql, (resp_worker_id,)).fetchone()
                 row_features.update(dict(res))
     resp_features = {
-        "resp": ["min_offer"]
+        "resp": ["resp_time_spent"]
     }
     for name, features in resp_features.items():
         table = get_table(name, job_id=job_id, treatment=treatment, schema="result", is_task=False)
@@ -186,7 +179,7 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None, tasks_features=N
             res = con.execute(sql, (resp_worker_id,)).fetchone()
             row_features.update(dict(res))
     tmp_df = pd.DataFrame(data=[row_features])
-    x, _ = df_to_xy(tmp_df, select_columns=None)    #app.config[MODEL_INFOS_KEY]["top_columns"])
+    x, _ = df_to_xy(tmp_df, select_columns=app.config[MODEL_INFOS_KEY]["top_columns"])
     app.logger.debug("get_features - done")
     return x, row_features
 
@@ -467,11 +460,10 @@ def handle_check(treatment):
     ai_proposal = ai_cookie_obj["ai_proposal"]
     offer = int(request.args.get("offer", 0))
     ai_offer = int(ai_cookie_obj["row_info"]["ai_offer"])
-    acceptance_probability = get_acceptance_probability(offer, app.config[MODEL_INFOS_KEY]["pdf"])
-    best_offer_probability = get_best_offer_probability(ai_offer=ai_offer, offer=offer, accuracy=app.config[MODEL_INFOS_KEY]["acc"], train_err_pdf=app.config[MODEL_INFOS_KEY]["train_err_pdf"])
+    model_infos = app.config[MODEL_INFOS_KEY]
+    acceptance_probability = get_acceptance_probability(ai_offer=ai_offer, offer=offer, accuracy=model_infos["acc"], train_err_pdf=model_infos["train_err_pdf"], train_pdf=model_infos["pdf"])
+    best_offer_probability = get_best_offer_probability(ai_offer=ai_offer, offer=offer, accuracy=model_infos["acc"], train_err_pdf=model_infos["train_err_pdf"])
 
-    #TODO: use the model predictions, data distribution to generate the ai_calls_response
-    #ai_proposal["ai_calls_response"].append([acceptance_probability, best_offer_probability])
     ai_proposal["ai_calls_count_repeated"] += 1
     if offer not in ai_proposal["ai_calls_offer"]:
         ai_proposal["ai_calls_offer"].append(offer)

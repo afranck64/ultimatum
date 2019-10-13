@@ -5,6 +5,7 @@ bp = Blueprint("tasks", __name__)
 
 # MAX_BONUS = cg.MAX_BONUS + crt.MAX_BONUS + eff.MAX_BONUS + hexaco.MAX_BONUS + risk.MAX_BONUS
 MAX_BONUS = 0
+
 if "cc" in app.config["TASKS"]:
     MAX_BONUS += cc.MAX_BONUS
 if "cg" in app.config["TASKS"]:
@@ -26,7 +27,7 @@ if "exp" in app.config["TASKS"]:
 if "ras" in app.config["TASKS"]:
      MAX_BONUS += ras.MAX_BONUS
 
-TASKS_FEATURES = {
+_TASKS_FEATURES = {
     "cg": cg.FEATURES,
     "cpc": cpc.FEATURES,
     "crt": crt.FEATURES,
@@ -38,5 +39,7 @@ TASKS_FEATURES = {
     "cc": cc.FEATURES,
     "ras": ras.FEATURES,
 }
+
+TASKS_FEATURES = {k:(v if k in app.config["TASKS"] else []) for k,v in _TASKS_FEATURES.items()}
 
 app.config["TASKS_FEATURES"] = TASKS_FEATURES

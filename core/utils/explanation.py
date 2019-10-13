@@ -104,7 +104,7 @@ def offer_to_bin(offer, is_symmetric=False, max_gain=None, step=None):
         return idx
 
 
-def get_acceptance_probability(offer, train_pdf, bias=None):
+def get_acceptance_probability_no_dss(offer, train_pdf, bias=None, experiment_mode=True):
     """
     :param offer: Human's offer to a given responder
     :param train_pdf: pdf of the training's target for the bins [0, 5, 10, ..., MAX_GAIN]
@@ -120,9 +120,69 @@ def get_acceptance_probability(offer, train_pdf, bias=None):
     corrected_pdf = n_train_df + bias
     cum_train_pdf = np.cumsum(corrected_pdf)
     idx = offer_to_bin(offer)
+
+    # reduce the slope
+    cum_train_pdf = np.log10(1 + cum_train_pdf)
+
     n_cum_train_pdf = cum_train_pdf / cum_train_pdf.max()
     
     return n_cum_train_pdf[idx]
+
+def get_acceptance_probability(ai_offer, offer, accuracy, train_err_pdf, step=None, uncertainty=None, experiment_mode=True, train_pdf=None):
+    """
+    :param ai_offer: (int 0..MAX_GAIN) AI's offer to a given responder
+    :param offer: (int 0..MAX_GAIN) Human's offer to a given responder
+    :param accuracy: (float: 0..1) Model's accuracy
+    :param train_err_pdf: (array) Model's training error pdf [from -MAX_GAIN to MAX_GAIN with steps 5]
+    :param step: (int) step for bins values, default: 5
+    :param uncertainty: (array|list<float>)
+    :param experiment_mode: (bool) if True, enforce ai_offer to have the highest probability otherwhise
+           takes training error into consideration
+    :returns: probability of the human's offer being the best one
+    """
+    if step is None:
+        step = 5
+    if uncertainty is None:
+        uncertainty = [0.002, 0.02, 0.03, 0.04, 9, 0.005, 0.003]
+    # Scale values from
+    train_err_pdf = np.array(train_err_pdf)
+    # redistribute the probabilities to the neighbours to make the distribution more human intuitive
+    train_err_pdf = np.convolve(train_err_pdf, uncertainty, mode="same")
+    if experiment_mode:
+        idx_zero = offer_to_bin(0, is_symmetric=True)
+        idx_top = np.argmax(train_err_pdf)
+        top_prob = train_err_pdf[idx_top]
+        zero_prob = train_err_pdf[idx_zero]
+        if zero_prob < top_prob:
+            diff_prob = abs(top_prob - zero_prob)
+            zero_prob += 1.5 * diff_prob
+            top_prob -=  diff_prob
+            train_err_pdf[idx_zero] = zero_prob
+            train_err_pdf[idx_top] = top_prob
+    n_train_err_pdf = np.array(train_err_pdf) / np.max(train_err_pdf)
+    estimated_err = (offer - ai_offer)
+
+
+    # hack until offer_to_bin is fixed!!!
+    if ai_offer == 0 and offer == MAX_GAIN:
+        idx = -1
+    else:
+        idx = offer_to_bin(estimated_err, is_symmetric=True)
+    # hack until offer_to_bin is fixed!!!
+    if offer==0:
+        idx_rel_max_gain = -1
+    else:
+        idx_rel_max_gain = idx + (MAX_GAIN - (offer)) // STEP
+
+    if train_pdf is None:
+        train_pdf, _ = get_pdf([0])
+        train_pdf = np.ones(train_pdf.shape) / train_pdf.shape[0]
+
+    # reduce the slope
+    cum_n_train_err_pdf = np.log10(1+ np.cumsum(n_train_err_pdf))
+    n_cum_n_train_pdf = cum_n_train_err_pdf / cum_n_train_err_pdf[idx_rel_max_gain]
+    
+    return (accuracy) *n_cum_n_train_pdf[idx] + get_acceptance_probability_no_dss(offer, train_pdf, bias=None) * (1 - accuracy)
 
 def get_best_offer_probability(ai_offer, offer, accuracy, train_err_pdf, step=None, uncertainty=None, experiment_mode=True):
     """
