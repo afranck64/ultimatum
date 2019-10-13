@@ -31,32 +31,25 @@ def avg_loss_error(*args, **kwargs):
 def avg_gain_score(*args, **kwargs):
     return avg_gain_ratio(*args, **kwargs)
 
-def train_and_save(data_dir, output_dir, model=None, top_columns=None, shuffle=True, validation_split=0.2, random_state=None):
-    if top_columns is None:
-        top_columns = ['time_spent_risk', 'cells', 'selfish',
-            'count_effort', 'Honesty_Humility', 'Extraversion', 'Agreeableness'
-        ]
-        # top_columns += ['time_spent_prop']
+def train_and_save(data_dir, output_dir, model=None, top_columns=None, shuffle=True, validation_split=0.2, random_state=None, target_column="min_offer", data_dir_filename="data.xls", drop_columns=None):
     if model is None:
         # model = AcceptanceModel()
         model = ClusterExtModel(base_model="affinity")
-    df = pd.read_excel(os.path.join(data_dir, "data.xls"))
+    if data_dir_filename.endswith(".xls"):
+        df = pd.read_excel(os.path.join(data_dir, data_dir_filename))
+    else:
+        df = pd.read_csv(os.path.join(data_dir, data_dir_filename))
+    # columns need to be dropped before using columns as features per default
+    if drop_columns is not None:
+        df = df[[col for col in df.columns if col not in drop_columns]]
+
+    if top_columns is None:
+        top_columns = [col for col in df.columns if col != target_column]
     if shuffle:
         df = df.sample(frac=1.0, random_state=random_state)
-    df_max = {}
-    df_max["cells"] = 50.0
-    df_max["Honesty_Humility"] = 5.0
-    df_max["Extraversion"] = 5.0
-    df_max["Agreeableness"] = 5.0
-    df_max["selfish"] = 60.0
-    df_max["time_spent_risk"] = 152000.0
-    df_max["time_spent_prop"] = 269000.0
-    df_max["min_offer"] = MAX_GAIN
-    df_max["count_effort"] = 20.0
-    df_max["crf_performance"] = 3.0
-    df_max = pd.Series(df_max)
-    df_min = pd.Series({k: 0 for k in df_max})
-    x, y = df_to_xy(df, centered=True, select_columns=top_columns, df_min=df_min, df_max=df_max)
+    df_min = df[top_columns].min()
+    df_max = df[top_columns].max()
+    x, y = df_to_xy(df, centered=True, select_columns=top_columns, df_min=df_min, df_max=df_max, drop_columns=drop_columns)
 
     split = x.shape[0]
     if validation_split is not None:
