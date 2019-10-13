@@ -55,7 +55,7 @@ AFFIRMATIONS = """1. Most people seem to be more aggressive and assertive than I
 AFFIRMATIONS_NO_STARS = [affirmation.replace("*", "") for affirmation in AFFIRMATIONS]
 
 REVERSED_ITEMS = {f"q{idx+1}" for idx, affirmation in enumerate(AFFIRMATIONS) if affirmation[-1]=="*"}
-FEATURES = {
+FEATURES = {f"ras_{field}" for field in FIELDS} | {
     "ras_assertiveness",
     "ras_time_spent"
 }
@@ -89,6 +89,7 @@ def response_to_result(response, job_id=None, worker_id=None):
             assertiveness += (0 - scala)
         else:
             assertiveness += scala
+    result.update({f"ras_{field}": response[field] for field in FIELDS})
     result["ras_assertiveness"] = assertiveness
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
