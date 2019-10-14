@@ -97,7 +97,7 @@ class MainForm(FlaskForm):
     code_cc = StringField("Completion Code: letters selection task", validators=[Optional()])
     code_ras = StringField("Completion Code: Assertiveness task", validators=[Optional()])
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
-    please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
+    feedback = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
 def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None, overview_url=None):
     app.logger.info("handle_survey")

@@ -35,7 +35,7 @@ class MainCPCForm(FlaskForm):
     code_resp_prop = StringField("Completion Code: main task", )
     code_cpc = StringField("Completion Code: Choices task", )
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
-    please_enter_your_comments_feedback_or_suggestions_below = TextAreaField("Please enter your comments, feedback or suggestions below.")
+    feedback = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
 def handle_survey_cpc():
     job_id = f"{BASE}_cpc"
