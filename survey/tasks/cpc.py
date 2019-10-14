@@ -190,7 +190,6 @@ def response_to_result(response, job_id=None, worker_id=None):
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id
-    result["worker_bonus"] = response_to_bonus(response)
     return result
 ############
 

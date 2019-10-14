@@ -123,6 +123,7 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
         worker_id = cookie_obj["worker_id"]
         response_result = response_to_result_func(response, job_id=job_id, worker_id=worker_id)
         worker_bonus = response_to_bonus(response)
+        response_result["worker_bonus"] = worker_bonus
         try:
             save_result2file(get_output_filename(base, job_id, is_task=True), response_result)
         except Exception as err:

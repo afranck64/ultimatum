@@ -43,7 +43,7 @@ def response_to_bonus(response):
         user_choice = int(response[key])
         user_p = options[user_choice][INDEX_PROBABILITY]
         p = random.random()
-        if user_p > p:
+        if user_p >= p:
             tmp_bonus += options[user_choice][INDEX_GAIN]
     bonus = round(tmp_bonus / len(CHOICES))
     return bonus
@@ -73,7 +73,6 @@ def response_to_result(response, job_id=None, worker_id=None):
     result["risk_time_spent"] = result["time_spent"]
     result["job_id"] = job_id
     result["worker_id"] = worker_id
-    result["worker_bonus"] = response_to_bonus(response)
     return result
 ############
 
