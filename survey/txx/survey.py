@@ -6,6 +6,7 @@ from flask import render_template, request, flash, url_for, redirect, make_respo
 from flask_wtf.form import FlaskForm
 from wtforms.validators import DataRequired, Optional, Regexp
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, BooleanField, RadioField, TextAreaField, SelectMultipleField, SelectField
+from wtforms.widgets import ListWidget, CheckboxInput
 
 from survey.utils import (
     get_table, save_result2db, save_result2file, get_output_filename, get_latest_treatment, generate_completion_code, save_worker_id,
@@ -18,6 +19,12 @@ from survey.adapter import get_adapter, get_adapter_from_dict
 from survey.txx.index import check_is_proposer_next, NEXT_IS_PROPOSER_WAITING
 
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
+
+
+class MultiCheckboxField(SelectMultipleField):
+    # Thanks: https://snipnyet.com/adierebel/59f46bff77da1511c3503532/multiple-checkbox-field-using-wtforms-with-flask-wtf/
+	widget			= ListWidget(prefix_label=False)
+	option_widget	= CheckboxInput()
 
 class MainForm(FlaskForm):
     gender = RadioField("What is your gender?", choices=[
@@ -35,7 +42,7 @@ class MainForm(FlaskForm):
         ("older_than_65_years", "Older than 65 Years")],
         validators=[DataRequired("Please choose a value")]
     )
-    ethnicity = SelectMultipleField("What is the ethnicity with which you most closely identify? You may choose multiple options.", choices=[
+    ethnicity = MultiCheckboxField("What is the ethnicity with which you most closely identify? You may choose multiple options.", choices=[
         ("american_indian_or_alaska_native", "American Indian or Alaska Native"),
         ("asian", "Asian"),
         ("black_or_african_american", "Black or African American"),
@@ -48,6 +55,15 @@ class MainForm(FlaskForm):
         ("Primary source of income", "Primary source of income"),
         ("Secondary source of income", "Secondary source of income"),
         ("I earn nearly equal incomes from crowdsourced microtasks and other job(s)", "I earn nearly equal incomes from crowdsourced microtasks and other job(s)")],
+        validators=[DataRequired("Please choose a value")]
+    )
+    education =  RadioField("What is the highest degree or level of school you have completed?", choices=[
+        ("less_than_high_school_diploma", "Less than a high school diploma"),
+        ("high_school_degree", "High school graduate, diploma or the equivalent"),
+        ("bachelor_degree", "Bachelor's degree"),
+        ("master_degree", "Master's degree"),
+        ("doctorate_degree", "Doctorate degree"),
+        ("other", "Other")],
         validators=[DataRequired("Please choose a value")]
     )
     proposer = RadioField("The PROPOSER...", choices=[

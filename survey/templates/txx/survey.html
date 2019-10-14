@@ -274,7 +274,11 @@
   
             <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.ethnicity.errors)}}</div>
             {{form.ethnicity.label}}<br>
-            {{form.ethnicity}}<br><br>
+            {{form.ethnicity}}<br><br><br><br>
+  
+            <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.education.errors)}}</div>
+            {{form.education.label}}<br>
+            {{form.education}}<br>
   
             <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.income.errors)}}</div>
             {{form.income.label}}<br>
