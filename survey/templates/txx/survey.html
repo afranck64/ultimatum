@@ -221,6 +221,7 @@
         <!-- <input type="text" id="{{form.code_resp_prop.id}}" value="{{form.code_resp_prop.data}}" onchange="update_tasks()"><br> -->
 
         <div id="features">
+            <h3>Please complete the following tasks in the exact order they are listed and gain additional bonus</h3><br>
             <div>Follow the link to begin the task, complete it and then enter the completion code below.</div><br>
             <a href="{{url_for('tasks.risk.index')}}?job_id={{job_id}}&worker_id={{worker_id}}" target="_blank"><button class="button"  type="button">Click here to start the risk task...</button></a><br>
             <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.code_risk.errors)}}</div>
