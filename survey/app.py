@@ -67,5 +67,5 @@ def survey_cpc_done():
     return handle_survey_cpc_done()
 
 if __name__ == "__main__":
-    # print(app.url_map)
+    app.logger.handlers.append(default_handler)
     app.run(host='0.0.0.0', port=8000)
