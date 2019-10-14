@@ -16,7 +16,7 @@ bp = Blueprint(f"tasks.{BASE}", __name__)
 FIELDS = {"ultimatum_game_experience"}
 FEATURES = {f"{BASE}_{k}" for k in FIELDS}
 
-MAX_BONUS = 60
+MAX_BONUS = 0
 
 
 def validate_response(response):
