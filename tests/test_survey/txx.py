@@ -36,7 +36,7 @@ OFFER = MAX_GAIN//2
 MIN_OFFER = MAX_GAIN//2
 SURVEY_MAIN_TASK_CODE_FIELD = "code_resp_prop"
 SURVEY_CONTROL_FIELDS = {"proposer", "responder", "proposer_responder", "money_division"}
-SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
+SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test", "education"}
 
     
 
