@@ -288,7 +288,7 @@
 
         <hr>
         {{form.feedback.label}}<br>
-        <textarea rows="3" cols="100" id="{{form.feedback.id}}" value="{form.feedback.value}}" name="{{form.feedback.name}}"></textarea>
+        {{form.feedback(rows='3', cols='100')}}
       </div>
     </fieldset>
     <br>
