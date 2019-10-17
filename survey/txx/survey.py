@@ -10,7 +10,7 @@ from wtforms.widgets import ListWidget, CheckboxInput
 
 from survey.utils import (
     get_table, save_result2db, save_result2file, get_output_filename, get_latest_treatment, generate_completion_code, save_worker_id,
-    get_cookie_obj, set_cookie_obj, table_exists, WORKER_CODE_DROPPED, ALL_COOKIES_KEY)
+    get_cookie_obj, set_cookie_obj, table_exists, WORKER_CODE_DROPPED, ALL_COOKIES_KEY, is_worker_available)
 
 from core.models.metrics import MAX_GAIN
 from survey.db import insert, get_db
@@ -131,11 +131,12 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
     if adapter.has_api():
         api = adapter.get_api()
         max_judgments = api.get_max_judgments()
+    else:
+        try:
+            max_judgments = int(request.args.get("max_judgments", max_judgments))
+        except:
+            pass
     next_player = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
-    #The next player should be a proposer but some responders may still be processing data
-    if next_player == NEXT_IS_PROPOSER_WAITING:
-        flash("Unfornately there is no task available right now. Please check again in 15 minutes. Otherwise you can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
-        return render_template("error.html", worker_code=WORKER_CODE_DROPPED)
 
 
     table_all = get_table("txx", "all", schema=None)
@@ -161,6 +162,15 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
                 flash(f"You already took part on this survey. You can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
                 req_response = make_response(render_template("error.html", worker_code=WORKER_CODE_DROPPED))
                 return req_response
+
+    #The next player should be a proposer but some responders may still be processing data
+    if next_player == NEXT_IS_PROPOSER_WAITING:
+        resp_table = get_table(base="resp", job_id=job_id, schema="result", treatment=treatment)
+        prop_table = get_table(base="prop", job_id=job_id, schema="result", treatment=treatment)
+        # We make sure the user didn't accidentaly refreshed the page after processing the main task
+        if (not is_worker_available(worker_id, resp_table) and not is_worker_available(worker_id, prop_table)):
+            flash("Unfornately there is no task available right now. Please check again in 15 minutes. Otherwise you can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+            return render_template("error.html", worker_code=WORKER_CODE_DROPPED)
 
     if request.method == "POST" and (drop=="1" or form.validate_on_submit()):
         form = form_class(request.form)

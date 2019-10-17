@@ -20,7 +20,7 @@ from survey._app import app, csrf_protect
 from survey.admin import get_job_config
 from survey.db import get_db, table_exists
 from survey.figure_eight import RowState
-from survey.utils import get_table, increase_worker_bonus, pay_worker_bonus, get_resp_worker_id
+from survey.utils import get_table, increase_worker_bonus, pay_worker_bonus, get_resp_worker_id, is_worker_available, generate_completion_code
 from .prop import BASE as prop_BASE, finalize_round, JUDGING_TIMEOUT_SEC, LAST_MODIFIED_KEY, STATUS_KEY, WORKER_KEY
 from .resp import BASE as resp_BASE
 
@@ -79,6 +79,19 @@ def check_is_proposer_next(job_id, worker_id, treatment, max_judgments=None):
     app.logger.debug(f"max_judgments: {max_judgments}, nb_prop: {nb_prop}, nb_resp: {nb_resp}, nb_prop_open: {nb_prop_open}, is_proposer: {is_proposer}")
     return is_proposer
 
+def get_previous_worker_code(job_id, worker_id, treatment):
+    """
+    Generate a code for the user in case he already took the main task
+    """
+    resp_table = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
+    prop_table = get_table(prop_BASE, job_id=job_id, schema="result", treatment=treatment)
+    worker_code = None
+    if is_worker_available(worker_id, resp_table):
+        worker_code = generate_completion_code(resp_BASE, job_id)
+    if is_worker_available(worker_id, prop_table):
+        worker_code = generate_completion_code(prop_BASE, job_id)
+    return worker_code
+
 def handle_index(treatment):
     job_id = request.args.get("job_id", "na")
     worker_id = request.args.get("worker_id", "na")
@@ -87,6 +100,7 @@ def handle_index(treatment):
         max_judgments = int(request.args.get("max_judgments", "0"))
     except ValueError:
         pass
+    previous_worker_code = get_previous_worker_code(job_id, worker_id, treatment)
     auto_finalize = request.args.get("auto_finalize")
     app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
     is_proposer = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
@@ -99,12 +113,20 @@ def handle_index(treatment):
             if res:
                 flash(f"You already took part on this survey. Thank you for your participation")
                 return render_template("error.html")
-    
 
-    if is_proposer:
-        return redirect(url_for(f"{treatment}.prop.index", **request.args))
+    if previous_worker_code is None:
+        if is_proposer:
+            return redirect(url_for(f"{treatment}.prop.index", **request.args))
+        else:
+            return redirect(url_for(f"{treatment}.resp.index", **request.args))
     else:
-        return redirect(url_for(f"{treatment}.resp.index", **request.args))
+        flash("You already completed the main task!")
+        if resp_BASE in previous_worker_code:
+            return render_template("txx/resp.done.html", worker_code=previous_worker_code)
+        else:
+            return render_template("txx/prop.done.html", worker_code=previous_worker_code)
+            
+
 
 
 def _process_judgments(signal, payload, job_id, job_config, treatment, auto_finalize=False):
