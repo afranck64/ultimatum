@@ -134,7 +134,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
     next_player = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
     #The next player should be a proposer but some responders may still be processing data
     if next_player == NEXT_IS_PROPOSER_WAITING:
-        flash("Unfornately there is no task available right now. Please check again in 15 minutes. Otherwise you can just ignore this HIT for it be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+        flash("Unfornately there is no task available right now. Please check again in 15 minutes. Otherwise you can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
         return render_template("error.html", worker_code=WORKER_CODE_DROPPED)
 
 
@@ -158,7 +158,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
         with con:
             res = con.execute(f"SELECT * from {table_all} WHERE worker_id=?", (worker_id,)).fetchone()
             if res:
-                flash(f"You already took part on this survey. Thank you for your participation")
+                flash(f"You already took part on this survey. You can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
                 req_response = make_response(render_template("error.html", worker_code=WORKER_CODE_DROPPED))
                 return req_response
 
