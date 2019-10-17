@@ -390,7 +390,6 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None, d
         else:
             req_response =  make_response(redirect(url_for(f"{treatment}.prop.done", **request.args)))
         set_cookie_obj(req_response, BASE, cookie_obj)
-        print("before redirect: ", cookie_obj)
         return req_response
 
     cookie_obj[BASE] = True
