@@ -169,8 +169,11 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
         prop_table = get_table(base="prop", job_id=job_id, schema="result", treatment=treatment)
         # We make sure the user didn't accidentaly refreshed the page after processing the main task
         if (not is_worker_available(worker_id, resp_table) and not is_worker_available(worker_id, prop_table)):
-            flash("Unfornately there is no task available right now. Please check again in 15 minutes. Otherwise you can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+            flash("Unfortunately there is no task available right now. Please check again in 15 minutes. Otherwise you can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
             return render_template("error.html", worker_code=WORKER_CODE_DROPPED)
+
+    if adapter.is_preview() or job_id=="na":
+        flash("Please do note that you are currently in the preview mode of the survey. You SHOULD NOT FILL NEITHER SUBMIT the survey in this mode. Please go back to Mturk and read the instructions about how to correctly start this survey.")
 
     if request.method == "POST" and (drop=="1" or form.validate_on_submit()):
         form = form_class(request.form)
@@ -192,7 +195,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
             set_cookie_obj(req_response, BASE, cookie_obj)
             return req_response
         elif is_codes_valid:
-            flash("Your data was validated and submitted. But not saved as this is a test task")
+            flash("Your data was submitted and validated but not save as you are currently in the preview mode of the survey. Please go back to Mturk and read the instructions about how to correctly start this survey.")
     elif request.method == "POST":
         response = request.form.to_dict()
         # Responders have to fill and submit tasks

@@ -46,7 +46,7 @@ class DefaultAdapter(BaseAdapter):
         self.worker_id = request.args.get("worker_id", "")
         self.assignment_id = request.args.get("assignment_id", "")
         self.submit_to_URL = request.args.get("submit_to_URL")
-        self.preview = request.args.get("preview") in {"1", "true"}
+        self.preview = request.args.get("preview") in {"1", "true"} or self.job_id in ("", "na")
         if self.preview:
             self.worker_id = "na"
         self.submit_to_kwargs = {
@@ -71,7 +71,7 @@ class DefaultAdapter(BaseAdapter):
         return self.submit_to_kwargs
 
     def is_preview(self):
-        return self.is_preview
+        return self.preview
     
     def to_dict(self):
         obj_dict = dict(self.__dict__)
