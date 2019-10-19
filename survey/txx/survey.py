@@ -90,12 +90,12 @@ class MainForm(FlaskForm):
         ("correct", "the money is divided according to the PROPOSER's offer")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
     )
-    code_resp_prop = StringField("Completion Code: main task", validators=[DataRequired(), Regexp(regex=" *prop:\w*| *resp:\w*")])
-    code_cpc = StringField("Completion Code: choice task", validators=[Optional()])
-    code_risk = StringField("Completion Code: risk task", validators=[Optional()])
-    code_exp = StringField("Completion Code: experience task", validators=[Optional()])
-    code_cc = StringField("Completion Code: letters selection task", validators=[Optional()])
-    code_ras = StringField("Completion Code: Assertiveness task", validators=[Optional()])
+    code_resp_prop = StringField("Completion Code of the main task:", validators=[DataRequired(), Regexp(regex=" *prop:\w*| *resp:\w*")])
+    code_cpc = StringField("Completion Code of the choice task:", validators=[Optional()])
+    code_risk = StringField("Completion Code of the risk task:", validators=[Optional()])
+    code_exp = StringField("Completion Code of the experience task:", validators=[Optional()])
+    code_cc = StringField("Completion Code of the letters selection task:", validators=[Optional()])
+    code_ras = StringField("Completion Code of the assertiveness task:", validators=[Optional()])
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     feedback = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
