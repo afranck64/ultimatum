@@ -12,12 +12,12 @@ bp = Blueprint("tasks.ras", __name__)
 
 FIELDS = {f"q{i}" for i in range(1, 31)}
 SCALAS = {
-    -3: "very much like me",
-    -2: "rather like me",
-    -1: "slightly like me",
-    1: "slightly unlike me",
-    2: "rather unlike me",
-    3: "very much unlike me"
+    3: "very much like me",
+    2: "rather like me",
+    1: "slightly like me",
+    -1: "slightly unlike me",
+    -2: "rather unlike me",
+    -3: "very much unlike me"
 }
 
 # Items containing a star at the end are reversed items
