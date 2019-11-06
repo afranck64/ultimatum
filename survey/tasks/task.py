@@ -121,6 +121,7 @@ def handle_task_done(base, response_to_result_func=None, response_to_bonus=None,
                         app.log_exception(err)
 
         worker_id = cookie_obj["worker_id"]
+        response["completion_code"] = worker_code
         response_result = response_to_result_func(response, job_id=job_id, worker_id=worker_id)
         worker_bonus = response_to_bonus(response)
         response_result["worker_bonus"] = worker_bonus

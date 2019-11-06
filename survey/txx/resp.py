@@ -149,6 +149,7 @@ def handle_done(treatment, template=None):
         job_id = cookie_obj["job_id"]
         worker_code = generate_completion_code(BASE, job_id)
         response = cookie_obj["response"]
+        response["completion_code"] = worker_code
         worker_id = cookie_obj["worker_id"]
         resp_result = resp_to_resp_result(response, job_id=job_id, worker_id=worker_id)
         try:

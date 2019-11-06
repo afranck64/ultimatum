@@ -1,5 +1,6 @@
 import os
 import uuid
+import datetime
 
 import requests
 from flask import render_template, request, flash, url_for, redirect, make_response, session
@@ -90,7 +91,7 @@ class MainForm(FlaskForm):
         ("correct", "the money is divided according to the PROPOSER's offer")],
         validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
     )
-    code_resp_prop = StringField("Completion Code of the main task:", validators=[DataRequired(), Regexp(regex=" *prop:\w*| *resp:\w*")])
+    code_resp_prop = StringField("Completion Code of the main task:", validators=[DataRequired(), Regexp(regex=r" *prop:\w*| *resp:\w*")])
     code_cpc = StringField("Completion Code of the choice task:", validators=[Optional()])
     code_risk = StringField("Completion Code of the risk task:", validators=[Optional()])
     code_exp = StringField("Completion Code of the experience task:", validators=[Optional()])
@@ -179,6 +180,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
         form = form_class(request.form)
         response = request.form.to_dict()
         response["ethnicity"] = VALUES_SEPARATOR.join(sorted(request.form.getlist(form.ethnicity.name)))
+        response["timestamp"] = str(datetime.datetime.now())
         cookie_obj["response"] = response        
         is_codes_valid = True
         # Responders have to fill and submit tasks
@@ -235,6 +237,7 @@ def handle_survey_done(template=None):
             flash(f"You have been disqualified as you made more than {MAXIMUM_CONTROL_MISTAKES} mistakes on the control questions. You can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
         response["worker_id"] = worker_id
         response["job_id"] = job_id
+        response["completion_code"] = worker_code
         result = {k:v for k,v in response.items() if k not in {'csrf_token', 'drop'}}
         try:
             save_result2file(get_output_filename(base=BASE, job_id=job_id, treatment=treatment), result)

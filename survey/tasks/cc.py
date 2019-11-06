@@ -145,6 +145,7 @@ def response_to_result(response, job_id=None, worker_id=None):
     result["cc_false_alarm_avg_click_delay"] = sum([delay if (letter==LETTER_NOISE and click) else 0 for letter, click, delay in zip(letters, clicked, delays)]) / (false_alarms or 1)
     result.update(SDT(hits, misses, false_alarms, correct_rejections))
     result["cc_time_spent"] = response["time_spent"]
+    result["completion_code"] = response["completion_code"]
     result["timestamp"] = str(datetime.datetime.now())
     result["job_id"] = job_id
     result["worker_id"] = worker_id
