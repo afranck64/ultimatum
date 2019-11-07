@@ -338,12 +338,12 @@ class MTurk(object):
                 raise e
         return False
 
-    def approve_assignment(self, assignment_id, message):
+    def approve_assignment(self, assignment_id, message, override_rejection=True):
         try:
             response = self.client.approve_assignment(
                 AssignmentId=assignment_id,
                 RequesterFeedback=message,
-                OverrideRejection=False
+                OverrideRejection=override_rejection
             )
             if len(response)==1 and response.get('ResponseMetadata'):
                 return True
