@@ -126,7 +126,10 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
     arg_job_id = adapter.get_job_id()
     arg_worker_id = adapter.get_worker_id()
     job_id = arg_job_id or f"na"
-    worker_id = arg_worker_id or str(uuid.uuid4())
+    worker_id = arg_worker_id
+    if worker_id in {"", "na", None}:
+        worker_id = str(uuid.uuid4())
+        adapter.worker_id = worker_id
 
     max_judgments = 0 #not set
     if adapter.has_api():
