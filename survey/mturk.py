@@ -345,11 +345,9 @@ class MTurk(object):
                 RequesterFeedback=message,
                 OverrideRejection=override_rejection
             )
-            if len(response)==1 and response.get('ResponseMetadata'):
-                return True
-            else:
+            if not (len(response)==1 and response.get('ResponseMetadata')):
                 logger.warning(str(response))
-                return False
+            return True
         except ClientError as e:
             if e.response['Error']['Code'] == 'RequestError':
                 logger.warning(f"{e}")
@@ -363,11 +361,9 @@ class MTurk(object):
                 AssignmentId=assignment_id,
                 RequesterFeedback=message
             )
-            if not response:
-                return True
-            else:
+            if not (len(response)==1 and response.get('ResponseMetadata')):
                 logger.warning(str(response))
-                return False
+            return True
         except ClientError as e:
             if e.response['Error']['Code'] == 'RequestError':
                 logger.warning(f"{e}")
