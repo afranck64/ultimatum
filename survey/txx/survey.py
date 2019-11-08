@@ -113,12 +113,15 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
     cookie_obj = get_cookie_obj(BASE)
     
     adapter_cookie = get_adapter_from_dict(cookie_obj.get("adapter", {}))
+    adapter_args = get_adapter_from_dict(request.args)
     adapter_referrer = get_adapter()
     
-    if adapter_referrer.worker_id not in {"", "na", None}:
+    if adapter_referrer.job_id not in {"", "na", None}:
         adapter = adapter_referrer
-    else:
+    elif adapter_cookie.job_id not in {"", "na", None}:
         adapter = adapter_cookie
+    else:
+        adapter = adapter_args
 
     app.logger.debug(f"adapter: {adapter.to_dict()}")
     worker_code_key = f"{BASE}_worker_code"
