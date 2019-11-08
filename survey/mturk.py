@@ -375,16 +375,14 @@ class MTurk(object):
         return self.client.get_account_balance()
     
     def get_max_judgments(self):
-        # try:
-        if True:
+        try:
             response = self.client.get_hit(
                 HITId=self.job_id
             )
             max_judgments = response['HIT']['MaxAssignments']
             logger.warning(f"RESPONSE: {response}")
             return max_judgments
-        # except ClientError as e:
-        else:
+        except ClientError as e:
             logger.warning(f"ClientError: {e}")
         return 0
     
