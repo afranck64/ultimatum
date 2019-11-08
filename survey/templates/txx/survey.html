@@ -189,7 +189,14 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="drop" name="drop" id="drop" value="0" /> 
 
+    {% if job_id in ['', 'na', None] %}
+    <fieldset disabled="disabled" style="background: #dddddd">
+        <legend style="background-color: red; font-weight: bold;">
+          This form is disabled!!! Follow the survey instructions on MTurk to correctly start the survey.
+        </legend>
+    {% else %}
     <fieldset>
+    {% endif %}
       <div>
         <h3> CONTROL QUESTIONS </h3>
         <div style="background-color:red;" class="alert alert-error">{{ ", ".join(form.proposer.errors)}}</div>
@@ -290,10 +297,10 @@
         {{form.feedback.label}}<br>
         {{form.feedback(rows='3', cols='100')}}
       </div>
+      <br>
+      <div align="center">
+          <input type="submit" class="button"  type="button" value="Submit" {% if job_id=='na' %} disabled='disabled' {% endif %}>
+      </div>
     </fieldset>
-    <br>
-    <div align="center">
-        <input type="submit" class="button"  type="button" value="Submit">
-    </div>
   </form>
 {% endblock %}
