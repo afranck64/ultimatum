@@ -52,7 +52,7 @@ class DefaultAdapter(BaseAdapter):
         self.submit_to_kwargs = {
             "job_id": self.job_id,
             "worker_id": self.worker_id,
-            "assignement_id": self.assignment_id
+            "assignment_id": self.assignment_id
         }
 
     def get_job_id(self):
