@@ -88,10 +88,15 @@ def index():
         api_key = request.form.get('api_key')
         secret = request.form.get('secret')
         base_code = request.form.get('base_code')
+        expected_judgments = 0
+        try:
+            expected_judgments = int(request.form.get("expected_judgments"))
+        except:
+            pass
         if secret != app.config['ADMIN_SECRET']:
             flash('Incorrect secret, please try again')
             return redirect(request.url)
-        job_config = JobConfig(job_id=job_id, api_key=api_key, base_code=base_code)
+        job_config = JobConfig(job_id=job_id, api_key=api_key, base_code=base_code, expected_judgments=expected_judgments)
         update_job(get_db('DB'), job_id, job_config)
         flash("Job successfully configured")
     return render_template("admin.html")
