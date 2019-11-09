@@ -15,6 +15,7 @@ from survey.utils import (
 
 from core.models.metrics import MAX_GAIN
 from survey.db import insert, get_db
+from survey.admin import get_job_config
 from survey._app import app, VALUES_SEPARATOR, MAXIMUM_CONTROL_MISTAKES
 from survey.adapter import get_adapter, get_adapter_from_dict
 from survey.txx.index import check_is_proposer_next, NEXT_IS_PROPOSER_WAITING
@@ -143,6 +144,8 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
             max_judgments = int(request.args.get("max_judgments", max_judgments))
         except:
             pass
+    job_config = get_job_config(get_db(), job_id)
+    max_judgments = max(max_judgments, job_config.expected_judgments)
     next_player = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
 
 
