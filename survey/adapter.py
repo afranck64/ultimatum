@@ -42,9 +42,9 @@ class BaseAdapter(object):
 
 class DefaultAdapter(BaseAdapter):
     def __init__(self):
-        self.job_id = request.args.get("job_id", "")
-        self.worker_id = request.args.get("worker_id", "")
-        self.assignment_id = request.args.get("assignment_id", "")
+        self.job_id = request.args.get("job_id", "").strip()
+        self.worker_id = request.args.get("worker_id", "").strip()
+        self.assignment_id = request.args.get("assignment_id", "").strip()
         self.submit_to_URL = request.args.get("submit_to_URL")
         self.preview = request.args.get("preview") in {"1", "true"} or self.job_id in ("", "na")
         if self.preview:
@@ -100,9 +100,9 @@ class MTurkAdapter(DefaultAdapter):
             query = parse_qs(parsed_url.query)
             query_flat = {k:v[0] for k,v in query.items()}
             args_source = query_flat
-        self.job_id = args_source.get("hitId")
-        self.worker_id = args_source.get("workerId")
-        self.assignment_id = args_source.get("assignmentId", "NA")
+        self.job_id = args_source.get("hitId", "").strip()
+        self.worker_id = args_source.get("workerId", "").strip()
+        self.assignment_id = args_source.get("assignmentId", "NA").strip()
         self.submit_to_URL = args_source.get("turkSubmitTo")
         self.preview = args_source.get("assignmentId") == "ASSIGNMENT_ID_NOT_AVAILABLE"
         if self.preview:
