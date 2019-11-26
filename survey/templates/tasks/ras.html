@@ -21,7 +21,7 @@
                 <ul class='likert'>
                     {% for value, label in scalas.items() %}               
                     <li>
-                        <input type="radio" name="q{{outer_loop.index}}" value="{{value}}" required> <label>{{label}}</label>
+                        <label><input type="radio" name="q{{outer_loop.index}}" value="{{value}}" required>{{label}}</label>
                     </li>
                     {% endfor %}
                 </ul>
