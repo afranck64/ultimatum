@@ -4,22 +4,16 @@ sklearn
 matplotlib
 seaborn
 keras
-tensorflow
-#tensorflow-gpu
+tensorflow==1.13.*
 imbalanced-learn
 mlxtend
 xlrd
 xlwt
-##conda install -c conda-forge xgboost
-#shap
 boto3
-
-#### survey
 flask
 flask-wtf
 requests
-
-#### tests
 pytest
 pytest-cov
 httmock
+gunicorn
