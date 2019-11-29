@@ -108,7 +108,7 @@ def generate_problems(filename):
     return problems, distributions
 
 
-PROBLEMS, DISTRIBUTIONS = generate_problems(os.path.join(CODE_DIR, "data/t00/ug2cpc.csv"))
+PROBLEMS, DISTRIBUTIONS = generate_problems(os.path.join(CODE_DIR, "data/ug2cpc.csv"))
 FIELDS = {k for k in DISTRIBUTIONS}
 FEATURES = set(f"cpc_{k}" for k in FIELDS) | {
     "cpc_expected_value",   #expected value of the user's selected lotteries
