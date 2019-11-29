@@ -5,16 +5,17 @@ from .metrics import avg_loss_ratio, MAX_GAIN
 from ..utils import randn_skew_fast
 
 class EMModel(object):
-    def __init__(self, max_value=MAX_GAIN, loss=None):
+    def __init__(self, max_value=MAX_GAIN, loss=None, step=5):
         self.value = None
         self.max_value = max_value
         self.loss = loss or avg_loss_ratio
         self._trained = False
+        self.step = step
     
     def fit(self, xTrain, yTrain, **kwargs):
         min_loss = float('inf')
         best_value = 0
-        for value in np.arange(self.max_value):
+        for value in np.arange(0, self.max_value+self.step, self.step):
             fixedPredict = np.ones_like(yTrain) * value
             loss = self.loss(yTrain, fixedPredict)
             if loss < min_loss:
