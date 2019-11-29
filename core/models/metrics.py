@@ -115,10 +115,10 @@ def cross_compute(min_offer, predicted, metric):
     :metric: (func) computation metric
     """
     res = 0
-    for idx in range(predicted.shape[0]):
-        sub_predicted = np.ones_like(min_offer) * predicted[idx]
+    for offer in predicted:
+        sub_predicted = np.ones_like(min_offer) * offer
         res += metric(min_offer, sub_predicted)
-    return res/predicted.shape[0]
+    return res/len(predicted)
 
 def invariance(min_offer, predicted):
     return 1 / (1 + np.std(predicted)**.5)
