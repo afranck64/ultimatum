@@ -1,15 +1,31 @@
+# Ultimatum Game
+
 Mastering the ultimatum game. ^_^
 
 
-run tests:
+
+## Quickstart
+
+First of all, you need [docker](https://docs.docker.com/install/) and [docker-compose](https://docs.docker.com/compose/install/)
+
+### Build the project:
 ```bash
-#Enable Treatment T10:
-export T10=true
-python -m pytest tests/
+docker-compose build
 ```
 
+### Launch tests:
 ```bash
-#Enable all Treatments
-export TXX=true
-python -m pytest tests/
+docker-compose run test
+```
+
+### Launch the survey website locally
+```bash
+# The local address of the website will be printed in the terminal.
+docker-compose up web
+```
+
+### Launch jupyter notebook
+```bash
+# The local address of the website will be printed in the terminal.
+docker-compose up notebook
 ```
