@@ -2,6 +2,18 @@ version: '3'
 services:
   web:
     build: .
+    container_name: web
     ports:
       - "5000:5000"
     working_dir: /code
+  
+  test:
+    image: code_web
+    command: pytest
+  
+  notebook:
+    ports:
+      - "8888:8888"
+    image: code_web
+    command: jupyter notebook --allow-root --ip=0.0.0.0 --port=8888
+  
