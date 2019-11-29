@@ -38,21 +38,12 @@ def df_to_xydf(df, normalize=True, centered=False, fuse_risk=False, drop_columns
     """
     if "min_offer" not in df.columns:
         df["min_offer"] = np.nan
-    if df_min is None:
-        df_min = pd.Series(data={col:0 for col in df.columns})
-    if df_max is None:
-        df_max = pd.Series(data={col:0 for col in df.columns})
-        df_max["cells"] = 50.0
-        df_max["Honesty_Humility"] = 5.0
-        df_max["Extraversion"] = 5.0
-        df_max["Agreeableness"] = 5.0
-        df_max["selfish"] = 60.0
-        df_max["time_spent_risk"] = 152000.0
-        df_max["time_spent_prop"] = 269000.0
-        df_max["min_offer"] = MAX_GAIN
-        df_max["count_effort"] = 20.0
-        df_max["crt_performance"] = 3.0
-        import warnings
+    # if df_min is None:
+    #     df_min = df.min()
+    # if df_max is None:
+    #     df_max = pd.Series(data={col:0 for col in df.columns})
+    #     df_max["min_offer"] = MAX_GAIN
+    #     import warnings
 
     if fuse_risk or (select_columns is not None and "risk" in select_columns):
         risk_cols = ['cells', 'time_spent_risk']
