@@ -1,7 +1,7 @@
 # SERVER Config
 In the following examples, it is assumed that your user name is `testuser` and this repository is located at the root of your home folder. 
 - Copy/Downlad this folder to your home diretory. (This `README.md` file would be located at `/home/testuser/ultimatum/survey/README.md`)
-- Install Required packages in `requirements.txt` are installed inside a python-environment folder `/home/test/ultimatum/env`)
+- Install Required packages in `requirements.txt` are installed inside a python-environment folder `/home/testuser/ultimatum/env`)
     ```bash
     python -m venv env
     python source env/bin/activate
