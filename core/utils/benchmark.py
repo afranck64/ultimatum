@@ -9,9 +9,18 @@ from core.models.metrics import avg_loss, mse, rejection_ratio, avg_win_loss, av
 
 benchmark_functions = [avg_loss, mse, rejection_ratio, avg_win_loss, avg_loss_ratio, loss_sum, invariance]
 
-def process_model(model, xTrain, yTrain, xTest, yTest, fit_kwargs=None, predict_kwargs=None, metrics=None):
+def target_to_enforced_target_values(y, enforced_target_values):
+    y = y.ravel()
+    res = np.array(y)
+    for (lower, higher), value in enforced_target_values.items():
+        res[(lower<y) & (y<=higher)] = value
+    return res
+
+def process_model(model, xTrain, yTrain, xTest, yTest, fit_kwargs=None, predict_kwargs=None, metrics=None, enforced_target_values=None):
     if metrics is None:
         metrics = benchmark_functions
+    if enforced_target_values is not None:
+        yTrain = target_to_enforced_target_values(yTrain, enforced_target_values)
     fit_kwargs = {} if fit_kwargs is None else fit_kwargs
     predict_kwargs = {} if predict_kwargs is None else predict_kwargs
     model.fit(xTrain, yTrain, **fit_kwargs)
@@ -19,7 +28,7 @@ def process_model(model, xTrain, yTrain, xTest, yTest, fit_kwargs=None, predict_
     results = {func.__name__: func(yTest, yPredict) for func in metrics}
     return results
     
-def process_benchmark_cv(model, X, y, cv=5, fit_kwargs=None, predict_kwargs=None, augment_data=None, metrics=None):
+def process_benchmark_cv(model, X, y, cv=5, fit_kwargs=None, predict_kwargs=None, augment_data=None, metrics=None, enforced_target_values=None):
     """
     :param model: model with fit/predict methods
     :param X: features
@@ -41,11 +50,11 @@ def process_benchmark_cv(model, X, y, cv=5, fit_kwargs=None, predict_kwargs=None
             upsample = augment_data==2
             xTrain, yTrain = DACombine().fit_predict(xTrain, yTrain, upsample=upsample)
         xTest, yTest = X[test_index], y[test_index]
-        benchmark_result = process_model(deepcopy(model), xTrain, yTrain, xTest, yTest, fit_kwargs, predict_kwargs, metrics)
+        benchmark_result = process_model(deepcopy(model), xTrain, yTrain, xTest, yTest, fit_kwargs, predict_kwargs, metrics, enforced_target_values)
         results.append(benchmark_result)
     return pd.DataFrame(results)
 
-def process_benchmarks(models_dict, X, y, cv=5, fit_kwargs=None, predict_kwargs=None, augment_data=None, shuffle=False, metrics=None):
+def process_benchmarks(models_dict, X, y, cv=5, fit_kwargs=None, predict_kwargs=None, augment_data=None, shuffle=False, metrics=None, enforced_target_values=None):
     """
     Benchmark multiple models using the same augmented data to spare time from data augmentation
     :param models_dict: {key:model} dict of models with fit/predict methods
@@ -77,7 +86,7 @@ def process_benchmarks(models_dict, X, y, cv=5, fit_kwargs=None, predict_kwargs=
                 xTrain, yTrain = DACombine().fit_predict(xTrain, yTrain, upsample=upsample)
             xTest, yTest = X[test_index], y[test_index]
             for key, model in models_dict.items():
-                benchmark_result = process_model(deepcopy(model), xTrain, yTrain, xTest, yTest, fit_kwargs, predict_kwargs, metrics)
+                benchmark_result = process_model(deepcopy(model), xTrain, yTrain, xTest, yTest, fit_kwargs, predict_kwargs, metrics, enforced_target_values)
                 nKey = key
                 if augment_data_step:
                     nKey += "_da" + str(augment_data_step)
