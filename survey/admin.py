@@ -83,6 +83,7 @@ def update_job(con, job_id, job_config, table="jobs"):
 @csrf_protect.exempt
 @bp.route("/admin", methods=["GET", "POST"])
 def index():
+    app.logger.debug(f"admin.index")
     if request.method=="POST":
         job_id = request.form.get('job_id')
         api_key = request.form.get('api_key')
@@ -97,6 +98,7 @@ def index():
             flash('Incorrect secret, please try again')
             return redirect(request.url)
         job_config = JobConfig(job_id=job_id, api_key=api_key, base_code=base_code, expected_judgments=expected_judgments)
+        app.logger.debug(f"Job_config: {job_config}, request_form: {request.form.to_dict()}")
         update_job(get_db('DB'), job_id, job_config)
         flash("Job successfully configured")
     return render_template("admin.html")
