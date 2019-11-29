@@ -105,7 +105,7 @@ def test_index_auto(client, treatment, prefix=""):
 
 
 def test_resp_index(client, treatment):
-    res = client.get(f"/{treatment}/resp/").data
+    res = client.get(f"/{treatment}/resp/", follow_redirects=True).data
     assert b"RESPONDER" in res
 
 def test_resp_done_success(client, treatment):
