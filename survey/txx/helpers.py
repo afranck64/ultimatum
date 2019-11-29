@@ -35,8 +35,11 @@ SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
 
 
 
-def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, clear_session=True, path=None):
+def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, clear_session=True, path=None, dss_available=False):
     app.logger.debug("_process_resp")
+    MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
+    dss_available = bool(app.config.get(MODEL_KEY))
+    dss_available = dss_available and treatment[:3] not in {"t00", "t10", "t11"} #Treatments where the responder isn't informed about the DSS
     if worker_id is None:
         worker_id = generate_worker_id()
     if path is None:
@@ -47,7 +50,15 @@ def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MI
                 with client.session_transaction() as sess:
                     sess.clear()
         client.get(path, follow_redirects=True)
-        return client.post(path, data={"min_offer":min_offer}, follow_redirects=True)
+
+        data={"min_offer": min_offer, "feedback_understanding": 1, "feedback_explanation": 1, "feedback_accuracy": 0}
+        res = client.post(path, data=data, follow_redirects=True)
+        if dss_available:
+            path2 = f"/{treatment}/resp_dss/?job_id={job_id}&worker_id={worker_id}"
+            client.get(path2, follow_redirects=True)
+            data_dss = {"min_offer": min_offer, "feedback_understanding": 1, "feedback_explanation": 1, "feedback_accuracy": 0}
+            res = client.post(path2, data=data_dss, follow_redirects=True)
+        return res
 
 def _process_resp_tasks(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, bonus_mode="random", clear_session=True, synchron=True, path=None):
     app.logger.debug("_process_resp_tasks")
@@ -98,15 +109,17 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
                     app.logger.error(f"couldn't access to the ai_offer: - {info.data}")
                     app.log_exception(err)
                     offer = -1
-            res = client.post(path, data={"offer":offer}, follow_redirects=True)
+            data = {"offer": offer}
+            data_dss = {"offer_dss": offer, "feedback_understanding": 1, "feedback_explanation": 1, "feedback_accuracy": 0}
+            res = client.post(path, data=data, follow_redirects=True)
             if nb_dss_check is None:
-                res = client.post(path2, data={"offer_dss":offer}, follow_redirects=True)
+                res = client.post(path2, data=data_dss, follow_redirects=True)
             else:
                 client.get(path2, follow_redirects=True)
                 client.get(check_path)
                 for _ in range(nb_dss_check):
                     tmp = client.get(f"{check_path}?offer={random.choice(list(range(0, MAX_GAIN+1, 5)))}")
-                res = client.post(path2, data={"offer_dss":offer}, follow_redirects=True)
+                res = client.post(path2, data=data_dss, follow_redirects=True)
         else:
             res = client.post(path, data={"offer":offer}, follow_redirects=True)
         return res

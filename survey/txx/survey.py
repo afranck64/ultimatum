@@ -101,6 +101,36 @@ class MainForm(FlaskForm):
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     feedback = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
+class MainFormFeeback(FlaskForm):
+    proposer = RadioField("The PROPOSER...", choices=[
+        ("incorrect1", "decides the amount of money that the RESPONDER is paid"),
+        ("correct", f"proposes a division of the {MAX_GAIN / 100:.2f} USD with the RESPONDER"),
+        ("incorrect2", "accepts or rejects the offer made by the RESPONDER")],
+        validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
+    )
+    responder = RadioField("The RESPONDER...", choices=[
+        ("incorrect1", "decides the amount of money that the PROPOSER is paid"),
+        ("incorrect2", f"proposes a division of the {MAX_GAIN / 100:.2f} USD with the PROPOSER"),
+        ("correct", "accepts or rejects the offer made by the PROPOSER")],
+        validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
+    )
+    proposer_responder = RadioField("Choose the correct answer", choices=[
+        ("correct", "The PROPOSER and the RESPONDER are both humans participating in the task simultaneously."),
+        ("incorrect1", "Your matched worker is simulated by the computer and is not a real person."),
+        ("incorrect2", "Your decisions do not affect another worker.")],
+        validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
+    )
+    money_division = RadioField("If the RESPONDER accepts the PROPOSER's offer...", choices=[
+        ("incorrect1", "the money is divided 50/50 between the RESPONDER and the PROPOSER"),
+        ("incorrect2", "the money is divided according to the RESPONDER's minimum offer"),
+        ("correct", "the money is divided according to the PROPOSER's offer")],
+        validators=[DataRequired("Please choose a value"), Regexp(regex="correct")]
+    )
+    code_resp_prop = StringField("Completion Code of the main task:", validators=[DataRequired(), Regexp(regex=r" *prop:\w*| *resp:\w*")])
+    test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
+    feedback = TextAreaField("Please enter your comments, feedback or suggestions below.")
+
+
 def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None, overview_url=None):
     app.logger.info("handle_survey")
     if code_prefixes is None:
@@ -223,6 +253,113 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
     return req_response
 
 
+
+def handle_survey_feedback(treatment=None, template=None, code_prefixes=None, form_class=None, overview_url=None):
+    app.logger.info("handle_survey_feedback")
+    if code_prefixes is None:
+        code_prefixes = {"code_cpc": "cpc:", "code_exp": "exp:", "code_risk": "risk:", "code_cc": "cc:", "code_ras": "ras:"}
+    if form_class is None:
+        form_class = MainFormFeeback
+    if template is None:
+        template = "txx/survey_feedback.html"
+    if overview_url is None:
+        overview_url = url_for("overview_feedback")
+    cookie_obj = get_cookie_obj(BASE)
+    
+    adapter_cookie = get_adapter_from_dict(cookie_obj.get("adapter", {}))
+    adapter_args = get_adapter_from_dict(request.args)
+    adapter_referrer = get_adapter()
+    
+    if adapter_referrer.job_id not in {"", "na", None}:
+        adapter = adapter_referrer
+    elif adapter_cookie.job_id not in {"", "na", None}:
+        adapter = adapter_cookie
+    else:
+        adapter = adapter_args
+
+    app.logger.debug(f"adapter: {adapter.to_dict()}")
+    worker_code_key = f"{BASE}_worker_code"
+
+    arg_job_id = adapter.get_job_id()
+    arg_worker_id = adapter.get_worker_id()
+    job_id = arg_job_id or f"na"
+    worker_id = arg_worker_id
+    if worker_id in {"", "na", None}:
+        worker_id = str(uuid.uuid4())
+        adapter.worker_id = worker_id
+
+    max_judgments = 0 #not set
+    if adapter.has_api():
+        api = adapter.get_api()
+        max_judgments = api.get_max_judgments()
+    else:
+        try:
+            max_judgments = int(request.args.get("max_judgments", max_judgments))
+        except:
+            pass
+    job_config = get_job_config(get_db(), job_id)
+    max_judgments = max(max_judgments, job_config.expected_judgments)
+    next_player = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
+
+
+    table_all = get_table("txx", "all", schema=None)
+    # The task was already completed, so we skip to the completion code display
+    if cookie_obj.get(BASE) and cookie_obj.get(worker_code_key):        
+        req_response = make_response(redirect(url_for(f"{treatment}.survey.survey_done", **request.args)))
+        set_cookie_obj(req_response, BASE, cookie_obj)
+        return req_response
+    if treatment is None:
+        treatment = get_latest_treatment()
+    cookie_obj["job_id"] = job_id
+    cookie_obj["worker_id"] = worker_id
+    cookie_obj["assignment_id"] = adapter.get_assignment_id()
+    cookie_obj["treatment"] = treatment
+    cookie_obj["adapter"] = adapter.to_dict()
+    cookie_obj[BASE] = True
+    form = form_class(request.form)
+    drop = request.form.get("drop")
+    con = get_db()
+    # if table_exists(con, table_all):
+    #     with con:
+    #         res = con.execute(f"SELECT * from {table_all} WHERE worker_id=?", (worker_id,)).fetchone()
+    #         if res:
+    #             flash(f"You already took part on this survey. You can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+    #             req_response = make_response(render_template("error.html", worker_code=WORKER_CODE_DROPPED))
+    #             return req_response
+
+    #The next player should be a proposer but some responders may still be processing data
+    ## Should not matter in feedback surveys
+    if next_player == NEXT_IS_PROPOSER_WAITING:
+        resp_table = get_table(base="resp", job_id=job_id, schema="result", treatment=treatment)
+        prop_table = get_table(base="prop", job_id=job_id, schema="result", treatment=treatment)
+        # We make sure the user didn't accidentaly refreshed the page after processing the main task
+        if (not is_worker_available(worker_id, resp_table) and not is_worker_available(worker_id, prop_table)):
+            flash("Unfortunately there is no task available right now. Please check again in 15 minutes. Otherwise you can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+            return render_template("error.html", worker_code=WORKER_CODE_DROPPED)
+
+    if adapter.is_preview() or job_id=="na":
+        flash("Please do note that you are currently in the preview mode of the survey. You SHOULD NOT FILL NEITHER SUBMIT the survey in this mode. Please go back to Mturk and read the instructions about how to correctly start this survey.")
+
+    if request.method == "POST" and (drop=="1" or form.validate_on_submit()):
+        form = form_class(request.form)
+        response = request.form.to_dict()
+        response["timestamp"] = str(datetime.datetime.now())
+        cookie_obj["response"] = response        
+        is_codes_valid = True
+        # Responders have to fill and submit tasks
+        if is_codes_valid and job_id != "na" and worker_id != "na":
+            cookie_obj["response"] = response
+            #NOTE: the url should be pointing to handle_survey_feedback_done
+            req_response = make_response(redirect(url_for(f"{treatment}.survey.done", **request.args)))
+            set_cookie_obj(req_response, BASE, cookie_obj)
+            return req_response
+        elif is_codes_valid:
+            flash("Your data was submitted and validated but not save as you are currently in the preview mode of the survey. Please go back to Mturk and read the instructions about how to correctly start this survey.")
+
+    req_response = make_response(render_template(template, job_id=job_id, worker_id=worker_id, treatment=treatment, form=form, max_judgments=max_judgments, max_gain=MAX_GAIN, maximum_control_mistakes=MAXIMUM_CONTROL_MISTAKES, overview_url=overview_url, tasks=app.config["TASKS"]))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response
+
 def handle_survey_done(template=None):
     if template is None:
         template = "txx/survey.done.html"
@@ -263,6 +400,72 @@ def handle_survey_done(template=None):
         cookie_obj.clear()
 
         save_worker_id(job_id=job_id, worker_id=worker_id, worker_code=worker_code, assignment_id=adapter.assignment_id)
+        app.logger.debug(f"request-args: {request.args}, adapter: {adapter.to_dict()} ")
+        try:
+            expected_max_judgments = request.args.get("expected_max_judgments")
+            if expected_max_judgments is not None:
+                expected_max_judgments = int(expected_max_judgments)
+                api = adapter.get_api()
+                max_judgments = api.get_max_judgments()
+                app.logger.debug(f"survey.done: max_judgments: {max_judgments} - {type(max_judgments)}, expected_max_judgments: {expected_max_judgments} - {type(expected_max_judgments)}")
+                if max_judgments < expected_max_judgments:
+                    app.logger.debug(f"try create new assignments")
+                    create_res = api.create_additional_assignments(1)
+                    app.logger.debug(f"post assignment creation: new-max: {api.get_max_judgments()} , mturk-api-res: {create_res}")
+        except Exception as err:
+            app.log_exception(err)
+        app.logger.info(f"handle_survey_done: saved new survey - job_id: {job_id}, worker_id: {worker_id}")
+    req_response = make_response(render_template(template, worker_code=worker_code, dropped=True))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    for cookie in session.get(ALL_COOKIES_KEY, []):
+        req_response.set_cookie(cookie, expires=0)
+    session[ALL_COOKIES_KEY] = []
+    return req_response
+
+
+def handle_survey_feedback_done(template=None):
+    if template is None:
+        template = "txx/survey.done.html"
+    cookie_obj = get_cookie_obj(BASE)
+    if not cookie_obj.get(BASE):
+        flash("Sorry, you are not allowed to use this service. ^_^")
+        return render_template("error.html")
+    worker_code_key = f"{BASE}_worker_code"
+    worker_code = WORKER_CODE_DROPPED
+    if True or not cookie_obj.get(worker_code_key):
+        job_id = cookie_obj["job_id"]
+        worker_id = cookie_obj["worker_id"]
+        treatment = cookie_obj["treatment"]
+        assignment_id = cookie_obj.get("assignment_id")
+
+        worker_code = generate_completion_code(base=treatment, job_id=job_id)
+        response = cookie_obj["response"]
+        app.logger.debug("DONE_response: {response}")
+        dropped = response.get("drop")
+        if dropped=="1":
+            worker_code = WORKER_CODE_DROPPED
+            flash(f"You have been disqualified as you made more than {MAXIMUM_CONTROL_MISTAKES} mistakes on the control questions. You can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+        response["worker_id"] = worker_id
+        response["job_id"] = job_id
+        response["assignment_id"] = assignment_id
+        response["completion_code"] = worker_code
+        result = {k:v for k,v in response.items() if k not in {'csrf_token', 'drop'}}
+        try:
+            save_result2file(get_output_filename(base=BASE, job_id=job_id, treatment=treatment), result)
+        except Exception as err:
+            app.log_exception(err)
+        try:
+            save_result2db(table=get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment), response_result=result, unique_fields=["worker_id"])
+        except Exception as err:
+            app.log_exception(err)
+
+        adapter = get_adapter_from_dict(cookie_obj["adapter"])
+        #adapter = get_adapter()
+        app.logger.debug(f"adapter: {cookie_obj['adapter']}")
+        cookie_obj.clear()
+
+        #save_worker_id(job_id=job_id, worker_id=worker_id, worker_code=worker_code, assignment_id=adapter.assignment_id)
+
         app.logger.debug(f"request-args: {request.args}, adapter: {adapter.to_dict()} ")
         try:
             expected_max_judgments = request.args.get("expected_max_judgments")

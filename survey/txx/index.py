@@ -87,9 +87,13 @@ def get_previous_worker_code(job_id, worker_id, treatment):
     prop_table = get_table(prop_BASE, job_id=job_id, schema="result", treatment=treatment)
     worker_code = None
     if is_worker_available(worker_id, resp_table):
-        worker_code = generate_completion_code(resp_BASE, job_id)
+        worker_code = get_db().execute(f"SELECT completion_code from {resp_table} where worker_id=?", [worker_id]).fetchone()[0]
+        if not worker_code:
+            worker_code = generate_completion_code(resp_BASE, job_id)
     if is_worker_available(worker_id, prop_table):
-        worker_code = generate_completion_code(prop_BASE, job_id)
+        worker_code = get_db().execute(f"SELECT completion_code from {prop_table} where worker_id=?", [worker_id]).fetchone()[0]
+        if not worker_code:
+            worker_code = generate_completion_code(prop_BASE, job_id)
     return worker_code
 
 def handle_index(treatment):
@@ -101,18 +105,11 @@ def handle_index(treatment):
     except ValueError:
         pass
     previous_worker_code = get_previous_worker_code(job_id, worker_id, treatment)
-    auto_finalize = request.args.get("auto_finalize")
     app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
     is_proposer = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
 
     table_all = get_table(BASE, "all", schema=None)
     con = get_db()
-    if table_exists(con, table_all):
-        with con:
-            res = con.execute(f"SELECT * from {table_all} WHERE worker_id=?", (worker_id,)).fetchone()
-            if res:
-                flash(f"You already took part on this survey. Thank you for your participation")
-                return render_template("error.html")
 
     if previous_worker_code is None:
         if is_proposer:
@@ -127,6 +124,38 @@ def handle_index(treatment):
             return render_template("txx/prop.done.html", worker_code=previous_worker_code)
             
 
+
+def handle_index_feedback(treatment, base_treatment):
+    job_id = request.args.get("job_id", "na")
+    worker_id = request.args.get("worker_id", "na")
+    max_judgments = None
+    try:
+        max_judgments = int(request.args.get("max_judgments", "0"))
+    except ValueError:
+        pass
+    previous_worker_code = get_previous_worker_code(job_id, worker_id, base_treatment)
+    app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
+    is_proposer = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
+
+    table_all = get_table(BASE, "all", schema=None)
+    con = get_db()
+    if table_exists(con, table_all):
+        with con:
+            res = con.execute(f"SELECT * from {table_all} WHERE worker_id=?", (worker_id,)).fetchone()
+            # if res:
+            #     flash(f"You already took part on this survey. Thank you for your participation")
+            #     return render_template("error.html")
+    if previous_worker_code is None:
+        if is_proposer:
+            return redirect(url_for(f"{treatment}.prop.index", **request.args))
+        else:
+            return redirect(url_for(f"{treatment}.resp.index", **request.args))
+    else:
+        if prop_BASE in previous_worker_code:
+            return redirect(url_for(f"{treatment}.prop.index", **request.args))
+        else:
+            return redirect(url_for(f"{treatment}.resp.index", **request.args))
+            
 
 
 def _process_judgments(signal, payload, job_id, job_config, treatment, auto_finalize=False):

@@ -54,6 +54,10 @@ def survey_done():
 def overview():
     return render_template("overview.html", max_gain=MAX_GAIN)
 
+@app.route("/survey/overview_feedback")
+def overview_feedback():
+    return render_template("overview_feedback.html", max_gain=MAX_GAIN)
+
 @app.route("/survey/overview_auto_prop")
 def overview_auto_prop():
     return render_template("overview_auto_prop.html", max_gain=MAX_GAIN)

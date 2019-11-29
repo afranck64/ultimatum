@@ -35,6 +35,7 @@ from survey.db import insert, get_db, table_exists, update
 from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table, predict_weak, predict_strong,
     generate_completion_code, increase_worker_bonus, get_cookie_obj, set_cookie_obj, get_secret_key_hash,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
+from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_SCALAS
 #from survey.tasks import MAX_BONUS as TASKS_FEATURES
 
 
@@ -433,6 +434,9 @@ def handle_index_dss(treatment, template=None, proposal_class=None, messages=Non
             flash(message)
     if request.method == "POST":
         proposal = cookie_obj["proposal"]
+        proposal["feedback_understanding"] = request.form["feedback_understanding"]
+        proposal["feedback_explanation"] = request.form["feedback_explanation"]
+        proposal["feedback_accuracy"] = request.form["feedback_accuracy"]
         proposal["time_stop_dss"] = time.time()
         offer_dss = request.form["offer_dss"]
         try:
@@ -448,7 +452,7 @@ def handle_index_dss(treatment, template=None, proposal_class=None, messages=Non
 
     cookie_obj[BASE] = True
     prop_check_url = url_for(f"{treatment}.prop.check")
-    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ProposerForm(), prop_check_url=prop_check_url, max_gain=MAX_GAIN))
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_SCALAS, form=ProposerForm(), prop_check_url=prop_check_url, max_gain=MAX_GAIN))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
@@ -511,7 +515,7 @@ def handle_done(treatment, template=None, response_to_result_func=None):
         row_info = cookie_obj["row_info"]
         worker_id = cookie_obj["worker_id"]
         close_row(get_db("DATA"), job_id, row_info[PK_KEY], treatment=treatment)
-        worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
+        # worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
         prop_result = response_to_result_func(proposal, job_id=job_id, worker_id=worker_id, row_data=row_info)
         try:
             save_result2file(get_output_filename(base=BASE, job_id=job_id, treatment=treatment), prop_result)
@@ -519,7 +523,7 @@ def handle_done(treatment, template=None, response_to_result_func=None):
             app.log_exception(err)
         try:
             save_result2db(table=get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment), response_result=prop_result, unique_fields=["worker_id"])
-            increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=0, con=get_db("DB"))
+            # increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=0, con=get_db("DB"))
         except Exception as err:
             app.log_exception(err)
         auto_finalize = request.args.get("auto_finalize")
@@ -533,7 +537,7 @@ def handle_done(treatment, template=None, response_to_result_func=None):
 
         cookie_obj[BASE] = True
         cookie_obj["worker_id"] = worker_id
-        cookie_obj[worker_bonus_key] = cents_repr(worker_bonus)
+        # cookie_obj[worker_bonus_key] = cents_repr(worker_bonus)
         cookie_obj[worker_code_key] = worker_code
     req_response = make_response(render_template(template, worker_code=cookie_obj[worker_code_key]))
     set_cookie_obj(req_response, BASE, cookie_obj)

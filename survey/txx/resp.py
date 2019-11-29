@@ -34,7 +34,7 @@ from survey.utils import (
     save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, get_cookie_obj, set_cookie_obj,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus
 )
-
+from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_SCALAS
 
 ############ Consts #################################
 # SURVEY_INFOS_FILENAME = os.getenv("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
@@ -95,11 +95,11 @@ def resp_to_resp_result(response, job_id=None, worker_id=None):
     return result
 
 
-class ProposerForm(FlaskForm):
+class ResponderForm(FlaskForm):
     min_offer = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
-def handle_index(treatment, template=None, messages=None):
+def handle_index(treatment, template=None, messages=None, has_dss_component=False):
     app.logger.debug("handle_index")
     if messages is None:
         messages = []
@@ -126,12 +126,62 @@ def handle_index(treatment, template=None, messages=None):
         response["time_stop"] = time.time()
         response["min_offer"] = int(request.form["min_offer"])
         cookie_obj['response'] = response
+        if has_dss_component:
+            req_response = make_response(redirect(url_for(f"{treatment}.resp.index_dss", **request.args)))
+        else:
+            req_response = make_response(redirect(url_for(f"{treatment}.resp.done", **request.args)))
+        set_cookie_obj(req_response, BASE, cookie_obj)
+        return req_response
+
+    cookie_obj[BASE] = True
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ResponderForm()))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response
+
+def handle_index_dss(treatment, template=None, messages=None, dss_only=False):
+    app.logger.debug("handle_index_dss")
+    if messages is None:
+        messages = []
+    if template is None:
+        template = f"txx/resp_dss.html"
+    cookie_obj = get_cookie_obj(BASE)
+    worker_code_key = f"{BASE}_worker_code"
+    worker_id = request.args.get("worker_id", "na")
+    job_id = request.args.get("job_id", "na")
+    # The task was already completed, so we skip to the completion code display
+    if cookie_obj.get(BASE) and cookie_obj.get(worker_code_key) and cookie_obj.get("worker_id") == worker_id:
+        req_response = redirect(url_for(f"{treatment}.resp.done"))
+        return req_response
+    if request.method == "GET":
+        app.logger.debug(f"handle_index: job_id:{job_id}, worker_id:{worker_id} ")
+        if dss_only:
+            # for treatments T2x
+            cookie_obj['response'] = HHI_Resp_ADM()
+            cookie_obj["worker_id"] = worker_id
+            cookie_obj["job_id"] = job_id
+
+        else:
+            cookie_obj["response"]["time_start_dss"] = time.time()
+
+        for message in messages:
+            flash(message)
+    if request.method == "POST":
+        response = cookie_obj["response"]
+        if dss_only:
+            response["time_stop"] = time.time()
+            response["min_offer"] = int(request.form["min_offer"])
+        response["time_stop_dss"] = time.time()
+        response["min_offer_dss"] = int(request.form["min_offer"])
+        response["feedback_understanding"] = request.form["feedback_understanding"]
+        response["feedback_explanation"] = request.form["feedback_explanation"]
+        response["feedback_accuarcy"] = request.form["feedback_accuracy"]
+        cookie_obj['response'] = response
         req_response = make_response(redirect(url_for(f"{treatment}.resp.done")))
         set_cookie_obj(req_response, BASE, cookie_obj)
         return req_response
 
     cookie_obj[BASE] = True
-    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ProposerForm()))
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ResponderForm(), scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_SCALAS))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
