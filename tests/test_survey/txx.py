@@ -31,6 +31,7 @@ def get_min_offer():
 WEBHOOK_DELAY = 0.25
 
 TASK_REPETITION = 8
+TASK_REPETITION_LOWER = 3
 
 OFFER = MAX_GAIN//2
 MIN_OFFER = MAX_GAIN//2
@@ -328,3 +329,30 @@ def test_survey_unique(client, treatment):
             form_data["drop"] = "0"
             res = client.post(path, data=form_data, follow_redirects=True)
             assert b"dropped" in res.data
+
+
+
+def test_survey_no_workerid(client, treatment):
+    for _ in range(TASK_REPETITION_LOWER):
+        with app.app_context():
+            assignment_id = generate_worker_id().upper().replace("_", "")
+            path = f"/survey/{treatment}/?assignment_id={assignment_id}&preview=true"
+            with app.test_request_context(path):
+                client.get(path, follow_redirects=True)
+                form = MainForm()
+                form_data = {}
+                for field, item in form._fields.items():
+                    if field in SURVEY_CONTROL_FIELDS:
+                        form_data[field] = "correct"
+                    elif field == SURVEY_MAIN_TASK_CODE_FIELD:
+                        form_data[field] = "resp:"
+                    elif field.startswith("code_"):
+                        form_data[field] = get_completion_code(field)
+                    elif field in SURVEY_CHOICE_FIELDS:
+                        form_data[field] = random.choice(item.choices)[0]
+                    else:
+                        form_data[field] = "abc"
+                res = client.post(path, data=form_data, follow_redirects=True)
+                print("RESULT", res.data)
+                # assert b"Your survey completion code is:" in res.data
+                # assert b"dropped" not in res.data

@@ -74,3 +74,6 @@ def test_survey_drop(client):
 
 def test_survey_unique(client):
     txx.test_survey_unique(client, TREATMENT)
+
+def test_survey_no_workerid(client):
+    txx.test_survey_no_workerid(client, TREATMENT)
