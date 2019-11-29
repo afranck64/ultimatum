@@ -56,10 +56,12 @@ def loss_tf(y_true, y_pred):
     # return tf.math.subtract(one, tf.math.multiply(left_mul, right_mul))
     #return (1 - gain_tf(y_true, y_pred)) * 100
 
+    normalizer = MAX_GAIN / 100.0
+
     x0 = tf.math.subtract(y_pred, y_true)
     offset = tf.constant(1.0, dtype=K.floatx())
-    x1 = (x0 + offset) / K.constant(16.0, dtype=K.floatx())
-    x2 = (x0) / K.constant(40.0, dtype=K.floatx())
+    x1 = (x0 + offset) / K.constant(normalizer * 8.0, dtype=K.floatx())
+    x2 = (x0) / K.constant(normalizer * 20.0, dtype=K.floatx())
     left_mul = sigmoid1024_tf(x1)
     right_mul = tf.math.cos(tf.math.divide(x2, math_pi))
     return tf.math.subtract(one, tf.math.multiply(left_mul, right_mul))
