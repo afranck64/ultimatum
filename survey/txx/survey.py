@@ -350,7 +350,7 @@ def handle_survey_feedback(treatment=None, template=None, code_prefixes=None, fo
         if is_codes_valid and job_id != "na" and worker_id != "na":
             cookie_obj["response"] = response
             #NOTE: the url should be pointing to handle_survey_feedback_done
-            req_response = make_response(redirect(url_for(f"{treatment}.survey.done", **request.args)))
+            req_response = make_response(redirect(url_for(f"{treatment}.survey.survey_done", **request.args)))
             set_cookie_obj(req_response, BASE, cookie_obj)
             return req_response
         elif is_codes_valid:
