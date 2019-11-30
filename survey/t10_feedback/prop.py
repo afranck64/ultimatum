@@ -70,6 +70,7 @@ def get_row(con, job_id, worker_id, treatment, full=True):
         if not full:
             res = {k:v for k,v in res.items() if k in {"worker_id", "min_offer", "ai_offer"}}
         res = dict(res)
+        res["rowid"] = None
     except:
         pass
     return res
