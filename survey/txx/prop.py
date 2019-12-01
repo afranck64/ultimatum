@@ -112,6 +112,13 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
     result["ai_nb_calls"] = ai_nb_calls
     result["ai_calls_count_repeated"] = proposal["ai_calls_count_repeated"]
     result["completion_code"] = proposal["completion_code"]
+
+    ## Feedback
+    result["feedback_understanding"] = proposal.get("feedback_understanding")
+    result["feedback_explanation"] = proposal.get("feedback_explanation")
+    result["feedback_accuracy"] = proposal.get("feedback_accuracy")
+
+
     # if ai_nb_calls > 0:
     #     result["ai_call_min_offer"] = min(proposal["ai_calls_offer"])
     #     result["ai_call_max_offer"] = max(proposal["ai_calls_offer"])
@@ -322,7 +329,9 @@ def process_insert_row_dss(job_id, resp_row, treatment, overwrite=False):
 def insert_row(job_id, resp_row, treatment, overwrite=False):
     MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
     dss_available = bool(app.config.get(MODEL_KEY))
-    discarded_items = {"completion_code"}
+    discarded_items = {
+        "completion_code", "feedback_accuracy", "feedback_understanding", "feedback_explanation",
+        "time_start", "time_start_dss", "time_stop", "time_stop_dss", "timestamp"}
     resp_row = {k:v for k,v in resp_row.items() if k not in discarded_items}
     if dss_available:
         process_insert_row_dss(job_id, resp_row, treatment, overwrite)
