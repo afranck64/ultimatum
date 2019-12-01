@@ -30,8 +30,8 @@ def get_min_offer():
 
 WEBHOOK_DELAY = 0.25
 
-TASK_REPETITION = 8
-TASK_REPETITION_LOWER = 3
+TASK_REPETITION = 3
+TASK_REPETITION_LOWER = 2
 
 OFFER = MAX_GAIN//2
 MIN_OFFER = MAX_GAIN//2
@@ -53,21 +53,22 @@ def get_completion_code(field):
 def test_available(treatment):
     assert treatment.upper() in app.config["TREATMENTS"]
 
-def test_index(client, treatment, prefix=""):
+def test_index(client, treatment, prefix="", response_available=False):
     client = None
     job_id = "test"
     for _ in range(TASK_REPETITION):
         client = get_client()
-        resp_worker_id = generate_worker_id(f"{prefix}index_resp")
-        path = f"/{treatment}/?worker_id={resp_worker_id}"
-        with app.test_request_context(path):
-            res = client.get(path, follow_redirects=True)
-            assert b"RESPONDER" in res.data
-            # res = _process_resp_tasks(client, worker_id=worker_id)
+        if not response_available:
+            resp_worker_id = generate_worker_id(f"{prefix}index_resp")
+            path = f"/{treatment}/?worker_id={resp_worker_id}"
+            with app.test_request_context(path):
+                res = client.get(path, follow_redirects=True)
+                assert b"RESPONDER" in res.data
+                # res = _process_resp_tasks(client, worker_id=worker_id)
 
-            res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
-            process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
-            assert b"resp:" in res.data
+                res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+                process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
+                assert b"resp:" in res.data
         prop_worker_id = generate_worker_id(f"{prefix}index_prop")
         time.sleep(WEBHOOK_DELAY)
         path = f"/{treatment}/?worker_id={prop_worker_id}"
@@ -76,6 +77,29 @@ def test_index(client, treatment, prefix=""):
             # assert b"PROPOSER" in res.data
             res = _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=get_offer(), response_available=True)
             assert b"prop:" in res.data
+
+def test_index_feedback(client, treatment, prefix="", response_available=False):
+    client = None
+    job_id = "test"
+    for _ in range(TASK_REPETITION):
+        client = get_client()
+        if not response_available:
+            resp_worker_id = generate_worker_id(f"{prefix}index_feedback_resp")
+            path = f"/{treatment}/?worker_id={resp_worker_id}"
+            with app.test_request_context(path):
+                res = client.get(path, follow_redirects=True)
+                assert b"RESPONDER" in res.data
+                # res = _process_resp_tasks(client, worker_id=worker_id)
+
+                res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+                assert b"resp:" in res.data
+        else:
+            prop_worker_id = generate_worker_id(f"{prefix}index_prop")
+            path = f"/{treatment}/?worker_id={prop_worker_id}"
+            with app.test_request_context(path):
+                res = client.get(path, follow_redirects=True)
+                res = _process_prop_round(client, treatment, worker_id=prop_worker_id, offer=get_offer(), response_available=True, finalize_round=False)
+                assert b"prop:" in res.data
 
 def test_index_auto(client, treatment, prefix=""):
     #takes the role assigned by the system and solves the corresponding tasks
@@ -130,33 +154,35 @@ def test_resp_done_both_models(client, treatment):
     res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
     assert b"resp:" in res
 
-def test_prop_index(client, treatment):
+def test_prop_index(client, treatment, response_available=False):
     resp_worker_id = generate_worker_id("resp")
     job_id = "test"
-    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
-    process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
-    time.sleep(WEBHOOK_DELAY)
+    if not response_available:
+        _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+        process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
+        time.sleep(WEBHOOK_DELAY)
     prop_worker_id = generate_worker_id("prop")
-    res = client.get(f"/{treatment}/prop/?job_id={job_id}&worker_id={prop_worker_id}").data
+    res = client.get(f"/{treatment}/prop/?job_id={job_id}&worker_id={prop_worker_id}", follow_redirects=True).data
     assert b"PROPOSER" in res
 
-def test_prop_check(client, treatment):
+def test_prop_check(client, treatment, response_available=False):
     worker_id = generate_worker_id("prop_check")
     path = f"/{treatment}/prop/?job_id=test&worker_id={worker_id}"
-    _process_resp_tasks(client, treatment, worker_id=None, min_offer=get_min_offer())
+    if not response_available:
+        _process_resp_tasks(client, treatment, worker_id=None, min_offer=get_min_offer())
     with app.test_request_context(path):
-        client.get(path)
-        res = client.get(f"{treatment}/prop/check/?offer={OFFER}").data
+        client.get(path, follow_redirects=True)
+        res = client.get(f"{treatment}/prop/check/?offer={OFFER}", follow_redirects=True).data
         assert b"acceptance_probability" in res
         assert b"best_offer_probability" in res
 
-def test_prop_done(client, treatment):
-    res = _process_prop(client, treatment, offer=get_offer())
+def test_prop_done(client, treatment, response_available=False):
+    res = _process_prop(client, treatment, offer=get_offer(), response_available=response_available)
     assert b"prop:" in res.data
 
-def test_prop_check_done(client, treatment):
+def test_prop_check_done(client, treatment, response_available=False):
     nb_dss_check = random.randint(1, 20)
-    res = _process_prop(client, treatment, offer=get_offer(), nb_dss_check=nb_dss_check)
+    res = _process_prop(client, treatment, offer=get_offer(), nb_dss_check=nb_dss_check, response_available=response_available)
     assert b"prop:" in res.data
 
 

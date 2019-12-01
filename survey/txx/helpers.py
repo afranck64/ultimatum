@@ -95,7 +95,7 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
             with client:
                 with client.session_transaction() as sess:
                     sess.clear()
-        client.get(path)
+        client.get(path, follow_redirects=True)
         app.logger.debug(f"Path: {path}, Path2: {path2}")
         if dss_available:
             # We send the secret_key_hash to have the ai_offer sent back!!!
@@ -125,7 +125,7 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
         return res
 
 
-def _process_prop_round(client, treatment, job_id="test", worker_id=None, offer=OFFER, clear_session=True, response_available=False, synchron=False, path=None):
+def _process_prop_round(client, treatment, job_id="test", worker_id=None, offer=OFFER, clear_session=True, response_available=False, synchron=False, path=None, finalize_round=True):
     app.logger.debug("_process_prop_round")
     if client is None:
         client = app.test_client()
@@ -140,7 +140,8 @@ def _process_prop_round(client, treatment, job_id="test", worker_id=None, offer=
         _process_resp_tasks(client, treatment=treatment, job_id=job_id, worker_id=None, min_offer=MIN_OFFER, bonus_mode="full")
     res = _process_prop(client, treatment=treatment, job_id=job_id, worker_id=worker_id, offer=offer, response_available=True, path=path)
     time.sleep(WEBHOOK_DELAY)
-    emit_webhook(client, url=webhook_url, treatment=treatment, job_id=job_id, worker_id=worker_id)
+    if finalize_round:
+        emit_webhook(client, url=webhook_url, treatment=treatment, job_id=job_id, worker_id=worker_id)
     return res
 
 
