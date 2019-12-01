@@ -174,7 +174,7 @@ def handle_index_dss(treatment, template=None, messages=None, dss_only=False):
         response["min_offer_dss"] = int(request.form["min_offer"])
         response["feedback_understanding"] = request.form["feedback_understanding"]
         response["feedback_explanation"] = request.form["feedback_explanation"]
-        response["feedback_accuarcy"] = request.form["feedback_accuracy"]
+        response["feedback_accuracy"] = request.form["feedback_accuracy"]
         cookie_obj['response'] = response
         req_response = make_response(redirect(url_for(f"{treatment}.resp.done")))
         set_cookie_obj(req_response, BASE, cookie_obj)
