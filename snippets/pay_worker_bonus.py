@@ -44,7 +44,7 @@ def get_client(sandbox=MTURK_SANDBOX):
 def pay_worker_bonus(client, worker_id, bonus_cents, assignment_id, reason=None):
     client.send_bonus(
         WorkerId=str(worker_id),
-        BonusAmount=str(bonus_cents),
+        BonusAmount=str(bonus_cents/100),
         AssignmentId=str(assignment_id),
         Reason= reason or "Thank you for your work. ^_^",
         #UniqueRequestToken=unique_token
