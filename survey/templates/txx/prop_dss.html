@@ -117,15 +117,85 @@
     </script>
 
     <style>
+        img {
+            display: block;
+            margin: auto;
+          }
+          
+          p {
+            display: block;
+            margin-top: 1em;
+            margin-bottom: 1em;
+            margin-left: 2em;
+            margin-right: 2em;
+          }
+          
+          form {
+            display: block;
+            margin-top: 1em;
+            margin-bottom: 2em;
+            margin-left: 2em;
+            margin-right: 0;
+          }
+          
+          form input {
+          display: inline-block;
+          }
+        
+        form .likert {
+          list-style:none;
+          width:100%;
+          margin:0;
+          padding: 10px 0 15px 0;
+          display:block;
+          border-bottom:1px solid #efefef;
+        }
+        h2.likert-header {
+        padding-left:4.25%;
+        margin:20px 0 0;
+        }
+        /* form .likert:last-of-type {border-bottom:0;} */
         form .likert:before {
-        content: '';
-        position:relative;
-        top:11px;
-        left:8%;
-        display:block;
-        background-color:#efefef;
-        height:4px;
-        width:83%;
+          content: '';
+          position:relative;
+          top:11px;
+          left:8%;
+          display:block;
+          background-color:#efefef;
+          height:4px;
+          width:85%;
+        }
+        @-moz-document url-prefix() {
+
+            form .likert:before {
+            content: '';
+            position: relative;
+            top:11px;
+            left:0%;
+            display:block;
+            background-color:#efefef;
+            height:4px;
+            width:85%;
+            }
+        }
+        form .likert li {
+          display:inline-block;
+          width:13.7%;
+          text-align:center;
+          vertical-align: top;
+        }
+        form .likert li input[type=radio] {
+          display:block;
+          position:relative;
+          top:0;
+          left:50%;
+          margin-left:-6px;
+          
+        }
+        form .likert li label {width:100%;
+          font-size: 16px;
+          font-weight: normal;
+          display: inline-block;
         }
     </style>
 {% endblock %}
@@ -227,30 +297,30 @@
                 <br>
                 <br>
                 <label align="center" class="statement">I could understand why the AI-System thought the responder would accept a given offer.
-                    <ul class='likert' style="display: block; list-style:none; border-bottom:1px solid #efefef; padding: 0;">
+                    <ul class='likert'>
                         {% for value, label in scalas.items() %}               
-                        <li style="display: inline-block; width: 13.5%; vertical-align: top; text-align: center;">
-                            <label style="width: 100%; font-size: 16px; font-weight: normal;"> <input type="radio" name="feedback_understanding" value="{{value}}" required style="display: block; position: relative; top:0; left:50%; margin-left: -6px;">{{label}}</label>
+                        <li >
+                            <label> <input type="radio" name="feedback_understanding" value="{{value}}">{{label}}</label>
                         </li>
                         {% endfor %}
                     </ul>
                 </label>
 
                 <label align="center" class="statement">It is hard for me to explain how the AI-System took its decisions.
-                    <ul class='likert' style="display: block; list-style:none; border-bottom:1px solid #efefef; padding: 0;">
+                    <ul class='likert'>
                         {% for value, label in scalas.items() %}               
-                        <li style="display: inline-block; width: 13.5%; vertical-align: top; text-align: center;">
-                            <label style="width: 100%; font-size: 16px; font-weight: normal;"> <input type="radio" name="feedback_explanation" value="{{value}}" required style="display: block; position: relative; top:0; left:50%; margin-left: -6px;">{{label}}</label>
+                        <li >
+                            <label > <input type="radio" name="feedback_explanation" value="{{value}}" required>{{label}}</label>
                         </li>
                         {% endfor %}
                     </ul>
                 </label>
 
                 <label align="center" class="statement">On average recommendations of the AI-System allow PROPOSERS to gain the following share of the pie left by RESPONDERS (pie - min_offer):
-                    <ul class='likert' style="display: block; list-style:none; border-bottom:1px solid #efefef; padding: 0;">
+                    <ul class='likert'>
                         {% for value, label in accuracy_scalas.items() %}               
-                        <li style="display: inline-block; width: 13.5%; vertical-align: top; text-align: center;">
-                            <label style="width: 100%; font-size: 16px; font-weight: normal;"> <input type="radio" name="feedback_accuracy" value="{{value}}" required style="display: block; position: relative; top:0; left:50%; margin-left: -6px;">{{label}}</label>
+                        <li >
+                            <label > <input type="radio" name="feedback_accuracy" value="{{value}}" required>{{label}}</label>
                         </li>
                         {% endfor %}
                     </ul>
