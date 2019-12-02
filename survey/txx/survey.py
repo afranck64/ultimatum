@@ -16,7 +16,7 @@ from survey.utils import (
 from core.models.metrics import MAX_GAIN
 from survey.db import insert, get_db
 from survey.admin import get_job_config
-from survey._app import app, VALUES_SEPARATOR, MAXIMUM_CONTROL_MISTAKES
+from survey._app import app, VALUES_SEPARATOR, MAXIMUM_CONTROL_MISTAKES, TREATMENTS_AUTO_DSS
 from survey.adapter import get_adapter, get_adapter_from_dict
 from survey.txx.index import check_is_proposer_next, NEXT_IS_PROPOSER_WAITING
 
@@ -263,7 +263,10 @@ def handle_survey_feedback(treatment=None, template=None, code_prefixes=None, fo
     if template is None:
         template = "txx/survey_feedback.html"
     if overview_url is None:
-        overview_url = url_for("overview_feedback")
+        if treatment and treatment.upper() in TREATMENTS_AUTO_DSS:
+            overview_url = url_for("overview_auto_prop_feedback")
+        else:
+            overview_url = url_for("overview_feedback")
     cookie_obj = get_cookie_obj(BASE)
     
     adapter_cookie = get_adapter_from_dict(cookie_obj.get("adapter", {}))
