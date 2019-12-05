@@ -19,9 +19,12 @@ from survey.db import get_db
 from survey.txx.prop import insert_row
 from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED, get_table, get_secret_key_hash
 
+from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_SCALAS
 from survey.tasks.helpers import process_tasks, generate_worker_id
 
 
+AI_FEEDBACK_SCALAS_KEYS = list(AI_FEEDBACK_SCALAS)
+AI_FEEDBACK_ACCURACY_SCALAS_KEYS = list(AI_FEEDBACK_ACCURACY_SCALAS)
 
 WEBHOOK_DELAY = 0.25
 
@@ -51,7 +54,12 @@ def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MI
                     sess.clear()
         client.get(path, follow_redirects=True)
 
-        data={"min_offer": min_offer, "feedback_understanding": 1, "feedback_explanation": 1, "feedback_accuracy": 0}
+        data={
+            "min_offer": min_offer,
+            "feedback_understanding": random.choice(AI_FEEDBACK_SCALAS_KEYS),
+            "feedback_explanation":  random.choice(AI_FEEDBACK_SCALAS_KEYS),
+            "feedback_accuracy": random.choice(AI_FEEDBACK_ACCURACY_SCALAS_KEYS)
+        }
         res = client.post(path, data=data, follow_redirects=True)
         if dss_available:
             path2 = f"/{treatment}/resp_dss/?job_id={job_id}&worker_id={worker_id}"
@@ -110,7 +118,12 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
                     app.log_exception(err)
                     offer = -1
             data = {"offer": offer}
-            data_dss = {"offer_dss": offer, "feedback_understanding": 1, "feedback_explanation": 1, "feedback_accuracy": 0}
+            data_dss = {
+                "offer_dss": offer,
+                "feedback_understanding": random.choice(AI_FEEDBACK_SCALAS_KEYS),
+                "feedback_explanation":  random.choice(AI_FEEDBACK_SCALAS_KEYS),
+                "feedback_accuracy": random.choice(AI_FEEDBACK_ACCURACY_SCALAS_KEYS)
+            }
             res = client.post(path, data=data, follow_redirects=True)
             if nb_dss_check is None:
                 res = client.post(path2, data=data_dss, follow_redirects=True)

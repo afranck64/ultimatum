@@ -34,7 +34,7 @@ from survey._app import app, csrf_protect, TREATMENTS_MODEL_REFS, CODE_DIR
 from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists, update
-from survey.txx.prop import JUDGING_TIMEOUT_SEC, HHI_Prop_ADM, OFFER_VALUES, ProposerForm, prop_to_prop_result, AI_COOKIE_KEY, AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_SCALAS
+from survey.txx.prop import JUDGING_TIMEOUT_SEC, HHI_Prop_ADM, OFFER_VALUES, ProposerForm, prop_to_prop_result, AI_COOKIE_KEY, AI_FEEDBACK_SCALAS
 from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table, predict_weak, predict_strong,
     generate_completion_code, increase_worker_bonus, get_cookie_obj, set_cookie_obj, get_secret_key_hash,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
@@ -51,7 +51,16 @@ df_prop = pd.read_csv(PROP_FILENAME)
 
 bp = Blueprint(f"{TREATMENT}.{BASE}", __name__)
 
-
+# Keep the original values used when t10_feedback was launched
+AI_FEEDBACK_ACCURACY_SCALAS = {
+    0: "No clue",
+    1: "0%",
+    2: "20%",
+    3: "40%",
+    4: "60%",
+    5: "80%",
+    6: "100%",
+}
 ######################################################
 
 
