@@ -39,7 +39,7 @@ def index_dss():
         """The system was trained using prior interactions of comparable bargaining situations.
 - The system learned a fixed optimal offer (AI_OFFER).
 - AI_OFFER was found by testing each possible offer on comparable bargaining situations and was selected as the one that provided the highest average gain to the PROPOSERs.
-- Following the AI-System's recommendations, PROPOSERs can gain 80% of the share of the pie left by RESPONDERs.
+- Following the AI-System's recommendations, PROPOSERs can gain 80% of the pie left by RESPONDERs.
 - Following the AI-System's recommendations, PROPOSERs can have 95% of their offers accepted.
 - The probability of an offer being accepted is higher than 50% when the offer is greater than or equal to AI_OFFER.
 - The probability of an offer being the RESPONDER's minimal offer is higher the closer the test offer is to AI_OFFER.""",
