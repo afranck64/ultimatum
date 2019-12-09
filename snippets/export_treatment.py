@@ -44,6 +44,7 @@ def get_tables(treatment):
         "result__exp",
         "result__ras",
         "result__risk",
+        "main__txx",
         f"result__{treatment}_resp",
         f"result__{treatment}_prop",
         f"result__{treatment}_survey",
