@@ -8,6 +8,7 @@ from flask import (
 )
 from survey._app import app, csrf_protect
 from survey.txx.resp import handle_done, handle_index, handle_index_dss
+from survey.globals import AI_SYSTEM_DESCRIPTION_BRIEF_RESPONDER, AI_SYSTEM_DESCRIPTION_EXTENDED_RESPONDER
 
 ############ Consts #################################
 
@@ -29,17 +30,7 @@ def index():
 @csrf_protect.exempt
 @bp.route("/resp_dss/", methods=["GET", "POST"])
 def index_dss():
-    messages = [
-        """The Proposer has the option to use an AI Recommendation System (AI System) to help him decide which offer to make.
-The system was trained using prior interactions of comparable bargaining situations.""",
-        """The system was trained using prior interactions of comparable bargaining situations.
-- The system learned a fixed optimal offer (AI_OFFER).
-- AI_OFFER was found by testing each possible offer on comparable bargaining situations and was selected as the one that provided the highest average gain to the PROPOSERs.
-- Following the AI System's recommendations, PROPOSERs can gain 80% of the pie left by RESPONDERs.
-- Following the AI System's recommendations, PROPOSERs can have 95% of their offers accepted.
-- The probability of an offer being accepted is higher than 50% when the offer is greater than or equal to AI_OFFER.
-- The probability of an offer being the RESPONDER's minimal offer is higher the closer the offer is to AI_OFFER.""",
-    ]
+    messages = [AI_SYSTEM_DESCRIPTION_BRIEF_RESPONDER, AI_SYSTEM_DESCRIPTION_EXTENDED_RESPONDER]
     return handle_index_dss(TREATMENT, messages=messages)
 
 @bp.route("/resp/done")

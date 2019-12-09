@@ -101,11 +101,8 @@ app.config["TASKS"] = ["exp", "risk", "cc", "ras", "cpc"]
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", os.urandom(32))
 app.config["APPLICATION_ROOT"] = os.getenv("APPLICATION_ROOT", "/")
 # Main database
-app.config["DATABASE"] = os.getenv("DATABASE", "./db.sqlite3")
-# Data (job based) database
-app.config["DATABASE_DATA"] = os.getenv("DATABASE_DATA", "./db.data.sqlite3")
-# Results (job based) database
-app.config["DATABASE_RESULT"] = os.getenv("DATABASE_RESULT", "./db.result.sqlite3")
+app.config["DATABASE"] = os.getenv("DATABASE", os.path.join(CODE_DIR, "db.sqlite3"))
+
 app.config["ADMIN_SECRET"] = os.getenv("ADMIN_SECRET", "")
 
 class FakePool(object):
