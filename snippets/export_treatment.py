@@ -77,7 +77,7 @@ def mask_workers_ids(df):
             df[col] = df[col].apply(lambda x: x[:5] + "#####" + x[10:] if x else None, 0)
     return df
 
-EXCLUDED_JOB_IDS = ('na', 'demo', 'check', 'test_auto')
+EXCLUDED_JOB_IDS = ('na', 'demo', 'check', 'test_auto', 'test')
 def export(treatment, con, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     tasks_tables = get_tasks_tables()
@@ -91,8 +91,11 @@ def export(treatment, con, output_dir):
             df = pd.read_sql(sql, con)
             df_masked_worker_ids = mask_workers_ids(df)
             output_file = os.path.join(output_dir, table + ".csv")
-            df_masked_worker_ids.to_csv(output_file)
-            print(f"Successfully exported table {table}")
+            if df_masked_worker_ids.shape[0] > 0:
+                df_masked_worker_ids.to_csv(output_file)
+                print(f"Successfully exported table {table}")
+            else:
+                print(f"Skipped table {table}")
         except Exception as err:
             print(f"Could not export table {table} - {err}")
 
