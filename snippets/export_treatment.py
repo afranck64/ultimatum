@@ -82,14 +82,18 @@ def export(treatment, con, output_dir):
     tasks_tables = get_tasks_tables()
     tasks_jobs_ids = get_tasks_jobs_ids(treatment, con)
     for table in get_tables(treatment):
-        if table in tasks_tables:
-            sql = f"select * from {table} where job_id in {tuple(tasks_jobs_ids)} and job_id not in {EXCLUDED_JOB_IDS}"
-        else:
-            sql = f"select * from {table} where job_id not in {EXCLUDED_JOB_IDS}"
-        df = pd.read_sql(sql, con)
-        df_masked_worker_ids = mask_workers_ids(df)
-        output_file = os.path.join(output_dir, table + ".csv")
-        df_masked_worker_ids.to_csv(output_file)
+        try:
+            if table in tasks_tables:
+                sql = f"select * from {table} where job_id in {tuple(tasks_jobs_ids)} and job_id not in {EXCLUDED_JOB_IDS}"
+            else:
+                sql = f"select * from {table} where job_id not in {EXCLUDED_JOB_IDS}"
+            df = pd.read_sql(sql, con)
+            df_masked_worker_ids = mask_workers_ids(df)
+            output_file = os.path.join(output_dir, table + ".csv")
+            df_masked_worker_ids.to_csv(output_file)
+            print(f"Successfully exported table {table}")
+        except Exception as err:
+            print(f"Could not export table {table} - {err}")
 
 
 
