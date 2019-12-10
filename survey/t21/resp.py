@@ -37,7 +37,7 @@ def index_dss():
 @csrf_protect.exempt
 @bp.route("/resp_feedback/", methods=["GET", "POST"])
 def feedback():
-    return handle_feedback(TREATMENT, template="txx/resp_dss_t2x.html")
+    return handle_feedback(TREATMENT, template="txx/resp_dss_feedback_t2x.html")
 
 
 @bp.route("/resp/done")
