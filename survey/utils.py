@@ -106,7 +106,12 @@ def get_table(base, job_id, schema, category=None, treatment=None, is_task=False
 
     return res
 
-
+def get_masked_worker_id(worker_id):
+    if worker_id is None:
+        return worker_id
+    else:
+        return worker_id[:5] + "#####" + worker_id[10:]
+        
 def is_worker_available(worker_id, table):
     """
     Returns True if <table> exist and contains a column "worker_id" which has the value <worker_id>

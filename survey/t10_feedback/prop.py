@@ -34,9 +34,9 @@ from survey._app import app, csrf_protect, TREATMENTS_MODEL_REFS, CODE_DIR
 from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists, update
-from survey.txx.prop import JUDGING_TIMEOUT_SEC, HHI_Prop_ADM, OFFER_VALUES, ProposerForm, prop_to_prop_result, AI_COOKIE_KEY, AI_FEEDBACK_SCALAS
+from survey.txx.prop import JUDGING_TIMEOUT_SEC, HHI_Prop_ADM, OFFER_VALUES, ProposerForm, prop_to_prop_result, AI_COOKIE_KEY, AI_FEEDBACK_SCALAS, handle_feedback
 from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table, predict_weak, predict_strong,
-    generate_completion_code, increase_worker_bonus, get_cookie_obj, set_cookie_obj, get_secret_key_hash,
+    generate_completion_code, increase_worker_bonus, get_cookie_obj, set_cookie_obj, get_secret_key_hash, get_masked_worker_id,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
 ############ Consts #################################
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
@@ -45,7 +45,7 @@ BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 MODEL_INFOS_KEY = f"{TREATMENT.upper()}_MODEL_INFOS"
 MODEL_KEY = f"{TREATMENT.upper()}_MODEL"
 
-PROP_FILENAME = os.path.join(CODE_DIR, "data", "t10", "data__t10_prop.csv")
+PROP_FILENAME = os.path.join(CODE_DIR, "data", "t10", "export", "data__t10_prop.csv")
 
 df_prop = pd.read_csv(PROP_FILENAME)
 
@@ -75,7 +75,8 @@ def get_row(con, job_id, worker_id, treatment, full=True):
     app.logger.debug("get_row - feedback")
     res = None
     try:
-        res = dict(df_prop[df_prop["worker_id"]==worker_id].iloc[0])
+        masked_worker_id = get_masked_worker_id(worker_id)
+        res = dict(df_prop[df_prop["worker_id"]==masked_worker_id].iloc[0])
         if not full:
             res = {k:v for k,v in res.items() if k in {"worker_id", "min_offer", "ai_offer"}}
         res = dict(res)
@@ -124,9 +125,6 @@ def handle_index_dss(treatment, template=None, proposal_class=None, messages=Non
             flash(message)
     if request.method == "POST":
         proposal = cookie_obj["proposal"]
-        proposal["feedback_understanding"] = request.form["feedback_understanding"]
-        proposal["feedback_explanation"] = request.form["feedback_explanation"]
-        proposal["feedback_accuracy"] = request.form["feedback_accuracy"]
         proposal["time_stop"] = time.time()
         proposal["time_stop_stop"] = time.time()
         offer_dss = request.form["offer_dss"]
@@ -227,6 +225,12 @@ You can use the system as often as you want."""
 @bp.route("/prop/check/")
 def check():
     return handle_check(TREATMENT)
+
+
+@csrf_protect.exempt
+@bp.route("/prop/", methods=["GET", "POST"])
+def feedback():
+    return handle_feedback(TREATMENT)
 
 @bp.route("/prop/done")
 def done():
