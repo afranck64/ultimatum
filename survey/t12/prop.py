@@ -10,7 +10,7 @@ from flask import (
 from core.utils import cents_repr
 
 from survey._app import app, csrf_protect
-from survey.txx.prop import handle_check, handle_done, handle_index, insert_row, handle_index_dss
+from survey.txx.prop import handle_check, handle_done, handle_index, insert_row, handle_index_dss, handle_feedback
 from survey.globals import AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER, AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER
 ############ Consts #################################
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
@@ -43,6 +43,11 @@ def index_dss():
 @bp.route("/prop/check/")
 def check():
     return handle_check(TREATMENT)
+
+@csrf_protect.exempt
+@bp.route("/prop_feedback/", methods=["GET", "POST"])
+def feedback():
+    return handle_feedback(TREATMENT)
 
 @bp.route("/prop/done")
 def done():

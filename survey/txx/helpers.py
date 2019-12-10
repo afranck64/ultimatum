@@ -19,12 +19,13 @@ from survey.db import get_db
 from survey.txx.prop import insert_row
 from survey.utils import get_worker_bonus, get_worker_paid_bonus, get_total_worker_bonus, WORKER_CODE_DROPPED, get_table, get_secret_key_hash
 
-from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_SCALAS
+from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_SCALAS, AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS
 from survey.tasks.helpers import process_tasks, generate_worker_id
 
 
 AI_FEEDBACK_SCALAS_KEYS = list(AI_FEEDBACK_SCALAS)
 AI_FEEDBACK_ACCURACY_SCALAS_KEYS = list(AI_FEEDBACK_ACCURACY_SCALAS)
+AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_KEYS = list(AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS)
 
 WEBHOOK_DELAY = 0.25
 
@@ -56,16 +57,24 @@ def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MI
 
         data={
             "min_offer": min_offer,
-            "feedback_understanding": random.choice(AI_FEEDBACK_SCALAS_KEYS),
-            "feedback_explanation":  random.choice(AI_FEEDBACK_SCALAS_KEYS),
-            "feedback_accuracy": random.choice(AI_FEEDBACK_ACCURACY_SCALAS_KEYS)
         }
         res = client.post(path, data=data, follow_redirects=True)
         if dss_available:
-            path2 = f"/{treatment}/resp_dss/?job_id={job_id}&worker_id={worker_id}"
-            client.get(path2, follow_redirects=True)
-            data_dss = {"min_offer": min_offer, "feedback_understanding": 1, "feedback_explanation": 1, "feedback_accuracy": 0}
-            res = client.post(path2, data=data_dss, follow_redirects=True)
+            path_dss = f"/{treatment}/resp_dss/?job_id={job_id}&worker_id={worker_id}"
+            client.get(path_dss, follow_redirects=True)
+            data_dss={
+                "min_offer": min_offer,
+            }
+            res = client.post(path_dss, data=data_dss, follow_redirects=True)
+
+            data_feedback = {
+                "feedback_alternative": random.choice(AI_FEEDBACK_SCALAS_KEYS),
+                "feedback_fairness":  random.choice(AI_FEEDBACK_SCALAS_KEYS),
+                "feedback_accuracy": random.choice(AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_KEYS)
+            }
+            path_feedback = f"/{treatment}/resp_feedback/?job_id={job_id}&worker_id={worker_id}"
+            res = client.post(path_feedback, data=data_feedback, follow_redirects=True)
+
         return res
 
 def _process_resp_tasks(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, bonus_mode="random", clear_session=True, synchron=True, path=None):
@@ -87,15 +96,14 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
     dss_available = bool(app.config.get(MODEL_KEY))
     if worker_id is None:
         worker_id = generate_worker_id("prop")
-    path2 = None
     if path is None:
         path = f"/{treatment}/prop/?job_id={job_id}&worker_id={worker_id}"
-    if path2 is None:
-        path2 = f"/{treatment}/prop_dss/?job_id={job_id}&worker_id={worker_id}"
-
+    path_dss = f"/{treatment}/prop_dss/?job_id={job_id}&worker_id={worker_id}"
+    path_feedback = f"/{treatment}/prop_feedback/?job_id={job_id}&worker_id={worker_id}"
     if auto_finalize is True:
         path += "&auto_finalize=1"
-        path2 += "&auto_finalize=1"
+        path_dss += "&auto_finalize=1"
+        path_feedback += "&auto_finalize=1"
     if not response_available:
         _process_resp_tasks(client, treatment, job_id=job_id)
     with app.test_request_context(path):
@@ -104,7 +112,7 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
                 with client.session_transaction() as sess:
                     sess.clear()
         client.get(path, follow_redirects=True)
-        app.logger.debug(f"Path: {path}, Path2: {path2}")
+        app.logger.debug(f"Path: {path}, Path2: {path_dss}")
         if dss_available:
             # We send the secret_key_hash to have the ai_offer sent back!!!
             check_path = f"{treatment}/prop/check/?secret_key_hash={get_secret_key_hash()}"
@@ -120,19 +128,22 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
             data = {"offer": offer}
             data_dss = {
                 "offer_dss": offer,
+            }
+            data_feedback = {
                 "feedback_understanding": random.choice(AI_FEEDBACK_SCALAS_KEYS),
                 "feedback_explanation":  random.choice(AI_FEEDBACK_SCALAS_KEYS),
-                "feedback_accuracy": random.choice(AI_FEEDBACK_ACCURACY_SCALAS_KEYS)
+                "feedback_accuracy": random.choice(AI_FEEDBACK_ACCURACY_SCALAS_KEYS),
             }
             res = client.post(path, data=data, follow_redirects=True)
             if nb_dss_check is None:
-                res = client.post(path2, data=data_dss, follow_redirects=True)
+                res = client.post(path_dss, data=data_dss, follow_redirects=True)
             else:
-                client.get(path2, follow_redirects=True)
+                client.get(path_dss, follow_redirects=True)
                 client.get(check_path)
                 for _ in range(nb_dss_check):
                     tmp = client.get(f"{check_path}?offer={random.choice(list(range(0, MAX_GAIN+1, 5)))}")
-                res = client.post(path2, data=data_dss, follow_redirects=True)
+                res = client.post(path_dss, data=data_dss, follow_redirects=True)
+            res = client.post(path_feedback, data=data_feedback, follow_redirects=True)
         else:
             res = client.post(path, data={"offer":offer}, follow_redirects=True)
         return res

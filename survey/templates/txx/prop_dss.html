@@ -285,49 +285,8 @@
             </label>
             <br>
             <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
             <div align="center" id="feedback">
-                <hr>
-                <h3>Please indicate your agreement with each of the following statements.</h3>
-                <br>
-                <br>
-                <label align="center" class="statement">I could understand why the AI System thought the responder would accept a given offer.
-                    <ul class='likert'>
-                        {% for value, label in scalas.items() %}               
-                        <li >
-                            <label> <input type="radio" name="feedback_understanding" value="{{value}}">{{label}}</label>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </label>
-
-                <label align="center" class="statement">It is hard for me to explain how the AI System took its decisions.
-                    <ul class='likert'>
-                        {% for value, label in scalas.items() %}               
-                        <li >
-                            <label > <input type="radio" name="feedback_explanation" value="{{value}}" required>{{label}}</label>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </label>
-
-                <label align="center" class="statement">On average, recommendations of the AI System allow PROPOSERS to gain the following share of the pie left by RESPONDERS:
-                    <ul class='likert'>
-                        {% for value, label in accuracy_scalas.items() %}               
-                        <li >
-                            <label > <input type="radio" name="feedback_accuracy" value="{{value}}" required>{{label}}</label>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </label>
             </div>
-            <br>
-            <br>
             <br>
             <br>
             <p align="center"> {{form.submit()}}</p>

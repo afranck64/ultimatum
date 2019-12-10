@@ -9,7 +9,7 @@ AI_FEEDBACK_SCALAS = {
 }
 
 AI_FEEDBACK_ACCURACY_SCALAS = {
-    "no_clue": "No clue",
+    "no_clue": "I don't know",
     "0_percent": "0%",
     "20_percent": "20%",
     "40_percent": "40%",
@@ -18,6 +18,26 @@ AI_FEEDBACK_ACCURACY_SCALAS = {
     "100_percent": "100%",
 }
 
+
+AI_FEEDBACK_ACCURACY_PROPOSER_SCALAS = {
+    "ai_much_worse": "Worse than me",
+    "ai_worse": "",
+    "ai_sligthly_worse": "",
+    "ai_equal_to_proposer": "As good as me",
+    "ai_slighly_better": "",
+    "ai_better": "",
+    "ai_much_better": "Better than me",
+}
+
+AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS = {
+    "ai_much_worse": "Worse than the proposer",
+    "ai_worse": "",
+    "ai_sligthly_worse": "",
+    "ai_equal_to_proposer": "As good as the proposer",
+    "ai_slighly_better": "",
+    "ai_better": "",
+    "ai_much_better": "Better than the proposer",
+}
 
 AI_SYSTEM_DESCRIPTION_BRIEF_STANDALONE_PROPOSER = """You have been assigned the role of a PROPOSER. As a PROPOSER, you will make an offer to the RESPONDER. You have the option to use an AI Recommendation System (AI System) to help you decide which offer to make. The system was trained using prior interactions of comparable bargaining situations."""
 
@@ -37,8 +57,10 @@ AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER = """To use the AI System, simply select a 
 
 You can use the system as often as you want."""
 
-AI_SYSTEM_DESCRIPTION_BRIEF_RESPONDER = """The Proposer has the option to use an AI Recommendation System (AI System) to help him/her decide which offer to make.
+AI_SYSTEM_DESCRIPTION_BRIEF_STANDALONE_RESPONDER = """The Proposer has the option to use an AI Recommendation System (AI System) to help him/her decide which offer to make.
 The system was trained using prior interactions of comparable bargaining situations."""
+
+AI_SYSTEM_DESCRIPTION_BRIEF_RESPONDER = """The Proposer has the option to use an AI Recommendation System (AI System) to help him/her decide which offer to make."""
 
 AI_SYSTEM_DESCRIPTION_EXTENDED_RESPONDER = AI_SYSTEM_DESCRIPTION_EXTENDED_PROPOSER
 

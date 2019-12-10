@@ -97,22 +97,46 @@
     <br>
 
     <form action="" method="post">
-            <p align="center">Select the Minimum Offer that You are Willing to Accept From the Dropdown Menu Below</p>
-            {{ form.hidden_tag() }}
-            <div align="center">
-                <select name="min_offer" id="min_offer" required id="min_offer" onchange="show_feedback_questions()">
-                    <option value="" selected disabled hidden>Select a value</option>
-                    {% for value, label in offer_values.items() %}
-                        <option value={{value}}>{{label}}</option>
-                    {% endfor %}
-                </select>
-            </div>
+            <div align="center" id="feedback">
+                <hr>
+                <h3>Please indicate your agreement with each of the following statements.</h3>
+                <br>
+                <br>
+                <label align="center" class="statement">I would have chosen a different minimum offer if i was directly playing against the proposer and not his AI System.
+                    <ul class='likert'>
+                        {% for value, label in scalas.items() %}               
+                        <li>
+                            <label> <input type="radio" name="feedback_alternative" value="{{value}}" required>{{label}}</label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </label>
 
-            <br> <br> <br> <br> <br> <br> <br>
-            
-            <div align="center"> 
-                    {{form.submit()}}
+                <label align="center" class="statement">I think it is unfair that the proposer gets to use a AI System.
+                    <ul class='likert'>
+                        {% for value, label in scalas.items() %}               
+                        <li>
+                            <label> <input type="radio" name="feedback_fairness" value="{{value}}" required>{{label}}</label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </label>
+
+                <label align="center" class="statement">On average, i think the AI System is:
+                    <ul class='likert'>
+                        {% for value, label in accuracy_scalas.items() %}               
+                        <li>
+                            <label> <input type="radio" name="feedback_accuracy" value="{{value}}" required>{{label}}</label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </label>
             </div>
+            <br>
+            <br>
+            <br>
+            <br>
+            <p align="center"> <input type=submit value=Submit></p>
         </div>
     </form>
 {% endblock %}

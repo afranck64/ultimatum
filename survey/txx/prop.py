@@ -35,7 +35,7 @@ from survey.db import insert, get_db, table_exists, update
 from survey.utils import (save_result2db, save_result2file, get_output_filename, get_table, predict_weak, predict_strong,
     generate_completion_code, increase_worker_bonus, get_cookie_obj, set_cookie_obj, get_secret_key_hash,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY)
-from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_SCALAS
+from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_PROPOSER_SCALAS
 #from survey.tasks import MAX_BONUS as TASKS_FEATURES
 
 
@@ -331,7 +331,7 @@ def insert_row(job_id, resp_row, treatment, overwrite=False):
     dss_available = bool(app.config.get(MODEL_KEY))
     discarded_items = {
         "completion_code", "feedback_accuracy", "feedback_understanding", "feedback_explanation",
-        "time_start", "time_start_dss", "time_stop", "time_stop_dss", "timestamp"}
+        "time_start", "time_start_dss", "time_stop", "time_stop_dss", "timestamp", "feedback_fairness", "feedback_alternative"}
     resp_row = {k:v for k,v in resp_row.items() if k not in discarded_items}
     if dss_available:
         process_insert_row_dss(job_id, resp_row, treatment, overwrite)
@@ -443,9 +443,6 @@ def handle_index_dss(treatment, template=None, proposal_class=None, messages=Non
             flash(message)
     if request.method == "POST":
         proposal = cookie_obj["proposal"]
-        proposal["feedback_understanding"] = request.form["feedback_understanding"]
-        proposal["feedback_explanation"] = request.form["feedback_explanation"]
-        proposal["feedback_accuracy"] = request.form["feedback_accuracy"]
         proposal["time_stop_dss"] = time.time()
         offer_dss = request.form["offer_dss"]
         try:
@@ -455,13 +452,13 @@ def handle_index_dss(treatment, template=None, proposal_class=None, messages=Non
             offer_dss = None
         proposal["offer_dss"] = offer_dss
         cookie_obj['proposal'] = proposal
-        req_response =  make_response(redirect(url_for(f"{treatment}.prop.done", **request.args)))
+        req_response =  make_response(redirect(url_for(f"{treatment}.prop.feedback", **request.args)))
         set_cookie_obj(req_response, BASE, cookie_obj)
         return req_response
 
     cookie_obj[BASE] = True
     prop_check_url = url_for(f"{treatment}.prop.check")
-    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_SCALAS, form=ProposerForm(), prop_check_url=prop_check_url, max_gain=MAX_GAIN))
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ProposerForm(), prop_check_url=prop_check_url, max_gain=MAX_GAIN))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
@@ -501,6 +498,26 @@ def handle_check(treatment):
     set_cookie_obj(req_response, AI_COOKIE_KEY, ai_cookie_obj)
     return req_response
 
+def handle_feedback(treatment, template=None, messages=None):
+    app.logger.debug("handle_index_dss")
+    cookie_obj = get_cookie_obj(BASE)
+    worker_code_key = f"{BASE}_worker_code"
+    worker_id = request.args.get("worker_id", "na")
+    if messages is None:
+        messages = []
+    if template is None:
+        template = f"txx/prop_dss_feedback.html"
+    if request.method == "POST":
+        proposal = cookie_obj["proposal"]
+        proposal["feedback_understanding"] = request.form["feedback_understanding"]
+        proposal["feedback_explanation"] = request.form["feedback_explanation"]
+        proposal["feedback_accuracy"] = request.form["feedback_accuracy"]
+        req_response =  make_response(redirect(url_for(f"{treatment}.prop.done", **request.args)))
+        set_cookie_obj(req_response, BASE, cookie_obj)
+        return req_response
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_PROPOSER_SCALAS))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response 
 
 def handle_done(treatment, template=None, response_to_result_func=None):
     app.logger.debug("handle_done")

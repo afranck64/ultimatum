@@ -7,7 +7,7 @@ from flask import (
     Blueprint
 )
 from survey._app import app, csrf_protect
-from survey.txx.resp import handle_done, handle_index, handle_index_dss
+from survey.txx.resp import handle_done, handle_index, handle_index_dss, handle_feedback
 from survey.globals import AI_SYSTEM_DESCRIPTION_BRIEF_RESPONDER, AI_SYSTEM_DESCRIPTION_EXTENDED_RESPONDER
 
 ############ Consts #################################
@@ -32,6 +32,11 @@ def index():
 def index_dss():
     messages = [AI_SYSTEM_DESCRIPTION_BRIEF_RESPONDER, AI_SYSTEM_DESCRIPTION_EXTENDED_RESPONDER]
     return handle_index_dss(TREATMENT, messages=messages)
+
+@csrf_protect.exempt
+@bp.route("/resp_feedback/", methods=["GET", "POST"])
+def feedback():
+    return handle_feedback(TREATMENT)
 
 @bp.route("/resp/done")
 def done():

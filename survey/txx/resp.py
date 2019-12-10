@@ -34,7 +34,7 @@ from survey.utils import (
     save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, get_cookie_obj, set_cookie_obj,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus
 )
-from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_SCALAS
+from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS
 
 ############ Consts #################################
 # SURVEY_INFOS_FILENAME = os.getenv("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
@@ -172,18 +172,35 @@ def handle_index_dss(treatment, template=None, messages=None, dss_only=False):
             response["min_offer"] = int(request.form["min_offer"])
         response["time_stop_dss"] = time.time()
         response["min_offer_dss"] = int(request.form["min_offer"])
-        response["feedback_understanding"] = request.form["feedback_understanding"]
-        response["feedback_explanation"] = request.form["feedback_explanation"]
-        response["feedback_accuracy"] = request.form["feedback_accuracy"]
         cookie_obj['response'] = response
-        req_response = make_response(redirect(url_for(f"{treatment}.resp.done")))
+        req_response = make_response(redirect(url_for(f"{treatment}.resp.feedback", **request.args)))
         set_cookie_obj(req_response, BASE, cookie_obj)
         return req_response
 
     cookie_obj[BASE] = True
-    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ResponderForm(), scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_SCALAS))
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ResponderForm(), scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
+
+def handle_feedback(treatment, template=None, messages=None):
+    app.logger.debug("handle_index_dss")
+    cookie_obj = get_cookie_obj(BASE)
+    if messages is None:
+        messages = []
+    if template is None:
+        template = f"txx/resp_dss_feedback.html"
+    if request.method == "POST":
+        response = cookie_obj["response"]
+        response["feedback_alternative"] = request.form["feedback_alternative"]
+        response["feedback_fairness"] = request.form["feedback_fairness"]
+        response["feedback_accuracy"] = request.form["feedback_accuracy"]
+        cookie_obj['response'] = response
+        req_response =  make_response(redirect(url_for(f"{treatment}.resp.done", **request.args)))
+        set_cookie_obj(req_response, BASE, cookie_obj)
+        return req_response
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS, form=FlaskForm()))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response 
 
 def handle_done(treatment, template=None):
     app.logger.debug("handle_done")
