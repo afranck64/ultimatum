@@ -143,11 +143,11 @@ for treatment in TREATMENTS:
                     importlib.import_module(f"survey.{treatment.lower()}")
                     _treatments.append(treatment)
                 except ImportError as err:
-                    app.logger.warning(err)
+                    app.logger.warning(f"Disabling treatment {treatment} due to: {err}")
                 except Exception as err:
                     app.logger.error(err)
             except Exception as err:
-                app.logger.warning(err)
+                app.logger.warning(f"Disabling treatment {treatment} due to: {err}")
 app.config["TREATMENTS"] = _treatments
 app.config["TREATMENTS_AUTO_DSS"] = TREATMENTS_AUTO_DSS
 app.config["OUTPUT_DIR"] = os.getenv("OUTPUT_DIR", "./data/output")
