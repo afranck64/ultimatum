@@ -51,6 +51,7 @@ def get_tables(treatment):
     ]
     return tables
 
+FEEDBACK_COLUMNS = ["feedback_accuracy", "feedback_explanation", "feedback_explanation"]
 def get_con(treatment, db=None):
     if db is None:
         db = ":memory:"
@@ -65,6 +66,19 @@ def get_con(treatment, db=None):
         try:
             csv_file = os.path.join(output_dir, table + ".csv")
             df = pd.read_csv(csv_file)
+
+            # try to fix t10:
+            if treatment == "t10" and table == "result__t10_prop":
+                try:
+                    output_dir_feedback = get_output_dir(f"{treatment}_feedback")
+                    csv_file_feedback = os.path.join(output_dir_feedback, f"result__{treatment}_feedback_prop" + ".csv")
+                    df_feedback = pd.read_csv(csv_file_feedback)
+                    df_feedback = df_feedback[FEEDBACK_COLUMNS + ["worker_id"]].set_index("worker_id")
+
+                    df = df.set_index("worker_id")
+                    for col in FEEDBACK_COLUMNS:
+                        df[col] = df_feedback[col]
+                except Exception as err:
             df.to_sql(table, con)
         except Exception as err:
             print("err: ", err)
