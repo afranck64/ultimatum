@@ -96,7 +96,7 @@ def get_previous_worker_code(job_id, worker_id, treatment):
             worker_code = generate_completion_code(prop_BASE, job_id)
     return worker_code
 
-def handle_index(treatment):
+def handle_index(treatment, resp_only=None, prop_only=None):
     job_id = request.args.get("job_id", "na")
     worker_id = request.args.get("worker_id", "na")
     max_judgments = None
@@ -112,17 +112,22 @@ def handle_index(treatment):
     con = get_db()
 
     if previous_worker_code is None:
-        if is_proposer:
+        if resp_only:
+            return redirect(url_for(f"{treatment}.resp.index", **request.args))
+        elif prop_only:
             return redirect(url_for(f"{treatment}.prop.index", **request.args))
         else:
-            return redirect(url_for(f"{treatment}.resp.index", **request.args))
+            if is_proposer:
+                return redirect(url_for(f"{treatment}.prop.index", **request.args))
+            else:
+                return redirect(url_for(f"{treatment}.resp.index", **request.args))
     else:
         flash("You already completed the main task!")
         if resp_BASE in previous_worker_code:
             return render_template("txx/resp.done.html", worker_code=previous_worker_code)
         else:
             return render_template("txx/prop.done.html", worker_code=previous_worker_code)
-            
+
 
 
 def handle_index_feedback(treatment, base_treatment):
