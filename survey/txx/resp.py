@@ -22,14 +22,14 @@ from wtforms.widgets import html5
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
-from survey._app import app, csrf_protect, TREATMENTS_AUTO_DSS
+from survey._app import app, csrf_protect, TREATMENTS_AUTO_DSS, CODE_DIR
 from survey.figure_eight import FigureEight, RowState
 from core.utils.explanation import get_acceptance_probability, get_best_offer_probability
 from core.utils import cents_repr
 from core.models.metrics import gain, MAX_GAIN
 
 from survey.admin import get_job_config
-from survey.db import insert, get_db, table_exists
+from survey.db import insert, get_db, table_exists, update
 from survey.utils import (
     save_result2db, save_result2file, get_output_filename, generate_completion_code, get_table, get_cookie_obj, set_cookie_obj,
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus
@@ -40,8 +40,6 @@ from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_RESPONDER_SC
 # SURVEY_INFOS_FILENAME = os.getenv("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
 
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
-
-LAST_MODIFIED_KEY = '_time_change'
 
 OFFER_VALUES = {str(val):cents_repr(val) for val in range(0, MAX_GAIN+1, 5)}
 
@@ -87,6 +85,7 @@ def resp_to_resp_result(response, job_id=None, worker_id=None):
     }
     """
     result = dict(response)
+    result["min_offer_final"] = response.get("min_offer_dss", response.get("min_offer"))
     result["timestamp"] = str(datetime.datetime.now())
     #TODO: clarify this!!!
     result["resp_time_spent"] = round(response["time_stop"] - response["time_start"])
@@ -94,6 +93,73 @@ def resp_to_resp_result(response, job_id=None, worker_id=None):
     result["worker_id"] = worker_id
     return result
 
+
+def create_resp_data_table(treatment, ref):
+    app.logger.debug(f"create_table_data - {ref}, {treatment}")
+    con = get_db()
+    table = get_table(BASE, None, "data", treatment=treatment)
+    assert len(ref)==4, "expected references of the form <txyz>"
+    required_columns = """ai_calls_acceptance_probability,ai_calls_best_offer_probability,ai_calls_count_repeated,ai_calls_offers,ai_calls_pauses,ai_nb_calls,ai_offer,feedback_accuracy,feedback_explanation,feedback_understanding,job_id,offer,offer_dss,offer_final,prop_time_spent,prop_worker_id,timestamp,worker_id""".split(",")
+    if not table_exists(con, table):
+        df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'result__{ref}_prop.csv'))
+        df[STATUS_KEY] = RowState.JUDGEABLE
+        df[WORKER_KEY] = None
+        df["job_id"] = f"REF{ref.upper()}"
+        columns = [col for col in required_columns if col in df.columns]
+        df = df[columns]
+        with con:
+            df.to_sql(table, con, index=False)
+            app.logger.debug("create_table_data: table created")
+
+def get_row_ignore_job(con, job_id, worker_id, treatment):
+    """
+    Get a row and change it's state to Judging with a last modified time
+    :param con: sqlite3|sqlalchemy connection
+    :param job_id: job id
+    :param worker_id: worker's id
+    :param treatment:
+    """
+    app.logger.debug("get_row")
+    table = get_table(base=BASE, job_id=job_id, schema="data", treatment=treatment)
+    if not table_exists(con, table):
+        app.logger.warning(f"table: {table} does not exist")
+        return None
+
+    res = None
+    dep_change_time = time.time() - JUDGING_TIMEOUT_SEC
+    # Let's check if the same worker is looking for a row (then give him the one he is working on back)
+    free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {WORKER_KEY}==? and {LAST_MODIFIED_KEY} > ?', (RowState.JUDGING, worker_id, dep_change_time)).fetchone()
+    if not free_rowid:
+        # let's search for a row that remained too long in the 'judging' state
+        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {LAST_MODIFIED_KEY} < ?', (RowState.JUDGING, dep_change_time)).fetchone()
+    if not free_rowid:
+        # Let's check for a judgeable untouched row
+        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==?', (RowState.JUDGEABLE,)).fetchone()
+        if free_rowid:
+            free_rowid = free_rowid[PK_KEY]
+            ## let's search for a rowid that hasn't been processed yetf
+            res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid,)).fetchone())
+            with con:
+                update(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
+                return res
+    if free_rowid:
+        free_rowid = free_rowid[PK_KEY]
+        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid,)).fetchone())
+        with con:
+            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
+    else:
+        app.logger.warning(f"no row available! job_id: {job_id}, worker_id: {worker_id}")
+    return res
+
+def close_row(con, job_id, row_id, treatment):
+    app.logger.debug("close_row")
+    table = get_table(BASE, job_id=job_id, schema="data", treatment=treatment)
+    if not table_exists(con, table):
+        app.logger.warning(f"table missing: <{table}>")
+    else:
+        with con:
+            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING), con=con)
+    app.logger.debug("close_row - done")
 
 class ResponderForm(FlaskForm):
     min_offer = IntegerField("Offer", validators=[DataRequired(), InputRequired()])
@@ -109,6 +175,9 @@ def handle_index(treatment, template=None, messages=None, has_dss_component=Fals
     worker_code_key = f"{BASE}_worker_code"
     worker_id = request.args.get("worker_id", "na")
     job_id = request.args.get("job_id", "na")
+
+    close_row(get_db(), job_id, 2, treatment)
+
     # The task was already completed, so we skip to the completion code display
     if cookie_obj.get(BASE) and cookie_obj.get(worker_code_key) and cookie_obj.get("worker_id") == worker_id:
         req_response = redirect(url_for(f"{treatment}.resp.done"))
@@ -228,6 +297,64 @@ def handle_done(treatment, template=None):
             #save_resp_result2db(get_db("RESULT"), resp_result, job_id)
             save_result2db(table=get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment), response_result=resp_result, unique_fields=["worker_id"])
             increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=0)
+        except Exception as err:
+            app.log_exception(err)
+        cookie_obj.clear()
+    
+
+        cookie_obj[BASE] = True
+        cookie_obj["worker_id"] = worker_id
+        cookie_obj[worker_code_key] = worker_code
+
+    req_response = make_response(render_template(template, worker_code=cookie_obj[worker_code_key]))
+    set_cookie_obj(req_response, BASE, cookie_obj)
+    return req_response
+
+def handle_done_no_prop(treatment, template=None, no_features=None):
+    app.logger.debug("handle_done")
+    if template is None:
+        template = f"txx/resp.done.html"
+    if no_features is None:
+        completion_code_base = BASE
+    else:
+        # survey should not require tasks
+        completion_code_base = BASE + "NF"
+
+    cookie_obj = get_cookie_obj(BASE)
+    worker_code_key = f"{BASE}_worker_code"
+    if not cookie_obj.get(BASE, None):
+        flash("Sorry, you are not allowed to use this service. ^_^")
+        return render_template("error.html")
+    if not cookie_obj.get(worker_code_key):
+        job_id = cookie_obj["job_id"]
+        worker_code = generate_completion_code(completion_code_base, job_id)
+        response = cookie_obj["response"]
+        response["completion_code"] = worker_code
+        worker_id = cookie_obj["worker_id"]
+        resp_result = resp_to_resp_result(response, job_id=job_id, worker_id=worker_id)
+        try:
+            #save_resp_result(TUBE_RES_FILENAME, resp_result)
+            save_result2file(get_output_filename(BASE, job_id, treatment=treatment), resp_result)
+        except Exception as err:
+            app.log_exception(err)
+        
+        bonus_cents = 0
+        row_id = None
+        try:
+            prop_row = get_row_ignore_job(get_db(), job_id, worker_id, treatment)
+            offer = prop_row.get("offer_final", prop_row.get("offer", 0))
+            row_id = prop_row.get(PK_KEY)
+            if offer >= response["min_offer"]:
+                bonus_cents = MAX_GAIN - offer
+            else:
+                bonus_cents = 0
+        except Exception as err:
+            app.log_exception(err)
+        try:
+            #save_resp_result2db(get_db("RESULT"), resp_result, job_id)
+            save_result2db(table=get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment), response_result=resp_result, unique_fields=["worker_id"])
+            increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=bonus_cents)
+            close_row(get_db(), job_id, row_id, treatment)
         except Exception as err:
             app.log_exception(err)
         cookie_obj.clear()

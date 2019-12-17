@@ -158,7 +158,7 @@ def create_prop_data_table(treatment, ref):
     app.logger.debug(f"create_table_data - {ref}, {treatment}")
     con = get_db()
     table = get_table(BASE, None, "data", treatment=treatment)
-    assert len(ref)==4
+    assert len(ref)==4, "expected references of the form <txyz>"
     if not table_exists(con, table):
         df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'data__{ref}_prop.csv'))
         df[STATUS_KEY] = RowState.JUDGEABLE
@@ -645,7 +645,13 @@ def finalize_round(job_id, prop_worker_id, treatment):
     offer, min_offer = 0, 0
     with con:
         table = get_table(BASE, job_id, schema="result", treatment=treatment)
-        res = con.execute(f"SELECT offer_final as offer, min_offer, resp_worker_id from {table} WHERE prop_worker_id=?", (prop_worker_id,)).fetchone()
+        try:
+            # min_offer_final was introduce late, so it may be missing on some tables...
+            # in case of absence, a fallback to min_offer is perfectly fine.
+            res = con.execute(f"SELECT offer_final as offer, min_offer_final as min_offer, resp_worker_id from {table} WHERE prop_worker_id=?", (prop_worker_id,)).fetchone()
+        except Exception as err:
+            app.logger.warn(f"{err}")
+            res = con.execute(f"SELECT offer_final as offer, min_offer, resp_worker_id from {table} WHERE prop_worker_id=?", (prop_worker_id,)).fetchone()
     offer, min_offer = res["offer"], res["min_offer"]
     resp_worker_id = res["resp_worker_id"]
     offer = max(min(offer, MAX_GAIN), 0)
