@@ -114,7 +114,10 @@
       var code_resp_prop = document.getElementById("{{form.code_resp_prop.id}}").value;
       
       if (code_resp_prop.indexOf("resp") !== -1) {
-        document.getElementById("features").style.display='block';
+        // for respNF no feature is required!!!
+        if (code_resp_prop.indexOf("respNF") == -1) {
+          document.getElementById("features").style.display='block';
+        }
       } else {
         document.getElementById("features").style.display='none';
       }
@@ -149,7 +152,7 @@
           show_demographics &= task_code.indexOf(task_expected_code) !== -1;
         }
       } else {
-        show_demographics &= code_resp_prop.indexOf("prop:")!==-1;
+        show_demographics &= (code_resp_prop.indexOf("prop:")!==-1 || code_resp_prop.indexOf("respNF:")!==-1);
       }
       if (show_demographics) {
         document.getElementById("demographics").style.display = "block";
