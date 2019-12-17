@@ -92,7 +92,7 @@ def export(treatment, con, output_dir):
             df_masked_worker_ids = mask_workers_ids(df)
             output_file = os.path.join(output_dir, table + ".csv")
             if df_masked_worker_ids.shape[0] > 0:
-                df_masked_worker_ids.to_csv(output_file)
+                df_masked_worker_ids.to_csv(output_file, index=False)
                 print(f"Successfully exported table {table}")
             else:
                 print(f"Skipped table {table}")
