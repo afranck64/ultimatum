@@ -28,7 +28,7 @@ from core.utils.preprocessing import df_to_xy
 from core.utils import cents_repr
 from core.models.metrics import gain, MAX_GAIN
 
-from survey._app import app, csrf_protect, TREATMENTS_MODEL_REFS
+from survey._app import app, csrf_protect, TREATMENTS_MODEL_REFS, CODE_DIR
 from survey.figure_eight import FigureEight, RowState
 from survey.admin import get_job_config
 from survey.db import insert, get_db, table_exists, update
@@ -154,6 +154,19 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
             result[k] = v
     return result
 
+def create_prop_data_table(treatment, ref):
+    app.logger.debug(f"create_table_data - {ref}, {treatment}")
+    con = get_db()
+    table = get_table(BASE, None, "data", treatment=treatment)
+    assert len(ref)==4
+    if not table_exists(con, table):
+        df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'data__{ref}_prop.csv'))
+        df[STATUS_KEY] = RowState.JUDGEABLE
+        df[WORKER_KEY] = None
+        df["job_id"] = f"REF{ref.upper()}"
+        with con:
+            df.to_sql(table, con)
+            app.logger.debug("create_table_data: table created")
 
 
 def get_features(job_id, resp_worker_id, treatment, tasks=None, tasks_features=None):
@@ -206,7 +219,49 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def get_row(con, job_id, worker_id, treatment):
+
+def get_row_ignore_job(con, job_id, worker_id, treatment):
+    """
+    Get a row and change it's state to Judging with a last modified time
+    :param con: sqlite3|sqlalchemy connection
+    :param job_id: job id
+    :param worker_id: worker's id
+    :param treatment:
+    """
+    app.logger.debug("get_row")
+    table = get_table(base=BASE, job_id=job_id, schema="data", treatment=treatment)
+    if not table_exists(con, table):
+        app.logger.warning(f"table: {table} does not exist")
+        return None
+
+    res = None
+    dep_change_time = time.time() - JUDGING_TIMEOUT_SEC
+    # Let's check if the same worker is looking for a row (then give him the one he is working on back)
+    free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {WORKER_KEY}==? and {LAST_MODIFIED_KEY} > ?', (RowState.JUDGING, worker_id, dep_change_time)).fetchone()
+    if not free_rowid:
+        # let's search for a row that remained too long in the 'judging' state
+        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==? and {LAST_MODIFIED_KEY} < ?', (RowState.JUDGING, dep_change_time)).fetchone()
+    if not free_rowid:
+        # Let's check for a judgeable untouched row
+        free_rowid = con.execute(f'select {PK_KEY} from {table} where {STATUS_KEY}==?', (RowState.JUDGEABLE,)).fetchone()
+        if free_rowid:
+            free_rowid = free_rowid[PK_KEY]
+            ## let's search for a rowid that hasn't been processed yetf
+            res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid,)).fetchone())
+            with con:
+                update(f'update {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
+                return res
+    if free_rowid:
+        free_rowid = free_rowid[PK_KEY]
+        res = dict(con.execute(f'select {PK_KEY}, * from {table} where {PK_KEY}=?', (free_rowid,)).fetchone())
+        with con:
+            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=?, {WORKER_KEY}=? where {PK_KEY}=?', (time.time(), RowState.JUDGING, worker_id, free_rowid), con=con)
+    else:
+        app.logger.warning(f"no row available! job_id: {job_id}, worker_id: {worker_id}")
+    return res
+
+
+def get_row(con, job_id, worker_id, treatment, ignore_job=False):
     """
     Get a row and change it's state to Judging with a last modified time
     :param con: sqlite3|sqlalchemy connection
@@ -244,16 +299,22 @@ def get_row(con, job_id, worker_id, treatment):
         app.logger.warning(f"no row available! job_id: {job_id}, worker_id: {worker_id}")
     return res
 
-def close_row(con, job_id, row_id, treatment):
+def close_row(con, job_id, row_id, treatment, ignore_job=None):
     app.logger.debug("close_row")
     table = get_table(BASE, job_id=job_id, schema="data", treatment=treatment)
     if not table_exists(con, table):
         app.logger.warning(f"table missing: <{table}>")
     else:
         with con:
-            update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=? and job_id=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING, job_id), con=con)
+            if ignore_job:
+                update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING), con=con)
+            else:
+                update(f'UPDATE {table} set {LAST_MODIFIED_KEY}=?, {STATUS_KEY}=? where {PK_KEY}=? and {STATUS_KEY}=? and job_id=?', (time.time(), RowState.JUDGED, row_id, RowState.JUDGING, job_id), con=con)
     app.logger.debug("close_row - done")
 
+
+def close_row_ignore_job(con, job_id, row_id, treatment):
+    return close_row(con, job_id, row_id, treatment, ignore_job=True)
 
 def process_insert_row(job_id, resp_row, treatment, overwrite=False):
     """
@@ -350,7 +411,7 @@ class ProposerForm(FlaskForm):
     offer = StringField("Offer", validators=[DataRequired(), InputRequired()])
     submit = SubmitField("Submit")
 
-def handle_index(treatment, template=None, proposal_class=None, messages=None, dss_available=None):
+def handle_index(treatment, template=None, proposal_class=None, messages=None, dss_available=None, get_row_func=None):
     app.logger.debug("handle_index")
     if messages is None:
         messages = []
@@ -361,6 +422,8 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None, d
         dss_available = bool(app.config.get(MODEL_KEY))
     if template is None:
         template = f"txx/prop.html"
+    if get_row_func is None:
+        get_row_func = get_row
     cookie_obj = get_cookie_obj(BASE)
     worker_code_key = f"{BASE}_worker_code"
     worker_id = request.args.get("worker_id", "na")
@@ -373,7 +436,7 @@ def handle_index(treatment, template=None, proposal_class=None, messages=None, d
     if request.method == "GET":
         cookie_obj['proposal'] = proposal_class()
         app.logger.debug(f"handle_index: job_id:{job_id}, worker_id:{worker_id} ")
-        row_info = get_row(get_db("DATA"), job_id, worker_id, treatment=treatment)
+        row_info = get_row_func(get_db("DATA"), job_id, worker_id, treatment=treatment)
 
         cookie_obj["worker_id"] = worker_id
         cookie_obj["job_id"] = job_id
@@ -519,7 +582,7 @@ def handle_feedback(treatment, template=None, messages=None):
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response 
 
-def handle_done(treatment, template=None, response_to_result_func=None):
+def handle_done(treatment, template=None, response_to_result_func=None, ignore_job=None):
     app.logger.debug("handle_done")
     if template is None:
         template = f"txx/{BASE}.done.html"
@@ -540,7 +603,7 @@ def handle_done(treatment, template=None, response_to_result_func=None):
         proposal.update(ai_cookie_obj.get("ai_proposal", {}))
         row_info = cookie_obj["row_info"]
         worker_id = cookie_obj["worker_id"]
-        close_row(get_db("DATA"), job_id, row_info[PK_KEY], treatment=treatment)
+        close_row(get_db("DATA"), job_id, row_info[PK_KEY], treatment=treatment, ignore_job=ignore_job)
         # worker_bonus = gain(int(row_info["min_offer"]), proposal["offer"])
         prop_result = response_to_result_func(proposal, job_id=job_id, worker_id=worker_id, row_data=row_info)
         try:
@@ -569,6 +632,9 @@ def handle_done(treatment, template=None, response_to_result_func=None):
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
+def is_fake_worker(worker_id):
+    return worker_id is None or "#" in worker_id
+
 def finalize_round(job_id, prop_worker_id, treatment):
     app.logger.debug("finalize_round")
     # TODO: At this point, all features have been gathered
@@ -591,5 +657,7 @@ def finalize_round(job_id, prop_worker_id, treatment):
     assert (resp_bonus+prop_bonus)==0 or (resp_bonus + prop_bonus)== MAX_GAIN
     con2 = get_db("DB")
     with con2:
-        increase_worker_bonus(job_id, resp_worker_id, resp_bonus, con2)
-        increase_worker_bonus(job_id, prop_worker_id, prop_bonus, con2)
+        if not is_fake_worker(resp_worker_id):
+            increase_worker_bonus(job_id, resp_worker_id, resp_bonus, con2)
+        if not is_fake_worker(prop_worker_id):
+            increase_worker_bonus(job_id, prop_worker_id, prop_bonus, con2)
