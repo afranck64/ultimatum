@@ -102,11 +102,13 @@ def create_resp_data_table(treatment, ref):
     required_columns = """ai_calls_acceptance_probability,ai_calls_best_offer_probability,ai_calls_count_repeated,ai_calls_offers,ai_calls_pauses,ai_nb_calls,ai_offer,feedback_accuracy,feedback_explanation,feedback_understanding,job_id,offer,offer_dss,offer_final,prop_time_spent,prop_worker_id,timestamp,worker_id""".split(",")
     if not table_exists(con, table):
         df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'result__{ref}_prop.csv'))
-        df[STATUS_KEY] = RowState.JUDGEABLE
-        df[WORKER_KEY] = None
-        df["job_id"] = f"REF{ref.upper()}"
         columns = [col for col in required_columns if col in df.columns]
         df = df[columns]
+
+        df["job_id"] = f"REF{ref.upper()}"
+        df[STATUS_KEY] = RowState.JUDGEABLE
+        df[WORKER_KEY] = None
+        df["updated"] = 0
         with con:
             df.to_sql(table, con, index=False)
             app.logger.debug("create_table_data: table created")
@@ -340,6 +342,7 @@ def handle_done_no_prop(treatment, template=None, no_features=None):
         
         bonus_cents = 0
         row_id = None
+        prop_row = {}
         try:
             prop_row = get_row_ignore_job(get_db(), job_id, worker_id, treatment)
             offer = prop_row.get("offer_final", prop_row.get("offer", 0))
@@ -355,6 +358,11 @@ def handle_done_no_prop(treatment, template=None, no_features=None):
             save_result2db(table=get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment), response_result=resp_result, unique_fields=["worker_id"])
             increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=bonus_cents)
             close_row(get_db(), job_id, row_id, treatment)
+            prop_result = resp_result.copy()
+            prop_result["resp_worker_id"] = worker_id
+            prop_result["worker_id"] = prop_result["prop_worker_id"]
+            prop_result.update(prop_row)
+            save_result2db(table=get_table(base="prop", job_id=job_id, schema="result", treatment=treatment), response_result=prop_result, unique_fields=["worker_id"])
         except Exception as err:
             app.log_exception(err)
         cookie_obj.clear()
