@@ -38,7 +38,7 @@ AGES = dict([
 
 EDUCATIONS = dict([
     ("less_than_high_school_diploma", "Less than a high school diploma"),
-    ("high_school_degree", "High school graduate, diploma or the equivalent"),
+    ("high_school_degree", "High school graduate"), #"High school graduate, diploma or the equivalent"),
     ("bachelor_degree", "Bachelor's degree"),
     ("master_degree", "Master's degree"),
     ("doctorate_degree", "Doctorate degree"),
@@ -54,7 +54,7 @@ GENDERS = dict([
 INCOMES = dict([
     ("Primary source of income", "Primary source of income"),
     ("Secondary source of income", "Secondary source of income"),
-    ("I earn nearly equal incomes from crowdsourced microtasks and other job(s)", "I earn nearly equal incomes from crowdsourced microtasks and other job(s)")
+    ("I earn nearly equal incomes from crowdsourced microtasks and other job(s)", "I earn nearly equal incomes"),   #"I earn nearly equal incomes from crowdsourced microtasks and other job(s)")
 ])
 
 
@@ -181,6 +181,18 @@ def get_nb_participants(treatment, con, dfs=None):
         )
         where job_id in (select distinct job_id from result__{treatment}_resp union select distinct job_id from result__{treatment}_prop)
     """
+    if SELECTION == "resp":
+        sql += f""" and
+            worker_id in (
+                select worker_id from result__{treatment}_resp
+            )
+        """
+    elif SELECTION == "prop":
+        sql += f""" and
+            worker_id in (
+                select worker_id from result__{treatment}_prop
+            )
+        """
     return con.execute(sql).fetchone()[0]
 
 @mark_for_stats()
@@ -283,39 +295,6 @@ def get_nb_gender_other(treatment, con, dfs=None):
     """
     return con.execute(sql).fetchone()[0]
 
-@mark_for_demographics()
-def get_ethnicity(treatment, con, dfs=None, use_percentage=None, use_labels=None):
-    sql = f"""
-        select * from result__{treatment}_survey
-        where worker_id in (
-            select worker_id from main__txx where worker_code != 'dropped'
-        )
-    """
-    if use_percentage is None:
-        use_percentage = USE_PERCENTAGE
-    if use_labels is None:
-        use_labels = USE_LABELS
-    labels = ETHNICITIES
-    df = pd.read_sql(sql, con)
-    df = df['ethnicity'].apply(lambda x: tuple(x.split(':')))
-    result = {}
-    for items in df:
-        for item in items:
-            result[item] = result.get(item, 0) + 1/len(items)
-    
-    if use_percentage:
-        result = {k:(result[k] if k in result else 0) for k in labels}
-        result = {k: f"{round(result[k])} ({round(100 * result[k]/len(df), 2)})" for k in result}
-    else:
-        result = {k:(round(result[k]) if k in result else 0) for k in labels}
-
-    if use_labels:
-        label_result = {}
-        for k, l in labels.items():
-            label_result[l] = result.get(k, 0)
-        result = label_result
-    return result
-     
 def _get_demographic_stat(name, labels, treatment, con, dfs=None, use_percentage=None, use_labels=None):
     sql = f"""
         select * from result__{treatment}_survey
@@ -362,13 +341,59 @@ def get_age(treatment, con, dfs=None, use_percentage=None, use_labels=None):
     return _get_demographic_stat("age", AGES, treatment, con, dfs, use_percentage, use_labels)
 
 @mark_for_demographics()
-def get_eductation(treatment, con, dfs=None, use_percentage=None, use_labels=None):
-    return _get_demographic_stat("education", EDUCATIONS, treatment, con, dfs, use_percentage, use_labels)
+def get_gender(treatment, con, dfs=None, use_percentage=None, use_labels=None):
+    return _get_demographic_stat("gender", GENDERS, treatment, con, dfs, use_percentage, use_labels)
 
 
 @mark_for_demographics()
-def get_gender(treatment, con, dfs=None, use_percentage=None, use_labels=None):
-    return _get_demographic_stat("gender", GENDERS, treatment, con, dfs, use_percentage, use_labels)
+def get_ethnicity(treatment, con, dfs=None, use_percentage=None, use_labels=None):
+    sql = f"""
+        select * from result__{treatment}_survey
+        where worker_id in (
+            select worker_id from main__txx where worker_code != 'dropped'
+        )
+    """
+    if SELECTION == "resp":
+        sql += f"""and
+            worker_id in (
+                select worker_id from result__{treatment}_resp
+            )
+        """
+    elif SELECTION == "prop":
+        sql += f"""and
+            worker_id in (
+                select worker_id from result__{treatment}_prop
+            )
+        """
+    if use_percentage is None:
+        use_percentage = USE_PERCENTAGE
+    if use_labels is None:
+        use_labels = USE_LABELS
+    labels = ETHNICITIES
+    df = pd.read_sql(sql, con)
+    df = df['ethnicity'].apply(lambda x: tuple(x.split(':')))
+    result = {}
+    for items in df:
+        for item in items:
+            result[item] = result.get(item, 0) + 1/len(items)
+    
+    if use_percentage:
+        result = {k:(result[k] if k in result else 0) for k in labels}
+        result = {k: f"{round(result[k])} ({round(100 * result[k]/len(df), 2)})" for k in result}
+    else:
+        result = {k:(round(result[k]) if k in result else 0) for k in labels}
+
+    if use_labels:
+        label_result = {}
+        for k, l in labels.items():
+            label_result[l] = result.get(k, 0)
+        result = label_result
+    return result
+
+@mark_for_demographics()
+def get_eductation(treatment, con, dfs=None, use_percentage=None, use_labels=None):
+    return _get_demographic_stat("education", EDUCATIONS, treatment, con, dfs, use_percentage, use_labels)
+
 
 @mark_for_demographics()
 def get_income(treatment, con, dfs=None, use_percentage=None, use_labels=None):
@@ -377,7 +402,8 @@ def get_income(treatment, con, dfs=None, use_percentage=None, use_labels=None):
 
 def generate_stats(treatment, con, dfs):
     stats = {label:function(treatment, con, dfs) for label, function in STATS_FUNCTIONS.items()}
-    return pd.Series(stats)
+    return stats
+    #return pd.Series(stats)
 
 
 def generate_demographics(treatment, con, dfs):
@@ -398,25 +424,30 @@ def main():
 
     SELECTION = args.selection
 
+    results = dict()
+    lst_stats = []
     for treatment in treatments:
+        if "." in treatment:
+            treatment, SELECTION = treatment.split(".")
         con, dfs = get_con_and_dfs(treatment)
         stats = generate_stats(treatment, con, dfs)
+        lst_stats.append(stats)
         demographics = generate_demographics(treatment, con, dfs)
-        print(f"Treatment: {treatment}")
-        if args.use_latex:
-            print(stats.to_latex())
-        else:
-            print(stats)
-        print("\n\n")
         for k, v in demographics.items():
-            serie = pd.Series(v, name=k)
-            if args.use_latex:
-                print(serie.to_latex())
-            else:
-                print(serie)
-            print()
-        print()
-        print()
+            lst = results.get(k, [])
+            lst.append(v)
+            results[k] = lst
+
+    if args.use_latex:
+        print(pd.DataFrame(lst_stats, index=treatments).T.to_latex())
+    else:
+        print(pd.DataFrame(lst_stats, index=treatments).T)
+    print("\n\n")
+    for k, items in results.items():
+        if args.use_latex:
+            print(pd.DataFrame(items, index=treatments).T.to_latex())
+        else:
+            print(pd.DataFrame(items, index=treatments).T)
 
 
 if __name__ == "__main__":
