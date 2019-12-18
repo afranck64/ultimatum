@@ -6,6 +6,8 @@ from keras.layers import Dense, Dropout
 from keras.layers import multiply
 from keras.wrappers.scikit_learn import KerasRegressor
 import keras.backend as K
+from keras import regularizers
+from keras import optimizers
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
@@ -66,7 +68,7 @@ def loss_tf(y_true, y_pred):
     right_mul = tf.math.cos(tf.math.divide(x2, math_pi))
     return tf.math.subtract(one, tf.math.multiply(left_mul, right_mul))
 
-def _keras_model(nb_features, loss=None, metrics=None, nb_outputs=1):
+def _keras_model(nb_features, loss=None, metrics=None, nb_outputs=1, lr=0.1):
     """
     build a simple regression model
     :param loss: (str|callable, default: loss_tf)
@@ -76,20 +78,23 @@ def _keras_model(nb_features, loss=None, metrics=None, nb_outputs=1):
     if metrics is None:
         metrics = [gain_tf]
     model = Sequential()
-    model.add(Dense(64, input_dim=nb_features, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(48, activation="relu"))
-    model.add(Dense(32, activation="relu"))
-    model.add(Dense(24, activation="relu"))
-    model.add(Dense(16, activation="relu"))
-    model.add(Dense(8, activation="relu"))
+    model.add(Dense(200, input_dim=nb_features, kernel_initializer='normal', activation='relu'))
+
+    # The Hidden Layers :
+    model.add(Dense(275, kernel_initializer='normal',activation="relu"))
+    model.add(Dense(100, kernel_initializer='normal',activation="relu",
+                kernel_regularizer=regularizers.l2(0.01),
+                    activity_regularizer=regularizers.l1(0.01)
+                    )
+                )
     if nb_outputs <= 1:
         model.add(Dense(1, activation='linear', kernel_initializer='normal'))
     else:
         model.add(Dense(nb_outputs, activation='linear'))
-    model.compile(loss=loss, optimizer='rmsprop', metrics=metrics)
+    model.compile(loss=loss, optimizer=optimizers.RMSprop(lr=lr), metrics=metrics)
     return model
 
-def _keras_hiddenless_model(nb_features, loss=None, metrics=None, nb_outputs=1):
+def _keras_hiddenless_model(nb_features, loss=None, metrics=None, nb_outputs=1, lr=0.1):
     if loss is None:
         loss = loss_tf
     if metrics is None:
@@ -100,7 +105,7 @@ def _keras_hiddenless_model(nb_features, loss=None, metrics=None, nb_outputs=1):
         model.add(Dense(1, activation='linear', kernel_initializer='normal'))
     else:
         model.add(Dense(nb_outputs, activation='linear'))
-    model.compile(loss=loss, optimizer='rmsprop', metrics=metrics)
+    model.compile(loss=loss, optimizer=optimizers.RMSprop(lr=lr), metrics=metrics)
     return model
 
 def keras_hiddenless_model(nb_features, loss=None, metrics=None, epochs=100, batch_size=32, verbose=False, nb_outputs=1):
@@ -113,7 +118,7 @@ def keras_model(nb_features, loss=None, metrics=None, epochs=100, batch_size=32,
 
 
 class KerasModel(object):
-    def __init__(self, loss=None, metrics=None, as_regression=True, epochs=200, batch_size=60, verbose=0, no_hidden_layer=False):
+    def __init__(self, loss=None, metrics=None, as_regression=True, epochs=500, batch_size=32, verbose=0, no_hidden_layer=False):
         self.nb_features = None
         self.loss = loss
         self.metrics = metrics
