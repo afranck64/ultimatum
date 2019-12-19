@@ -346,9 +346,9 @@ def handle_done_no_prop(treatment, template=None, no_features=None):
         prop_row = {}
         try:
             prop_row = get_row_ignore_job(get_db(), job_id, worker_id, treatment)
-            offer = prop_row.get("offer_final", prop_row.get("offer", 0))
+            offer = prop_row.get("offer_final", prop_row["offer"])
             row_id = prop_row.get(PK_KEY)
-            if offer >= response["min_offer"]:
+            if offer >= response.get("min_offer_final", response["min_offer"]):
                 bonus_cents = MAX_GAIN - offer
             else:
                 bonus_cents = 0
