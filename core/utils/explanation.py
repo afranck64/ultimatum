@@ -138,16 +138,18 @@ def get_acceptance_probability(ai_offer, offer, accuracy, train_err_pdf, step=No
     :param uncertainty: (array|list<float>)
     :param experiment_mode: (bool) if True, enforce ai_offer to have the highest probability otherwhise
            takes training error into consideration
+    :param train_pdf: pdf of the training's target for the bins [0, 5, 10, ..., MAX_GAIN]
     :returns: probability of the human's offer being the best one
     """
     if step is None:
-        step = 5
+        step = STEP
     if uncertainty is None:
         uncertainty = [0.002, 0.02, 0.03, 0.04, 9, 0.005, 0.003]
     # Scale values from
     train_err_pdf = np.array(train_err_pdf)
     # redistribute the probabilities to the neighbours to make the distribution more human intuitive
     train_err_pdf = np.convolve(train_err_pdf, uncertainty, mode="same")
+    # manipulation to have ai_offer with the highest probability
     if experiment_mode:
         idx_zero = offer_to_bin(0, is_symmetric=True)
         idx_top = np.argmax(train_err_pdf)
@@ -172,7 +174,7 @@ def get_acceptance_probability(ai_offer, offer, accuracy, train_err_pdf, step=No
     if offer==0:
         idx_rel_max_gain = -1
     else:
-        idx_rel_max_gain = idx + (MAX_GAIN - (offer)) // STEP
+        idx_rel_max_gain = idx + (MAX_GAIN - (offer)) // step
 
     if train_pdf is None:
         train_pdf, _ = get_pdf([0])
@@ -197,14 +199,14 @@ def get_best_offer_probability(ai_offer, offer, accuracy, train_err_pdf, step=No
     :returns: probability of the human's offer being the best one
     """
     if step is None:
-        step = 5
+        step = STEP
     if uncertainty is None:
         uncertainty = [0.02, 0.03, 0.04, 0.9, 0.005, 0.003, 0.002]
-        # uncertainty = train_err_pdf
     # Scale values from
     train_err_pdf = np.array(train_err_pdf)
     # redistribute the probabilities to the neighbours to make the distribution more human intuitive
     train_err_pdf = np.convolve(train_err_pdf, uncertainty, mode="same")
+    # manipulation to have ai_offer with the highest probability
     if experiment_mode:
         idx_zero = offer_to_bin(0, is_symmetric=True)
         idx_top = np.argmax(train_err_pdf)
