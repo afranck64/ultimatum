@@ -41,6 +41,9 @@ WORKER_CODE_DROPPED = "dropped"
 ALL_COOKIES_KEY = "all_cookies"
 
 FAKE_MODEL_OFFSET_RATIO = 0.05
+
+# treatment using available data overwrite the job ids to be prefix + treatment
+REF_JOB_ID_PREFIX = "REF"
 ######
 def get_latest_treatment():
     """
@@ -201,7 +204,7 @@ def has_worker_submitted(con, job_id, worker_id, treatment=None):
     base = "prop"
     table_data = get_table(base, job_id=job_id, schema="data", treatment=treatment)
     if table_exists(con, table_data):
-        sql_data = f"select * from {table_data} where job_id=? and (resp_worker_id=?)"
+        sql_data = f"select * from {table_data} where (job_id=? or job_id like '{REF_JOB_ID_PREFIX}%') and (resp_worker_id=?)"
         res = con.execute(sql_data, (job_id, worker_id)).fetchone()
         if res:
             return True
@@ -209,7 +212,7 @@ def has_worker_submitted(con, job_id, worker_id, treatment=None):
 
     table_result = get_table(base, job_id=job_id, schema="result", treatment=treatment)
     if table_exists(con, table_result):
-        sql_result = f"select * from {table_result} where job_id=? and (prop_worker_id=? or resp_worker_id=?)"
+        sql_result = f"select * from {table_result} where (job_id=? or job_id like '{REF_JOB_ID_PREFIX}%') and (prop_worker_id=? or resp_worker_id=?)"
         res = con.execute(sql_result, (job_id, worker_id, worker_id)).fetchone()
         if res:
             return True
