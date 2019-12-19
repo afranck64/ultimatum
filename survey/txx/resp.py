@@ -55,6 +55,7 @@ if app.config["DEBUG"]:
 # with open(SURVEY_INFOS_FILENAME) as inp_f:
 #     MODEL_INFOS = json.load(inp_f)
 
+SKIP_RESP_KEYS = {"status", "update", "feedback_accuracy", "feedback_alternative", "feedback_fairness"}
 ######################################################
 
 
@@ -358,7 +359,8 @@ def handle_done_no_prop(treatment, template=None, no_features=None):
             save_result2db(table=get_table(base=BASE, job_id=job_id, schema="result", treatment=treatment), response_result=resp_result, unique_fields=["worker_id"])
             increase_worker_bonus(job_id=job_id, worker_id=worker_id, bonus_cents=bonus_cents)
             close_row(get_db(), job_id, row_id, treatment)
-            prop_result = resp_result.copy()
+
+            prop_result = {k:v for k,v in resp_result.items() if k not in SKIP_RESP_KEYS}
             prop_result["resp_worker_id"] = worker_id
             prop_result["worker_id"] = prop_row["prop_worker_id"]
             prop_result.update(prop_row)
