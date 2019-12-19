@@ -115,6 +115,7 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
 
     ## Feedback
     result["feedback_understanding"] = proposal.get("feedback_understanding")
+    result["feedback_alternative"] = proposal.get("feedback_alternative")
     result["feedback_explanation"] = proposal.get("feedback_explanation")
     result["feedback_accuracy"] = proposal.get("feedback_accuracy")
 
@@ -561,7 +562,7 @@ def handle_check(treatment):
     set_cookie_obj(req_response, AI_COOKIE_KEY, ai_cookie_obj)
     return req_response
 
-def handle_feedback(treatment, template=None, messages=None):
+def handle_feedback(treatment, template=None, messages=None, alternative_affirmation=None):
     app.logger.debug("handle_index_dss")
     cookie_obj = get_cookie_obj(BASE)
     worker_code_key = f"{BASE}_worker_code"
@@ -572,13 +573,15 @@ def handle_feedback(treatment, template=None, messages=None):
         template = f"txx/prop_dss_feedback.html"
     if request.method == "POST":
         proposal = cookie_obj["proposal"]
+        # for some treatment there is no alternative feedback
+        proposal["feedback_alternative"] = request.form.get("feedback_alternative")
         proposal["feedback_understanding"] = request.form["feedback_understanding"]
         proposal["feedback_explanation"] = request.form["feedback_explanation"]
         proposal["feedback_accuracy"] = request.form["feedback_accuracy"]
         req_response =  make_response(redirect(url_for(f"{treatment}.prop.done", **request.args)))
         set_cookie_obj(req_response, BASE, cookie_obj)
         return req_response
-    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_PROPOSER_SCALAS))
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_PROPOSER_SCALAS, alternative_affirmation=alternative_affirmation))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response 
 

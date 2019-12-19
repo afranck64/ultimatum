@@ -115,6 +115,19 @@
                         {% endfor %}
                     </ul>
                 </label>
+                {% if alternative_affirmation %}
+                    <label align="center" class="statement">{{alternative_affirmation}}
+                        <ul class='likert'>
+                            {% for value, label in scalas.items() %}               
+                            <li >
+                                <label > <input type="radio" name="feedback_alternative" value="{{value}}" required>{{label}}</label>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </label>
+                {% else %}
+                     
+                {% endif %}
 
                 <label align="center" class="statement">On average, i think the recommendation system is.
                     <ul class='likert'>
