@@ -145,7 +145,13 @@ class KerasModel(object):
         return self.model.fit(xTrain, yTrain, **kwargs)
     
     def predict(self, xTest, **kwargs):
-        return self.model.predict(xTest, **kwargs)
+        yPred = self.model.predict(xTest, **kwargs)
+        #convert predictions into 5x values and clip in the right interval+
+        mask = (yPred % 5) != 0
+        yPred[mask] = yPred[mask] + 5 - yPred[mask] % 5
+        yPred = np.clip(yPred, 0, MAX_GAIN)
+        return yPred
+
     
     def __getattr__(self, name):
         try:
