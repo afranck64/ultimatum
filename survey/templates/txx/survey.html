@@ -113,11 +113,8 @@
     function update_tasks() {
       var code_resp_prop = document.getElementById("{{form.code_resp_prop.id}}").value;
       
-      if (code_resp_prop.indexOf("resp") !== -1) {
-        // for respNF no feature is required!!!
-        if (code_resp_prop.indexOf("respNF") == -1) {
+      if ((code_resp_prop.indexOf("resp:") !== -1) && (code_resp_prop.indexOf("respNF:") == -1)) {
           document.getElementById("features").style.display='block';
-        }
       } else {
         document.getElementById("features").style.display='none';
       }
