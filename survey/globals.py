@@ -43,7 +43,9 @@ AI_SYSTEM_DESCRIPTION_BRIEF_STANDALONE_PROPOSER = """Thank you for your offer. Y
 
 AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER = """Thank you for your offer. You will now make another decision as a PROPOSER. This time you have the option to use an AI Recommendation System (AI System) to help you decide which offer to make."""
 
-AI_SYSTEM_RESPONDER_INFORMATION_PROPOSER = """The RESPONDER doesn't know about the existence of the AI-System."""
+AI_SYSTEM_UNINFORMED_RESPONDER_INFORMATION_PROPOSER = """The RESPONDER does NOT know there is an AI System."""
+
+AI_SYSTEM_INFORMED_RESPONDER_INFORMATION_PROPOSER = """The RESPONDER knows you can use an AI System."""
 
 AI_SYSTEM_DESCRIPTION_EXTENDED_ACC_PROPOSER = """The system was trained using 100 prior interactions of comparable bargaining situations.
 - The system learned a fixed optimal offer (AI_OFFER).

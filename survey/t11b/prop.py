@@ -13,7 +13,7 @@ from core.utils import cents_repr
 
 from survey._app import app, csrf_protect, CODE_DIR
 from survey.txx.prop import handle_check, handle_done, handle_index, insert_row, handle_index_dss, get_row_ignore_job, handle_feedback, create_prop_data_table
-from survey.globals import AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER, AI_SYSTEM_DESCRIPTION_EXTENDED_PROPOSER, AI_SYSTEM_RESPONDER_INFORMATION_PROPOSER, AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER
+from survey.globals import AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER, AI_SYSTEM_DESCRIPTION_EXTENDED_PROPOSER, AI_SYSTEM_UNINFORMED_RESPONDER_INFORMATION_PROPOSER, AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER
 
 ############ Consts #################################
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
@@ -42,7 +42,7 @@ def index():
 
 @bp.route("/prop_dss/", methods=["GET", "POST"])
 def index_dss():
-    messages = [AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER, AI_SYSTEM_RESPONDER_INFORMATION_PROPOSER, AI_SYSTEM_DESCRIPTION_EXTENDED_PROPOSER, AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER]
+    messages = [AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER, AI_SYSTEM_UNINFORMED_RESPONDER_INFORMATION_PROPOSER, AI_SYSTEM_DESCRIPTION_EXTENDED_PROPOSER, AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER]
     return handle_index_dss(TREATMENT, messages=messages)
 
 @bp.route("/prop/check/")
