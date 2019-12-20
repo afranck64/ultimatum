@@ -86,20 +86,22 @@ def check_is_proposer_next(job_id, worker_id, treatment, max_judgments=None, res
                 is_proposer = NEXT_IS_WAITING
             else:
                 is_proposer = NEXT_IS_RESPONDER
+        
+        if resp_only:
+            if max_judgments > nb_resp:
+                is_proposer = NEXT_IS_RESPONDER
+            else:
+                is_proposer = NEXT_IS_WAITING
+        elif prop_only:
+            if max_judgments > nb_prop:
+                is_proposer = NEXT_IS_PROPOSER
+            else:
+                is_proposer = NEXT_IS_WAITING
     elif nb_prop_open > 0:
         is_proposer = NEXT_IS_PROPOSER
     else:
         is_proposer = NEXT_IS_RESPONDER
-    if resp_only:
-        if max_judgments > nb_resp:
-            is_proposer = NEXT_IS_RESPONDER
-        else:
-            is_proposer = NEXT_IS_WAITING
-    elif prop_only:
-        if max_judgments > nb_prop:
-            is_proposer = NEXT_IS_PROPOSER
-        else:
-            is_proposer = NEXT_IS_WAITING
+
     app.logger.debug(f"max_judgments: {max_judgments}, nb_prop: {nb_prop}, nb_resp: {nb_resp}, nb_prop_open: {nb_prop_open}, is_proposer: {is_proposer}")
     return is_proposer
 
