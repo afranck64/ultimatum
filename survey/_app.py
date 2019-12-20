@@ -20,7 +20,7 @@ app = Flask(__name__)
 csrf_protect = CSRFProtect(app)
 
 #["T10_FEEDBACK", "T10B", "T11A", "T11B", "T12A", "T13A", "T20A"]
-TREATMENTS = ["T00", "T10", "T11", "T12", "T13", "T20", "T21", "T22"] + ["T10_FEEDBACK", "T12A", "T11B"]
+TREATMENTS = ["T00", "T10", "T11", "T12", "T13", "T20", "T21", "T22"] + ["T10_FEEDBACK", "T12A", "T11B", "T13A"]
 
 TREATMENTS_AUTO_DSS = {
     "T20",
