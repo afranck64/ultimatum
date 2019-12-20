@@ -78,7 +78,7 @@ def mask_workers_ids(df):
     return df
 
 EXCLUDED_JOB_IDS = ('na', 'demo', 'check', 'test_auto', 'test')
-def export(treatment, con, output_dir):
+def export(treatment, con, output_dir, overwrite_all=None):
     os.makedirs(output_dir, exist_ok=True)
     tasks_tables = get_tasks_tables()
     tasks_jobs_ids = get_tasks_jobs_ids(treatment, con)
@@ -89,11 +89,32 @@ def export(treatment, con, output_dir):
             else:
                 sql = f"select * from {table} where job_id not in {EXCLUDED_JOB_IDS}"
             df = pd.read_sql(sql, con)
+            #fix for some imported table
+            if table == f"result__{treatment}_prop" and "worker_id" not in df.columns:
+                df["worker_id"] = df["prop_worker_id"]
             df_masked_worker_ids = mask_workers_ids(df)
             output_file = os.path.join(output_dir, table + ".csv")
             if df_masked_worker_ids.shape[0] > 0:
-                df_masked_worker_ids.to_csv(output_file, index=False)
-                print(f"Successfully exported table {table}")
+                if overwrite_all or not os.path.exists(output_file):
+                    df_masked_worker_ids.to_csv(output_file, index=False)
+                    print(f"Successfully exported table {table}")
+                else:
+                    ans_overwrite = None
+                    while ans_overwrite == None:
+                        ans_overwrite = input(f"The file to {table} already exsits. Overwrite? [y]es, [a]ll, [n]o, [c]ancel : ")
+                        if ans_overwrite in ("y", "Y", "a", "A"):
+                            df_masked_worker_ids.to_csv(output_file, index=False)
+                            if ans_overwrite in ("a", "A"):
+                                overwrite_all = True
+                            print(f"Successfully exported table {table}")
+                        elif ans_overwrite in ("c", "C"):
+                            print("Export cancelled")
+                            return
+                        elif ans_overwrite not in ("n", "N"):
+                            ans_overwrite = None
+                        else:
+                            print(f"Skipped table {table}")
+
             else:
                 print(f"Skipped table {table}")
         except Exception as err:
