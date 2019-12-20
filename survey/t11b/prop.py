@@ -24,7 +24,7 @@ MODEL_KEY = f"{TREATMENT.upper()}_MODEL"
 
 bp = Blueprint(f"{TREATMENT}.{BASE}", __name__)
 
-REF = "t11c"
+REF = "t12a"
 
 with app.app_context():
     create_prop_data_table(TREATMENT, REF)
@@ -52,7 +52,8 @@ def check():
 @csrf_protect.exempt
 @bp.route("/prop_feedback/", methods=["GET", "POST"])
 def feedback():
-    return handle_feedback(TREATMENT)
+    alternative_affirmation = "I would have made another offer if the RESPONDER was NOT informed about the AI System"
+    return handle_feedback(TREATMENT, alternative_affirmation=alternative_affirmation)
 
 @bp.route("/prop/done")
 def done():
