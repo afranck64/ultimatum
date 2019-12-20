@@ -49,7 +49,8 @@ def check():
 @csrf_protect.exempt
 @bp.route("/prop_feedback/", methods=["GET", "POST"])
 def feedback():
-    return handle_feedback(TREATMENT)
+    alternative_affirmation = "I would have made another offer if the RESPONDER was informed about the AI System"
+    return handle_feedback(TREATMENT, alternative_affirmation=alternative_affirmation)
 
 @bp.route("/prop/done")
 def done():
