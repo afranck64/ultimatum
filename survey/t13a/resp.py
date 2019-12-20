@@ -17,9 +17,10 @@ BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 
 bp = Blueprint(f"{TREATMENT}.resp", __name__)
 
-REF = "t11c"
+REF = "t11b"
+
 with app.app_context():
-    create_resp_data_table
+    create_resp_data_table(TREATMENT, REF)
 ######################################################
 
 
