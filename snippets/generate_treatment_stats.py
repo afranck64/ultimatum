@@ -115,7 +115,7 @@ def get_tables(treatment):
     ]
     return tables
 
-FEEDBACK_COLUMNS = ["feedback_accuracy", "feedback_explanation", "feedback_explanation"]
+FEEDBACK_COLUMNS_T10_FEEDBACK = ["feedback_accuracy", "feedback_explanation", "feedback_explanation"]
 def get_con_and_dfs(treatment, db=None):
     if db is None:
         db = ":memory:"
@@ -137,14 +137,14 @@ def get_con_and_dfs(treatment, db=None):
                     output_dir_feedback = get_output_dir(f"{treatment}_feedback")
                     csv_file_feedback = os.path.join(output_dir_feedback, f"result__{treatment}_feedback_prop" + ".csv")
                     df_feedback = pd.read_csv(csv_file_feedback)
-                    df_feedback = df_feedback[FEEDBACK_COLUMNS + ["worker_id"]].set_index("worker_id")
+                    df_feedback = df_feedback[FEEDBACK_COLUMNS_T10_FEEDBACK + ["worker_id"]].set_index("worker_id")
 
                     df = df.set_index("worker_id")
-                    for col in FEEDBACK_COLUMNS:
+                    for col in FEEDBACK_COLUMNS_T10_FEEDBACK:
                         df[col] = df_feedback[col]
                 except Exception as err:
                     pass
-            df.to_sql(table, con)
+            df.to_sql(table, con, index=False)
             dfs[table] = df
         except Exception as err:
             print("err: ", err)
