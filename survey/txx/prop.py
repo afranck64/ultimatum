@@ -109,6 +109,7 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
     result["offer_dss"] = proposal.get("offer_dss") #Disabled/None for T00
     result["offer_final"] = proposal.get("offer_dss", proposal["offer"])
     result["prop_time_spent"] = round(proposal["time_stop"] - proposal["time_start"])
+    result["prop_time_spent_dss"] = round(proposal.get("time_stop_dss", 0) - proposal.get("time_start_dss", 0))
     ai_nb_calls = len(proposal["ai_calls_offer"])
     result["ai_nb_calls"] = ai_nb_calls
     result["ai_calls_count_repeated"] = proposal["ai_calls_count_repeated"]
