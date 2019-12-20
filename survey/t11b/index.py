@@ -26,7 +26,7 @@ bp = Blueprint(f"{TREATMENT}", __name__)
 
 @bp.route("/")
 def index():
-    return handle_index(TREATMENT)
+    return handle_index(TREATMENT, prop_only=True)
 
 
 @csrf_protect.exempt

@@ -13,7 +13,7 @@ bp = Blueprint(f"{TREATMENT}.survey", __name__)
 @csrf_protect.exempt
 @bp.route(f"/", methods=["GET", "POST"])
 def survey():
-    return handle_survey(treatment=TREATMENT)
+    return handle_survey(treatment=TREATMENT, resp_only=True)
 
 @bp.route(f"/done")
 def survey_done():
