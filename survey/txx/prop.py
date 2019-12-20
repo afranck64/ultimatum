@@ -10,6 +10,7 @@ import io
 import hashlib
 import uuid
 
+import numpy as np
 import pandas as pd
 
 from flask import (
@@ -158,16 +159,44 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
 def create_prop_data_table(treatment, ref):
     app.logger.debug(f"create_table_data - {ref}, {treatment}")
     con = get_db()
-    table = get_table(BASE, None, "data", treatment=treatment)
+    table_data = get_table(BASE, None, "data", treatment=treatment)
+    table_resp = get_table("resp", None, "result", treatment=treatment)
     assert len(ref)==4, "expected references of the form <txyz>"
-    if not table_exists(con, table):
-        df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'data__{ref}_prop.csv'))
-        df[STATUS_KEY] = RowState.JUDGEABLE
-        df[WORKER_KEY] = None
-        df["job_id"] = f"REF{ref.upper()}"
-        with con:
-            df.to_sql(table, con)
+    job_id = f"REF{ref.upper()}"
+    if not table_exists(con, table_data):
+        df_resp = None
+        try:
+            # normaly, we expect an exported data-table to be available with all required features
+            df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'data__{ref}_prop.csv'))
+
+            df[STATUS_KEY] = RowState.JUDGEABLE
+            df[WORKER_KEY] = None
+            df["updated"] = 0
+            df["job_id"] = f"REF{ref.upper()}"
+            with con:
+                df.to_sql(table_data, con, index=False)
+                app.logger.debug("create_table_data: table created")
+            
+            df_resp = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'result__{ref}_resp.csv'))
+            df["job_id"] = f"REF{ref.upper()}"
+        except Exception as err:
+            app.logger.warn(f"silenced-error: {err}")
+            # otherwise, we work with the resp. table, which means the model does/should not expect any features.
+            df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'result__{ref}_resp.csv'))
+            df["job_id"] = f"REF{ref.upper()}"
+
+
+            for idx in range(len(df)):
+                resp_row = df.iloc[idx]
+                resp_row = dict(**resp_row)
+                insert_row(job_id, resp_row, treatment)
             app.logger.debug("create_table_data: table created")
+
+            df_resp = df
+        df_resp.to_sql(table_resp, con, index=False, if_exists='replace')
+        app.logger.debug("resp-table-cloned: table created")
+        
+            
 
 
 def get_features(job_id, resp_worker_id, treatment, tasks=None, tasks_features=None):
@@ -188,19 +217,26 @@ def get_features(job_id, resp_worker_id, treatment, tasks=None, tasks_features=N
     for task_name, features in tasks_features.items():
         if task_name in tasks:
             task_table = get_table(task_name, job_id=job_id, schema="result", is_task=True)
-            with con:
-                sql = f"SELECT {','.join(features)} FROM {task_table} WHERE worker_id=?"
-                res = con.execute(sql, (resp_worker_id,)).fetchone()
-                row_features.update(dict(res))
+            if table_exists(con, task_table):
+                with con:
+                    sql = f"SELECT {','.join(features)} FROM {task_table} WHERE worker_id=?"
+                    res = con.execute(sql, (resp_worker_id,)).fetchone()
+                    # task tables are shared. when using a REF, there the table may exists but without valid rows
+                    if res is not None:
+                        row_features.update(dict(res))
     resp_features = {
         "resp": ["resp_time_spent"]
     }
     for name, features in resp_features.items():
         table = get_table(name, job_id=job_id, treatment=treatment, schema="result", is_task=False)
-        with con:
-            sql = f"SELECT {','.join(features)} FROM {table} WHERE worker_id=?"
-            res = con.execute(sql, (resp_worker_id,)).fetchone()
-            row_features.update(dict(res))
+
+        if table_exists(con, table):
+            with con:
+                sql = f"SELECT {','.join(features)} FROM {table} WHERE worker_id=?"
+                res = con.execute(sql, (resp_worker_id,)).fetchone()
+                # task tables are shared. when using a REF, there the table may exists but without valid rows
+                if res is not None:
+                    row_features.update(dict(res))
     tmp_df = pd.DataFrame(data=[row_features])
     
     
