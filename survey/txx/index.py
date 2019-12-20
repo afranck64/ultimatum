@@ -31,7 +31,8 @@ BASE = "txx"
 NEXT_IS_RESPONDER = 0
 NEXT_IS_PROPOSER = 1
 NEXT_IS_PROPOSER_WAITING = 2
-def check_is_proposer_next(job_id, worker_id, treatment, max_judgments=None):
+NEXT_IS_WAITING = 2
+def check_is_proposer_next(job_id, worker_id, treatment, max_judgments=None, resp_only=None, prop_only=None):
     app.logger.debug("check_is_proposer_next")
     resp_table = get_table(resp_BASE, job_id=job_id, schema="result", treatment=treatment)
     prop_table = get_table(prop_BASE, job_id=job_id, schema="result", treatment=treatment)
@@ -50,32 +51,55 @@ def check_is_proposer_next(job_id, worker_id, treatment, max_judgments=None):
     if table_exists(con, prop_table_data):
         with con:
             judging_timeout = time.time() - JUDGING_TIMEOUT_SEC
-            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table_data} where job_id=? and ({STATUS_KEY}=? OR ({STATUS_KEY}=? and {LAST_MODIFIED_KEY}<?) OR ({WORKER_KEY}=?))", (job_id, RowState.JUDGEABLE, RowState.JUDGING, judging_timeout, worker_id)).fetchone()
+            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table_data} where (job_id=? OR job_id like 'REF%') and ({STATUS_KEY}=? OR ({STATUS_KEY}=? and {LAST_MODIFIED_KEY}<?) OR ({WORKER_KEY}=?))", (job_id, RowState.JUDGEABLE, RowState.JUDGING, judging_timeout, worker_id)).fetchone()
             if tmp:
                 nb_prop_open = tmp["count"]
     if table_exists(con, prop_table):
         with con:
-            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table} where job_id=?", (job_id, )).fetchone()
+            tmp = con.execute(f"SELECT COUNT(*) as count from {prop_table} where (job_id=? OR job_id like 'REF%')", (job_id, )).fetchone()
             if tmp:
                 nb_prop = tmp["count"]
     
     #TODO: if nb_resp >= expected row/2, should only take props
     if max_judgments is None or max_judgments==0:
         max_judgments = job_config["expected_judgments"]
+
+    max_resp = (max_judgments // 2)
+    max_prop = (max_judgments // 2)
+
+    if resp_only:
+        max_resp = max_judgments
+    elif prop_only:
+        max_prop = max_judgments
+
     if max_judgments > 0:
-        if (max_judgments // 2) <= nb_resp and (max_judgments // 2) > nb_prop:
+        #if (max_judgments // 2) <= nb_resp and (max_judgments // 2) > nb_prop:
+        if max_resp <= nb_resp and max_prop > nb_prop:
             if nb_prop_open > 0:
                 is_proposer = NEXT_IS_PROPOSER
             else:
-                is_proposer = NEXT_IS_PROPOSER_WAITING
+                is_proposer = NEXT_IS_WAITING
         elif nb_prop_open > 0:
             is_proposer = NEXT_IS_PROPOSER
         else:
-            is_proposer = NEXT_IS_RESPONDER
+            if resp_only or prop_only:
+                is_proposer = NEXT_IS_WAITING
+            else:
+                is_proposer = NEXT_IS_RESPONDER
     elif nb_prop_open > 0:
         is_proposer = NEXT_IS_PROPOSER
     else:
         is_proposer = NEXT_IS_RESPONDER
+    if resp_only:
+        if max_judgments > nb_resp:
+            is_proposer = NEXT_IS_RESPONDER
+        else:
+            is_proposer = NEXT_IS_WAITING
+    elif prop_only:
+        if max_judgments > nb_prop:
+            is_proposer = NEXT_IS_PROPOSER
+        else:
+            is_proposer = NEXT_IS_WAITING
     app.logger.debug(f"max_judgments: {max_judgments}, nb_prop: {nb_prop}, nb_resp: {nb_resp}, nb_prop_open: {nb_prop_open}, is_proposer: {is_proposer}")
     return is_proposer
 
@@ -106,7 +130,7 @@ def handle_index(treatment, resp_only=None, prop_only=None):
         pass
     previous_worker_code = get_previous_worker_code(job_id, worker_id, treatment)
     app.logger.debug(f"handle_index: job_id: {job_id}, worker_id: {worker_id}")
-    is_proposer = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
+    is_proposer = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments, resp_only=resp_only, prop_only=prop_only)
 
     table_all = get_table(BASE, "all", schema=None)
     con = get_db()

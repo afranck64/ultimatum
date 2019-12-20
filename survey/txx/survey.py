@@ -18,7 +18,7 @@ from survey.db import insert, get_db
 from survey.admin import get_job_config
 from survey._app import app, VALUES_SEPARATOR, MAXIMUM_CONTROL_MISTAKES, TREATMENTS_AUTO_DSS
 from survey.adapter import get_adapter, get_adapter_from_dict
-from survey.txx.index import check_is_proposer_next, NEXT_IS_PROPOSER_WAITING
+from survey.txx.index import check_is_proposer_next, NEXT_IS_WAITING
 
 BASE = os.path.splitext(os.path.split(__file__)[1])[0]
 
@@ -131,7 +131,7 @@ class MainFormFeeback(FlaskForm):
     feedback = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
 
-def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None, overview_url=None):
+def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None, overview_url=None, resp_only=None, prop_only=None):
     app.logger.info("handle_survey")
     if code_prefixes is None:
         code_prefixes = {"code_cpc": "cpc:", "code_exp": "exp:", "code_risk": "risk:", "code_cc": "cc:", "code_ras": "ras:"}
@@ -176,7 +176,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
             pass
     job_config = get_job_config(get_db(), job_id)
     max_judgments = max(max_judgments, job_config.expected_judgments)
-    next_player = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments)
+    next_player = check_is_proposer_next(job_id, worker_id, treatment, max_judgments=max_judgments, resp_only=resp_only, prop_only=prop_only)
 
 
     table_all = get_table("txx", "all", schema=None)
@@ -204,7 +204,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
                 return req_response
 
     #The next player should be a proposer but some responders may still be processing data
-    if next_player == NEXT_IS_PROPOSER_WAITING:
+    if next_player == NEXT_IS_WAITING:
         resp_table = get_table(base="resp", job_id=job_id, schema="result", treatment=treatment)
         prop_table = get_table(base="prop", job_id=job_id, schema="result", treatment=treatment)
         # We make sure the user didn't accidentaly refreshed the page after processing the main task
@@ -332,7 +332,7 @@ def handle_survey_feedback(treatment=None, template=None, code_prefixes=None, fo
 
     #The next player should be a proposer but some responders may still be processing data
     ## Should not matter in feedback surveys
-    if next_player == NEXT_IS_PROPOSER_WAITING:
+    if next_player == NEXT_IS_WAITING:
         resp_table = get_table(base="resp", job_id=job_id, schema="result", treatment=treatment)
         prop_table = get_table(base="prop", job_id=job_id, schema="result", treatment=treatment)
         # We make sure the user didn't accidentaly refreshed the page after processing the main task
