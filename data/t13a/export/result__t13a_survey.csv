@@ -1,0 +1,117 @@
+code_cc,code_cpc,code_exp,code_ras,code_resp_prop,code_risk,completion_code,ethnicity,feedback,job_id,money_division,proposer,proposer_responder,responder,timestamp,worker_id,age,gender,income,test,education
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,incorrect1,correct,incorrect1,2019-12-20 21:52:00.425702,A39SA#####M1D1,,,,,
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,,incorrect2,incorrect2,incorrect1,2019-12-20 22:00:53.855685,ACQ90#####Z2U,,,,,
+,,,,respNF:3lJgz,,t13a:kvEKs,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 22:27:18.400616,A27PI#####XHRB,3645_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:m2EIj,,t13a:VIyTV,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 22:38:43.678975,A23CX#####L0CQ,2635_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:xo1cH,,t13a:cipuH,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 22:40:07.052962,A3LJE#####RF1G,2635_years,male,Primary source of income,ball,high_school_degree
+,,,,respNF:Ae9Oq,,t13a:didBX,black_or_african_american,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 22:58:53.259941,A2ZW2#####HX3G,3645_years,male,Secondary source of income,ball,master_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:04:45.190658,A18HG#####0R8B,,,,ball,
+,,,,respNF:0Wjnz,,t13a:09ykH,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:21:50.821116,A3LT7#####OAKF,5665_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:HCPTk,,t13a:2TPsq,white,none,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:37:05.666743,A26RO#####AXGG,5665_years,female,Secondary source of income,ball,bachelor_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect1,correct,correct,correct,2019-12-20 23:39:43.460567,A2QV3#####FH1P,,,,,
+,,,,respNF:vHKWI,,t13a:AjiER,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:40:00.330786,A16AN#####KCVG,3645_years,male,Primary source of income,ball,bachelor_degree
+,,,,respNF:FUf99,,t13a:S2nPK,hispanic_latino,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:40:30.170332,A3NKZ#####X0ZP,1825_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:cvGQO,,t13a:pmz9w,black_or_african_american:hispanic_latino,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:45:36.213101,A21OJ#####LRJ9,1825_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:RCh1G,,t13a:crUpC,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:47:19.657413,A2EKR#####0VMV,2635_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:OcuZd,,t13a:bupTw,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:48:41.585948,A381D#####MEWZ,3645_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:3bRIY,,t13a:wxaz0,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-20 23:50:04.777259,A22NU#####OJZ,4655_years,female,Primary source of income,ball,high_school_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect2,incorrect1,incorrect1,incorrect2,2019-12-21 00:00:37.236639,A35EQ#####B18A,,,,ball,
+,,,,respNF:qsn6t,,t13a:FOipe,asian,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:06:32.300183,A3KA3#####PMPA,2635_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:87Sih,,t13a:Cae9x,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:07:03.032536,A2EAI#####SIO5,4655_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:f0gai,,t13a:Dts9C,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:07:15.627059,A7SXW#####40R,1825_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:I4IBo,,t13a:DOCjs,asian,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:08:00.692863,A3VN7#####NVFQ,1825_years,male,I earn nearly equal incomes from crowdsourced microtasks and other job(s),ball,high_school_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect2,correct,incorrect1,incorrect2,2019-12-21 00:08:22.770697,A1E8Z#####KTP8,,,,ball,
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect2,correct,correct,correct,2019-12-21 00:08:36.388601,A2JV4#####IXOH,,,,,
+,,,,respNF:D188e,,t13a:akkAY,asian,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:10:28.010775,A1W3Q#####BHWE,1825_years,male,Secondary source of income,ball,high_school_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:14:14.283644,A3TI6#####CKJF,,,,,
+,,,,respNF:NiZuh,,t13a:QGeLY,white,very nice task,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:14:39.855059,A2E5F#####552,2635_years,female,Secondary source of income,ball,master_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,,correct,incorrect2,correct,2019-12-21 00:16:33.906247,A0317#####B8PHOPICC1,,,,,
+,,,,respNF:tRMJO,,t13a:E8OQr,white,nothing,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:16:52.745880,A2B1X#####NBJM,2635_years,male,Secondary source of income,ball,bachelor_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect2,correct,correct,correct,2019-12-21 00:17:03.957332,A11SA#####SBI,,,,ball,
+,,,,respNF:v7Rd0,,t13a:BB1Jo,white,no,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:23:25.941098,A27GN#####G19C,2635_years,male,Primary source of income,ball,bachelor_degree
+,,,,respNF:vodRj,,t13a:gFwZV,white,Thank you,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:23:47.665250,A2FGK#####DFWS,4655_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:E1qRF,,t13a:70ivH,white,short and sweet,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:24:30.199558,A28P6#####7F9Y,1825_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:Jud10,,t13a:y6Aop,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:33:53.944107,A1OPG#####8XOY,2635_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:25w8a,,t13a:FGTyR,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:34:03.445800,A26TP#####66VC,1825_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:n82hS,,t13a:4Gxrz,white,Thanks,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:37:43.158469,A2Q8N#####OHSY,2635_years,female,Primary source of income,ball,bachelor_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:38:34.464978,APHNY#####N3O,,,,,
+,,,,respNF:VLcyI,,t13a:7LCJF,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:41:58.865664,A2JFR#####YZT2,2635_years,male,Secondary source of income,ball,high_school_degree
+,,,, respNF:4QXeW ,,t13a:lBAw9,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:44:22.741644,A30G1#####O3VL,5665_years,male,Secondary source of income,ball,doctorate_degree
+,,,,respNF:515lK,,t13a:eFLL6,white,interesting survey!,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:45:56.285491,A3MXB#####G9TA,3645_years,male,Secondary source of income,ball,master_degree
+,,,,respNF:eTTYn,,t13a:nbUsb,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:46:13.458017,A15VC#####EPJN,4655_years,male,Secondary source of income,ball,master_degree
+,,,,respNF:lxesX,,t13a:EfiYf,white,n/a,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:46:52.575826,A3KQ6#####BOPY,3645_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:gKB1k,,t13a:M35AK,black_or_african_american,none,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:47:47.295213,A3CXJ#####DXBN,3645_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:3OMDt,,t13a:C5tHQ,hispanic_latino,Super interesting! Wish I knew what my partner chose :) ,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:49:23.629812,A2MSJ#####9T0L,2635_years,female,Secondary source of income,ball,other
+,,,,respNF:nE6h9,,t13a:F0JoS,asian,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:53:12.435268,A3P27#####XWOC,1825_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:3Z0Sl,,t13a:nIIBp,black_or_african_american,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:55:56.590018,A141Q#####E2E,2635_years,male,Primary source of income,ball,high_school_degree
+,,,,respNF:ipdbK,,t13a:IgLKS,asian,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 00:59:09.646268,AWKUO#####8YI,3645_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:xvr4S,,t13a:pEFUF,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:00:32.348802,A423Q#####3B9,3645_years,male,Secondary source of income,ball,master_degree
+,,,,respNF:QDgK0,,t13a:50RaL,white,VERY NICE TASK,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:02:34.575929,A37S0#####6P17,2635_years,female,Secondary source of income,ball,master_degree
+,,,,respNF:6c4gW,,t13a:H0CPn,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:02:43.272639,A1518#####QYIJ,3645_years,female,Secondary source of income,ball,bachelor_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect1,correct,correct,correct,2019-12-21 01:03:09.714590,A2018#####RTA4,,,,,
+,,,,respNF:KVjIU,,t13a:XJ1f9,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:03:57.494757,A11BA#####5S8M,2635_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:KdwCQ,,t13a:4fZ0M,black_or_african_american,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:04:03.928046,ADP1Q#####JRS,2635_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:Mgzc9,,t13a:uoW9q,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:04:29.402514,A28ZP#####S7GZ,4655_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:MTa3m,,t13a:lf3ES,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:04:31.265226,A2CY1#####KP5Q,4655_years,female,Secondary source of income,ball,master_degree
+,,,,respNF:Gh6di,,t13a:C0Aa3,white,None,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:05:05.336560,A23TH#####OPKP,2635_years,female,Secondary source of income,ball,doctorate_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:06:24.312550,AJU7U#####FR9,,,,,
+,,,,respNF:KrPmC,,t13a:RyBPt,white,no comment,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:06:37.806102,A1POA#####TBXB,2635_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:Hwa5F,,t13a:Ni90N,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:06:37.943585,AEQV5#####TPY,2635_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:eWDRv,,t13a:XtVx7,asian,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:07:01.157348,AUYK3#####O60,2635_years,male,Secondary source of income,ball,master_degree
+,,,,respNF:gV7er,,t13a:aONEP,other,confusing instructions,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:07:05.544800,A49A0#####YDU,4655_years,female,Primary source of income,ball,bachelor_degree
+,,,,respNF:3nn8Y,,t13a:AYbE0,white,none,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:07:13.476144,A35ZV#####OBP5,3645_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:4eUrM,,t13a:mmyvi,white,I have no comments.,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:07:13.681563,A15CL#####SJDW,1825_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:a4PMV,,t13a:dHnc7,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:07:30.738339,A28HL#####LSKB,older_than_65_years,male,Secondary source of income,ball,master_degree
+,,,,respNF:xjAV9,,t13a:RmEja,white,"at least I didn't get ""dropped""",3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:07:41.880781,A3OKW#####VH4F,2635_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:iD40V,,t13a:YY3D7,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:08:00.329264,A1A3S#####FZEY,3645_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:QON4O,,t13a:HtkM1,white,none,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:08:30.882904,A1R0N#####GUTE,3645_years,male,Secondary source of income,ball,master_degree
+,,,,respNF:0Nhwc,,t13a:idMtQ,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:08:48.268409,A3FU3#####5K5F,3645_years,male,Primary source of income,ball,high_school_degree
+,,,,respNF:0OyDi,,t13a:kdtJg,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:09:02.017797,A1U69#####IXZ5,2635_years,female,Primary source of income,ball,high_school_degree
+,,,,respNF:XASBH,,t13a:N3icq,hispanic_latino,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:09:56.413186,A125C#####Q3CY,2635_years,female,Secondary source of income,ball,master_degree
+,,,,respNF:mldW8,,t13a:soL9o,black_or_african_american,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:10:13.290754,A1U3T#####9FU9,1825_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:xShMO,,t13a:4tOjG,black_or_african_american,Thank you,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:10:16.944106,A1IIF#####FISQ,3645_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:VTPkv,,t13a:2hQaB,white,Nice study,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:10:33.379386,AJMXU#####DLP,2635_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:ciqOq,,t13a:x2J38,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:10:41.179192,A3H9M#####IV6V,3645_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:8mmDK,,t13a:Sb8ax,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:11:00.474626,A2NKK#####G50G,1825_years,male,Primary source of income,ball,bachelor_degree
+,,,,respNF:VKf7f,,t13a:oCh8X,black_or_african_american,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:13:27.048612,A1SZ8#####CZH0,2635_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:ecK44,,t13a:3sVIE,black_or_african_american,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:14:06.235984,A25PQ#####ESAT,3645_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:NLLYj,,t13a:CV4kF,white,none,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:14:29.296955,AOZNG#####2SZ,4655_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:EnxEc,,t13a:PtsFT,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:15:19.806960,AFWJT#####4SZ,3645_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:yOryK,,t13a:zJ0zv,hispanic_latino:white,ROCK'N'ROLL!!!,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:16:29.524186,ANQYH#####4B1,2635_years,male,Primary source of income,ball,high_school_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect1,correct,correct,correct,2019-12-21 01:16:31.770053,AFKYO#####XAP,,,,,
+,,,,respNF:qlE7j,,t13a:ulzBL,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:18:52.173544,A3MAK#####NO62,2635_years,female,Secondary source of income,ball,master_degree
+,,,,respNF:AMCa6,,t13a:5k2vm,hispanic_latino,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:19:20.537158,AI6TD#####8FQ,2635_years,male,Secondary source of income,ball,high_school_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect2,correct,correct,correct,2019-12-21 01:20:08.347056,A3RR0#####DY27,,,,,
+,,,,respNF:znCiz,,t13a:nC1jx,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:20:18.105345,A1NF1#####RG1V,1825_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:oFFKY,,t13a:HUBSO,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:20:58.194665,A1M9D#####KKTC,2635_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:nTpXa,,t13a:YSPtp,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:21:26.229061,A31QY#####EJH1,2635_years,male,I earn nearly equal incomes from crowdsourced microtasks and other job(s),ball,bachelor_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect2,correct,correct,correct,2019-12-21 01:21:38.744214,A29GJ#####BQQG,,,,,
+,,,,respNF:LccOw,,t13a:VQugZ,white,good,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:22:07.699284,A9N9K#####U4W,2635_years,male,Primary source of income,ball,master_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect2,correct,correct,correct,2019-12-21 01:23:18.783667,A3LGH#####8Z9W,,,,,
+,,,,respNF:reDAM,,t13a:Fmznk,white,"On my last question, I would of liked to of chose slightly higher than the proposer.",3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:24:10.779322,A1KD8#####5RLM,3645_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:9ByRM,,t13a:6XXGv,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:24:18.235277,AS1IH#####V70,3645_years,female,Secondary source of income,ball,doctorate_degree
+,,,,respNF:qzaJE,,t13a:Ofk2S,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:24:27.212939,A2USG#####MM4E,3645_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:cLrp2,,t13a:7msoE,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:25:59.984720,A1EAN#####IFA1,3645_years,female,Secondary source of income,ball,master_degree
+,,,,respNF:rpCga,,t13a:LPgZE,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:26:17.923164,AIHCZ#####PTJ,2635_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:7Xg7R,,t13a:11Ry1,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:26:41.392270,A3SKE#####S0DI,4655_years,male,Primary source of income,ball,bachelor_degree
+,,,,respNF:x0GN1,,t13a:nBfEX,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:27:04.518207,ARILO#####N64,2635_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:JQaqT,,t13a:a5L1o,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:27:23.574638,A7N3J#####L6M,2635_years,male,Primary source of income,ball,bachelor_degree
+,,,, respNF:mad40 ,,t13a:TF9tR,asian,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:28:28.077148,A27AK#####M9KH,4655_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:lFQ4Y,,t13a:BBpC4,asian,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:28:55.346896,A31VW#####7PP5,2635_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:zJJiR,,t13a:rKizx,american_indian_or_alaska_native,none,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:29:27.003111,A7KAE#####X1D,2635_years,male,Primary source of income,ball,other
+,,,,respNF:UEAzc,,t13a:paBCH,american_indian_or_alaska_native,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:29:37.893884,A3CAS#####104,3645_years,male,Secondary source of income,ball,bachelor_degree
+,,,,respNF:BwrKF,,t13a:RvbvZ,asian,None.,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:30:26.074039,A1L2Z#####8MY6,3645_years,male,Secondary source of income,ball,bachelor_degree
+,,,, respNF:xERYm ,,t13a:SP48M,white,Interesting experiment.,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:30:30.174150,A2R75#####LBXE,older_than_65_years,male,Secondary source of income,ball,master_degree
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect2,correct,incorrect1,incorrect2,2019-12-21 01:34:13.411231,A1RK4#####GBQN,,,,ball,
+,,,,respNF:bYCRW,,t13a:0CkzG,white,Fun & enjoyable task,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:36:55.085538,A1CY7#####H136,4655_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:8amu3,,t13a:9F2N4,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:42:34.525817,A3F51#####A34D,4655_years,male,Secondary source of income,ball,master_degree
+,,,,respNF:iyQje,,t13a:8lCS1,white,"Everything seemed pretty straightforward.
+My Amazon MTurk ID#: A2I8YALVTOJN49",3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:45:34.794224,A2I8Y#####JN49,3645_years,female,Secondary source of income,ball,high_school_degree
+,,,,respNF:vpXky,,t13a:Wt4ou,asian:white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:48:55.034842,A2R94#####G9OR,2635_years,male,Secondary source of income,ball,master_degree
+,,,,respNF:HvESU,,t13a:Knspz,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:51:17.186029,A1PNY#####8FWF,2635_years,male,Primary source of income,ball,bachelor_degree
+,,,,respNF:EcT6M,,t13a:cWavP,white,none,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 01:53:36.207942,A3DK4#####CMM1,3645_years,male,Secondary source of income,ball,high_school_degree
+,,,,respNF:Lkqbz,,t13a:avBAc,white,This was interesting. ,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 02:19:24.829053,A2VX8#####RN2,4655_years,female,Primary source of income,ball,other
+,,,,,,dropped,,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,incorrect1,correct,incorrect2,incorrect1,2019-12-21 02:20:58.856823,A1DUP#####NU4L,,,,ball,
+,,,,respNF:Zra6B,,t13a:tZ3Nl,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 02:30:02.980653,AWZI6#####EWB,3645_years,female,Primary source of income,ball,bachelor_degree
+,,,,respNF:zwKwF,,t13a:kY65F,white,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 02:34:01.652262,A3KA0#####AAXO,4655_years,female,Secondary source of income,ball,bachelor_degree
+,,,,respNF:nEqke,,t13a:1HyER,other,,3O4VWC1GFZCRDFM2Y1NMV092O493JO,correct,correct,correct,correct,2019-12-21 02:53:04.933335,A2ALY#####PUYQ,4655_years,female,Secondary source of income,ball,high_school_degree
