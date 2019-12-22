@@ -49,6 +49,7 @@ class DefaultAdapter(BaseAdapter):
         self.preview = request.args.get("preview") in {"1", "true"} or self.job_id in ("", "na")
         if self.preview:
             self.worker_id = "na"
+            self.job_id = "na"
         self.submit_to_kwargs = {
             "job_id": self.job_id,
             "worker_id": self.worker_id,
@@ -107,6 +108,7 @@ class MTurkAdapter(DefaultAdapter):
         self.preview = args_source.get("assignmentId") == "ASSIGNMENT_ID_NOT_AVAILABLE"
         if self.preview:
             self.worker_id = "na"
+            self.job_id = "na"
         self.submit_to_kwargs = {
             "assignmentId": args_source.get("assignmentId")
         }
