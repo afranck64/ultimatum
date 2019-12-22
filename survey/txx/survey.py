@@ -216,8 +216,10 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
         flash("Please do note that you are currently in the preview mode of the survey. You SHOULD NOT FILL NEITHER SUBMIT the survey in this mode. Please go back to Mturk and read the instructions about how to correctly start this survey.")
 
     if request.method == "POST" and (drop=="1" or form.validate_on_submit()):
+        # Makes sure all fields are available, not only the one with value submitted!!!
+        response = {k:None for k in form._fields}
         form = form_class(request.form)
-        response = request.form.to_dict()
+        response.update(request.form.to_dict())
         response["ethnicity"] = VALUES_SEPARATOR.join(sorted(request.form.getlist(form.ethnicity.name)))
         response["timestamp"] = str(datetime.datetime.now())
         cookie_obj["response"] = response        
