@@ -121,7 +121,7 @@ def create_resp_data_auto_prop_table(treatment, ref, use_ai_offer=None):
     table = get_table(BASE, None, "data", treatment=treatment)
     assert len(ref)==4, "expected references of the form <txyz>"
     required_columns = """ai_calls_acceptance_probability,ai_calls_best_offer_probability,ai_calls_count_repeated,ai_calls_offers,ai_calls_pauses,ai_nb_calls,ai_offer,feedback_accuracy,feedback_explanation,feedback_understanding,job_id,model_type,offer,offer_dss,offer_final,prop_time_spent,prop_worker_id,timestamp,worker_id""".split(",")
-    columns_to_clear = """ai_calls_acceptance_probability,ai_calls_best_offer_probability,ai_calls_count_repeated,ai_calls_offers,ai_calls_pauses,ai_nb_calls,feedback_accuracy,feedback_explanation,feedback_understanding,job_id,prop_time_spent,prop_worker_id,timestamp,worker_id""".split(",")
+    columns_to_clear = """ai_calls_acceptance_probability,ai_calls_best_offer_probability,ai_calls_count_repeated,ai_calls_offers,ai_calls_pauses,ai_nb_calls,feedback_accuracy,feedback_explanation,feedback_understanding,job_id,prop_time_spent,timestamp,worker_id""".split(",")
     if not table_exists(con, table):
         df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'result__{ref}_prop.csv'))
         for col in required_columns:
