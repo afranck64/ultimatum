@@ -24,7 +24,7 @@ class AutoPropSurveyMainForm(MainForm):
 @csrf_protect.exempt
 @bp.route(f"/", methods=["GET", "POST"])
 def survey():
-    return handle_survey(treatment=TREATMENT, form_class=AutoPropSurveyMainForm, overview_url=url_for("overview_auto_prop"))
+    return handle_survey(treatment=TREATMENT, form_class=AutoPropSurveyMainForm, overview_url=url_for("overview_auto_prop"), resp_only=True)
 
 @bp.route(f"/done")
 def survey_done():
