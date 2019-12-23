@@ -35,6 +35,7 @@ from survey.utils import (
     LAST_MODIFIED_KEY, WORKER_KEY, STATUS_KEY, PK_KEY, increase_worker_bonus
 )
 from survey.globals import AI_FEEDBACK_SCALAS, AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS
+from survey.txx.helpers import finalize_resp
 
 ############ Consts #################################
 # SURVEY_INFOS_FILENAME = os.getenv("MODEL_INFOS_PATH", "./data/HH_SURVEY1/UG_HH_NEW.json")
@@ -107,6 +108,36 @@ def create_resp_data_table(treatment, ref):
         df = df[columns]
 
         df["job_id"] = f"REF{ref.upper()}"
+        df[STATUS_KEY] = RowState.JUDGEABLE
+        df[WORKER_KEY] = None
+        df["updated"] = 0
+        with con:
+            df.to_sql(table, con, index=False)
+            app.logger.debug("create_table_data: table created")
+
+def create_resp_data_auto_prop_table(treatment, ref, fixed_offer=None):
+    app.logger.debug(f"create_resp_data_auto_prop_table - {ref}, {treatment}")
+    con = get_db()
+    table = get_table(BASE, None, "data", treatment=treatment)
+    assert len(ref)==4, "expected references of the form <txyz>"
+    required_columns = """ai_calls_acceptance_probability,ai_calls_best_offer_probability,ai_calls_count_repeated,ai_calls_offers,ai_calls_pauses,ai_nb_calls,ai_offer,feedback_accuracy,feedback_explanation,feedback_understanding,job_id,model_type,offer,offer_dss,offer_final,prop_time_spent,prop_worker_id,timestamp,worker_id""".split(",")
+    columns_to_clear = """ai_calls_acceptance_probability,ai_calls_best_offer_probability,ai_calls_count_repeated,ai_calls_offers,ai_calls_pauses,ai_nb_calls,feedback_accuracy,feedback_explanation,feedback_understanding,job_id,prop_time_spent,prop_worker_id,timestamp,worker_id""".split(",")
+    if not table_exists(con, table):
+        df = pd.read_csv(os.path.join(CODE_DIR, 'data', ref, 'export', f'result__{ref}_prop.csv'))
+        for col in required_columns:
+            if col not in df.columns:
+                df[col] = None
+        columns = [col for col in required_columns if col in df.columns]
+
+        print(df.columns)
+        df = df[columns]
+
+        df["offer_final"] = df["ai_offer"]
+        df["offer"] = df["ai_offer"]
+        df["offer_dss"] = df["ai_offer"]
+        df[[col for col in columns_to_clear]] = None
+
+        df["job_id"] = f"REFAUTO{ref.upper()}"
         df[STATUS_KEY] = RowState.JUDGEABLE
         df[WORKER_KEY] = None
         df["updated"] = 0
@@ -190,6 +221,7 @@ def handle_index(treatment, template=None, messages=None, has_dss_component=Fals
         cookie_obj['response'] = HHI_Resp_ADM()
         cookie_obj["worker_id"] = worker_id
         cookie_obj["job_id"] = job_id
+        cookie_obj["auto_finalize"] = request.args.get("auto_finalize")
 
         for message in messages:
             flash(message)
@@ -274,11 +306,16 @@ def handle_feedback(treatment, template=None, messages=None):
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response 
 
-def handle_done(treatment, template=None):
+def handle_done(treatment, template=None, no_features=None):
     app.logger.debug("handle_done")
     if template is None:
         template = f"txx/resp.done.html"
 
+    if no_features is None:
+        completion_code_base = BASE
+    else:
+        # survey should not require tasks
+        completion_code_base = BASE + "NF"
     cookie_obj = get_cookie_obj(BASE)
     worker_code_key = f"{BASE}_worker_code"
     if not cookie_obj.get(BASE, None):
@@ -286,7 +323,7 @@ def handle_done(treatment, template=None):
         return render_template("error.html")
     if not cookie_obj.get(worker_code_key):
         job_id = cookie_obj["job_id"]
-        worker_code = generate_completion_code(BASE, job_id)
+        worker_code = generate_completion_code(completion_code_base, job_id)
         response = cookie_obj["response"]
         response["completion_code"] = worker_code
         worker_id = cookie_obj["worker_id"]
@@ -308,6 +345,11 @@ def handle_done(treatment, template=None):
         cookie_obj[BASE] = True
         cookie_obj["worker_id"] = worker_id
         cookie_obj[worker_code_key] = worker_code
+
+        auto_finalize = cookie_obj.get("auto_finalize", request.args.get("auto_finalize"))
+        if auto_finalize and no_features:# and base=="hexaco":
+            #NOTE: there is an import here ^_^
+            finalize_resp(job_id, worker_id, treatment)
 
     req_response = make_response(render_template(template, worker_code=cookie_obj[worker_code_key]))
     set_cookie_obj(req_response, BASE, cookie_obj)
@@ -361,6 +403,7 @@ def handle_done_no_prop(treatment, template=None, no_features=None):
             close_row(get_db(), job_id, row_id, treatment)
 
             prop_result = {k:v for k,v in resp_result.items() if k not in SKIP_RESP_KEYS}
+            prop_result = {k: v if "feedback" not in k else v for k, v in prop_result.items()}
             prop_result["resp_worker_id"] = worker_id
             prop_result["worker_id"] = prop_row["prop_worker_id"]
             prop_result.update(prop_row)
@@ -368,8 +411,6 @@ def handle_done_no_prop(treatment, template=None, no_features=None):
         except Exception as err:
             app.log_exception(err)
         cookie_obj.clear()
-    
-
         cookie_obj[BASE] = True
         cookie_obj["worker_id"] = worker_id
         cookie_obj[worker_code_key] = worker_code
