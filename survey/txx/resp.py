@@ -115,7 +115,7 @@ def create_resp_data_table(treatment, ref):
             df.to_sql(table, con, index=False)
             app.logger.debug("create_table_data: table created")
 
-def create_resp_data_auto_prop_table(treatment, ref, fixed_offer=None):
+def create_resp_data_auto_prop_table(treatment, ref, use_ai_offer=None):
     app.logger.debug(f"create_resp_data_auto_prop_table - {ref}, {treatment}")
     con = get_db()
     table = get_table(BASE, None, "data", treatment=treatment)
@@ -129,12 +129,13 @@ def create_resp_data_auto_prop_table(treatment, ref, fixed_offer=None):
                 df[col] = None
         columns = [col for col in required_columns if col in df.columns]
 
-        print(df.columns)
         df = df[columns]
 
-        df["offer_final"] = df["ai_offer"]
-        df["offer"] = df["ai_offer"]
-        df["offer_dss"] = df["ai_offer"]
+        if use_ai_offer:
+            df["offer_final"] = df["ai_offer"]
+            df["offer"] = df["ai_offer"]
+            df["offer_dss"] = df["ai_offer"]
+
         df[[col for col in columns_to_clear]] = None
 
         df["job_id"] = f"REFAUTO{ref.upper()}"
@@ -403,7 +404,7 @@ def handle_done_no_prop(treatment, template=None, no_features=None):
             close_row(get_db(), job_id, row_id, treatment)
 
             prop_result = {k:v for k,v in resp_result.items() if k not in SKIP_RESP_KEYS}
-            prop_result = {k: v if "feedback" not in k else v for k, v in prop_result.items()}
+            prop_result = {k: (v if "feedback" not in k and "time" not in k else None) for k, v in prop_result.items()}
             prop_result["resp_worker_id"] = worker_id
             prop_result["worker_id"] = prop_row["prop_worker_id"]
             prop_result.update(prop_row)
