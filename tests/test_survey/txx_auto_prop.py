@@ -251,7 +251,8 @@ def test_payment(client, treatment):
             time.sleep(WEBHOOK_DELAY)
             with app.app_context():
                 assert 0 == get_worker_bonus(job_id, resp_worker_id)
-                assert MIN_OFFER <= get_worker_paid_bonus(job_id, resp_worker_id) <= tasks.MAX_BONUS + (MAX_GAIN - OFFER)
+                worker_paid_bonus = get_worker_paid_bonus(job_id, resp_worker_id)
+                assert 0 <= worker_paid_bonus <= tasks.MAX_BONUS + MAX_GAIN
 
 
 

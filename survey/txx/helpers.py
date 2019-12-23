@@ -100,6 +100,7 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
         path = f"/{treatment}/prop/?job_id={job_id}&worker_id={worker_id}"
     path_dss = f"/{treatment}/prop_dss/?job_id={job_id}&worker_id={worker_id}"
     path_feedback = f"/{treatment}/prop_feedback/?job_id={job_id}&worker_id={worker_id}"
+    path_check = f"{treatment}/prop/check/?secret_key_hash={get_secret_key_hash()}"
     if auto_finalize is True:
         path += "&auto_finalize=1"
         path_dss += "&auto_finalize=1"
@@ -112,37 +113,43 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
                 with client.session_transaction() as sess:
                     sess.clear()
         client.get(path, follow_redirects=True)
-        app.logger.debug(f"Path: {path}, Path2: {path_dss}")
+        app.logger.debug(f"Path: {path}, Path2: {path_dss}, Path-check: {path_check}")
         if dss_available:
             # We send the secret_key_hash to have the ai_offer sent back!!!
-            check_path = f"{treatment}/prop/check/?secret_key_hash={get_secret_key_hash()}"
             # Use the ai's offer
+            data = {"offer": offer if offer != "auto" else 0}
+
+            res = client.post(path, data=data, follow_redirects=True)
+
             if offer == "auto":
-                info = client.get(check_path, follow_redirects=True)
+                info = client.get(path_check, follow_redirects=True)
                 try:
                     offer = json.loads(info.data)["ai_offer"]
                 except Exception as err:
                     app.logger.error(f"couldn't access to the ai_offer: - {info.data}")
                     app.log_exception(err)
                     offer = -1
-            data = {"offer": offer}
+
             data_dss = {
                 "offer_dss": offer,
             }
+                  
+
+            # if nb_dss_check is None:
+            #     res = client.post(path_dss, data=data_dss, follow_redirects=True)
+            if nb_dss_check is not None:
+                client.get(path_dss, follow_redirects=True)
+                client.get(path_check)
+                for _ in range(nb_dss_check):
+                    tmp = client.get(f"{path_check}?offer={random.choice(list(range(0, MAX_GAIN+1, 5)))}")
+                res = client.post(path_dss, data=data_dss, follow_redirects=True)
+
             data_feedback = {
+                "feedback_alternative": random.choice(AI_FEEDBACK_SCALAS_KEYS),
                 "feedback_understanding": random.choice(AI_FEEDBACK_SCALAS_KEYS),
                 "feedback_explanation":  random.choice(AI_FEEDBACK_SCALAS_KEYS),
                 "feedback_accuracy": random.choice(AI_FEEDBACK_ACCURACY_SCALAS_KEYS),
-            }
-            res = client.post(path, data=data, follow_redirects=True)
-            if nb_dss_check is None:
-                res = client.post(path_dss, data=data_dss, follow_redirects=True)
-            else:
-                client.get(path_dss, follow_redirects=True)
-                client.get(check_path)
-                for _ in range(nb_dss_check):
-                    tmp = client.get(f"{check_path}?offer={random.choice(list(range(0, MAX_GAIN+1, 5)))}")
-                res = client.post(path_dss, data=data_dss, follow_redirects=True)
+            } 
             res = client.post(path_feedback, data=data_feedback, follow_redirects=True)
         else:
             res = client.post(path, data={"offer":offer}, follow_redirects=True)
@@ -172,8 +179,7 @@ def _process_prop_round(client, treatment, job_id="test", worker_id=None, offer=
 def finalize_resp(job_id, worker_id, treatment):
     app.logger.debug("finalize_resp")
     table = get_table(base="resp", job_id=job_id, schema="result", treatment=treatment)
-    con = get_db("RESULT")
-    with con:
+    with get_db("RESULT") as con:
         res = con.execute(f"SELECT * from {table} where job_id=? and worker_id=?", (job_id, worker_id)).fetchone()
         if res:
             resp_result = dict(res)
@@ -285,8 +291,8 @@ def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgmen
             table_resp = get_table("resp", job_id, "result", treatment=treatment)
             table_prop = get_table("prop", job_id, "result", treatment=treatment)
             app.logger.debug("Waiting for the db...")
-            con = get_db()
-            with con:
+            
+            with get_db() as con:
                 if con.execute(f"SELECT * FROM {table_resp} where worker_id=?", (worker_id,)).fetchone():
                     proceed = True
                 elif con.execute(f"SELECT * FROM {table_prop} where worker_id=?", (worker_id,)).fetchone():
@@ -300,7 +306,8 @@ def emit_webhook(client, url, job_id="test", worker_id=None, signal="new_judgmen
         data_dict["payload"]["results"]["judgments"][0]["job_id"] = job_id
         data_dict["payload"]["results"]["judgments"][0]["worker_id"] = worker_id
         data_dict["payload"]["results"]["judgments"][0]["unit_state"] = unit_state
-        job_config = get_job_config(get_db("DB"), job_id)
+        with get_db() as con:
+            job_config = get_job_config(con, job_id)
         payload = json.dumps(data_dict["payload"])
         payload_ext = payload + str(job_config["api_key"])
         signature = hashlib.sha1(payload_ext.encode()).hexdigest()
