@@ -148,9 +148,9 @@ def prop_to_prop_result(proposal, job_id=None, worker_id=None, row_data=None):
     result["prop_worker_id"] = worker_id
     result["resp_worker_id"] = row_data["resp_worker_id"]
     result["min_offer"] = row_data["min_offer"]
-    result["model_type"] = row_data["model_type"]
+    result["model_type"] = row_data.get("model_type")
     result["resp_rowid"] = row_data["rowid"]
-    discard_row_data_fields = {"job_id", "worker_id", "job_id", "min_offer", "resp_worker_id", PK_KEY, "status", "time_start", "time_stop", "timestamp", "updated", "worker_id"}
+    discard_row_data_fields = {"job_id", "worker_id", "job_id", "min_offer", "resp_worker_id", PK_KEY, "status", "time_start", "time_stop", "time_start_dss", "time_stop_dss" "timestamp", "updated", "worker_id"}
     for k, v in row_data.items():
         #result[f"data__{k}"] = v
         if k not in discard_row_data_fields:
