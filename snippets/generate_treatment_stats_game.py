@@ -307,37 +307,82 @@ def _get_demographic_stat(name, labels, treatment, con, dfs=None, use_percentage
             )
     """
     if SELECTION == "resp":
-        sql += f"""and
-            worker_id in (
-                select worker_id from result__{treatment}_resp
-            )
+        sql = f"""
+            select
+                *
+            from result__{treatment}_survey s
+
+            inner join result__{treatment}_resp r
+            on s.worker_id = r.worker_id
+            where
+                s.worker_id in (
+                    select worker_id from main__txx where worker_code != 'dropped'
+                )
         """
     elif SELECTION == "prop":
-        sql += f"""and
-            worker_id in (
-                select worker_id from result__{treatment}_prop
-            )
+        sql = f"""
+            select
+                *
+            from result__{treatment}_survey s
+
+            inner join result__{treatment}_prop p
+            on s.worker_id = p.worker_id
+            where
+                s.worker_id in (
+                    select worker_id from main__txx where worker_code != 'dropped'
+                )
         """
-    if use_percentage is None:
-        use_percentage = USE_PERCENTAGE
-    if use_labels is None:
-        use_labels = USE_LABELS
+    else:
+        return
+
     df = pd.read_sql(sql, con)
-    df = df[name].values
-    result = {}
-    for item in df:
-        result[item] = result.get(item, 0) + 1
 
-    result = {k:(result[k] if k in result else 0) for k in labels}
-    if use_percentage:
-        result = {k: f"{round(result[k])} ({round(100 * result[k]/len(df), 2)})" for k in result}
+    df.to_csv("tmp_full.csv")
+    if SELECTION == "resp":
+        if "min_offer_final" not in df:
+            df["min_offer_final"] = df["min_offer"]
+        return df.groupby(name).mean()["min_offer"]
+    else:
+        return df.groupby(name).mean()["offer_final"]
 
-    if use_labels:
-        label_result = {}
-        for k, l in labels.items():
-            label_result[l] = result[k]
-        result = label_result
-    return result
+    
+
+
+    # sql = f"""
+    # select
+    #     *
+    # from result__{treatment}_survey
+    # natural join
+    # result__{treatment}_prop
+
+    # where
+    #     worker_id in (
+    #         select worker_id from main__txx where worker_code != 'dropped'
+    #     )
+    # """
+
+
+    # if use_percentage is None:
+    #     use_percentage = USE_PERCENTAGE
+    # if use_labels is None:
+    #     use_labels = USE_LABELS
+    # df = pd.read_sql(sql, con)
+
+    # df = df[name].values
+    # result = {}
+    # for item in df:
+    #     result[item] = result.get(item, 0) + 1
+
+    # result = {k:(result[k] if k in result else 0) for k in labels}
+    # if use_percentage:
+    #     result = {k: f"{round(result[k])} ({round(100 * result[k]/(len(df) or 1), 2)})" for k in result}
+
+    # if use_labels:
+    #     label_result = {}
+    #     for k, l in labels.items():
+    #         label_result[l] = result[k]
+    #     result = label_result
+    # return result
 
 @mark_for_demographics()
 def get_age(treatment, con, dfs=None, use_percentage=None, use_labels=None):

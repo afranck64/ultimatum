@@ -18,3 +18,5 @@ pytest-cov==2.7.1
 httmock==1.3.0
 gunicorn==19.9.0
 jupyter==1.0.0
+researchpy
+statsmodels
