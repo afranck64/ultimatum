@@ -144,8 +144,8 @@ PROPOSERS = {
     # "t00": "t00",
     # "t10a": "t10a",
     # "t11a": "t11a",
-    "t12a": "t10a",
-    "t13a": "t10a",
+    "t12a": "t11a",
+    "t13a": "t11a",
     # "t20a": "t10a",
 }
 
@@ -300,6 +300,47 @@ def get_rel_responder_min_offer(treatment, con, dfs=None, use_percentage=None, u
     resp_values = metrics.get_data(metrics.get_rel_min_offer_df(df_resp))
     resp_ref_values = metrics.get_data(metrics.get_rel_min_offer_df(df_resp_ref))
 
+    table, res = rp.ttest(pd.Series(resp_values), pd.Series(resp_ref_values), paired=False)
+    s = res.results[2]
+    p = res.results[3]
+    r = res.results[9]
+    diff = res.results[0] 
+    dof = res.results[1]
+    s = res.results[2]
+    p = res.results[3]
+    r = res.results[9]
+
+    tmp_res = stats.mannwhitneyu(resp_values, resp_ref_values)
+    print("TMP values: ", tmp_res)
+    
+    print("Conclusion: ", generate_stat_sentence(np.mean(resp_ref_values), np.std(resp_ref_values), np.mean(resp_values), np.std(resp_values), s, p, dof, diff=diff, label1="t12.dss",  label2=treatment+".dss"))
+
+
+    print("Table:", table)        
+    print("Res:", res)
+
+    res = {
+        "rel. min_offer T12": metrics.get_mean(resp_ref_values),
+        "rel. min_offer T13": metrics.get_mean(resp_values),
+
+        # "rejection_ratio": rejection_ratio(df_prop)
+        }
+    test_label = f"(ttest independent) H0: equal"
+    res = {k: (f"{v:.3f}" if pd.notnull(v) and v!= int(v) else v) for k,v in res.items()}
+    res["min_offer" + test_label] = f"{s:.3f} (p: {p:.3f}, r: {r:.3f})"
+    return res
+
+
+@mark_for_stats()
+def get_rel_responder_abs_df(treatment, con, dfs=None, use_percentage=None, use_labels=None):
+    if SELECTION != "resp":
+        return
+    df_prop, df_resp = get_prop_resp(treatment)
+    df_prop[df_resp.columns] = df_resp
+
+    df_prop_full, df_resp_ref = get_prop_resp("t12a")
+    resp_values = metrics.get_data(metrics.get_rel_responder_abs_df(df_prop))
+    resp_ref_values = metrics.get_data(metrics.get_rel_responder_abs_df(df_prop_full))
 
     table, res = rp.ttest(pd.Series(resp_values), pd.Series(resp_ref_values), paired=False)
     s = res.results[2]
@@ -327,6 +368,10 @@ def get_rel_responder_min_offer(treatment, con, dfs=None, use_percentage=None, u
     test_label = f"(ttest independent) H0: equal"
     res = {k: (f"{v:.3f}" if pd.notnull(v) and v!= int(v) else v) for k,v in res.items()}
     res["min_offer" + test_label] = f"{s:.3f} (p: {p:.3f}, r: {r:.3f})"
+
+
+    print()
+
     return res
 
 def generate_stats(treatment, con, dfs):

@@ -1,9 +1,22 @@
+import os
+import sys
 import argparse
-import pandas as pd
+import numbers
+
 import numpy as np
+import pandas as pd
+import researchpy as rp
+from scipy import stats
+import statsmodels.stats.api as sms
+import statsmodels.sandbox.stats.runs as sms2
 
-from utils import get_con_and_dfs
 
+sys.path.append(os.path.abspath(".."))
+
+from survey._app import CODE_DIR, app
+from core.models.metrics import gain_mean, rejection_ratio, gain
+from utils import get_con_and_dfs, get_all_con_and_dfs, generate_stat_sentence
+import metrics
 STATS_FUNCTIONS = {}
 
 
@@ -15,6 +28,11 @@ USE_PERCENTAGE = None
 USE_LABELS = None
 
 SELECTION = None
+
+
+ALL_CONS, ALL_DFS = get_all_con_and_dfs()
+
+
 
 AI_FEEDBACK_ACCURACY_SCALAS = {
     "ai_much_worse": "AI much worse than PROPOSER",
@@ -48,6 +66,28 @@ def get_parser():
 
 
 
+RESPONDERS = {
+    # "t00": "t00",
+    "t10a": "t10a",
+    "t10b": "t10a",
+    "t11a": "t10a",
+    "t11b": "t11a",
+    "t11c": "t11a",
+    # "t20": "t20a",
+    # "t20a": "t20a",
+}
+
+
+PROPOSERS = {
+    # "t00": "t00",
+    "t10a": "t10a",
+    "t11a": "t11a",
+    "t12a": "t11a",
+    "t13a": "t11a",
+    # "t20a": "t10a",
+}
+
+
 
 def mark_for_stats(label=None):
     def _mark_for_stats(function, label=label):
@@ -56,6 +96,34 @@ def mark_for_stats(label=None):
         STATS_FUNCTIONS[label] = function
         return function
     return _mark_for_stats
+
+def get_prop_resp(treatment):
+    if SELECTION == "prop":
+        df_prop = ALL_DFS[f"result__{treatment}_prop"].copy()
+        if treatment in {"t20", "t20a"}:
+            df_prop["offer"] = df_prop["ai_offer"]
+            df_prop["offer_dss"] = df_prop["ai_offer"]
+            df_prop["offer_final"] = df_prop["ai_offer"]
+        df_resp = ALL_DFS[f"result__{RESPONDERS[treatment]}_resp"].copy()
+    elif SELECTION == "resp":
+        df_resp = ALL_DFS[f"result__{treatment}_resp"].copy()
+        df_prop = ALL_DFS[f"result__{PROPOSERS[treatment]}_prop"].copy()
+    if "offer_dss" not in df_prop.columns:
+        df_prop["offer_dss"] = df_prop["offer"]
+        df_prop["offer_final"] = df_prop["offer"]
+    if "min_offer_dss" not in df_resp.columns:
+        df_resp["min_offer_dss"] = df_resp["min_offer"]
+        df_resp["min_offer_final"] = df_resp["min_offer"]
+    
+    size = min(df_prop.shape[0], df_resp.shape[0])
+    df_prop = df_prop.head(size)
+    df_resp = df_resp.head(size)
+
+    # in most cases, all data are taken from the df_prop dataframe, so resp data are overriden according to teh setup.
+    df_prop["min_offer"] = df_resp["min_offer"]
+    df_prop["min_offer_dss"] = df_resp["min_offer"]
+    df_prop["min_offer_final"] = df_resp["min_offer_final"]
+    return df_prop, df_resp
 
 
 def _get_feedback_accuracy_stat(name, labels, treatment, con, dfs=None, use_percentage=None, use_labels=None, transformer=None):
@@ -144,12 +212,78 @@ def transformer_acc(tmp, data):
 @mark_for_stats()
 def get_feedback_accuracy(treatment, con, dfs=None, use_percentage=None, use_labels=None):
     if not use_labels:
-        return _get_feedback_accuracy_stat("feedback_accuracy", AI_FEEDBACK_ACCURACY_SCALAS, treatment, con, dfs, use_percentage, use_labels, transformer_acc)
+        return _get_feedback_accuracy_stat("feedback_accuracy", AI_FEEDBACK_ACCURACY_SCALAS, treatment, con, dfs, use_percentage, use_labels, None)
     else:
         return _get_feedback_accuracy_stat("feedback_accuracy", AI_FEEDBACK_ACCURACY_SCALAS, treatment, con, dfs, use_percentage, use_labels)
 
 
 
+@mark_for_stats()
+def get_info_accuracy(treatment, con, dfs=None, use_percentage=None, use_labels=None):
+    if treatment in ("t13a", "t13"):
+        ref = "t12a"
+    elif treatment in ("t11a", "t11b"):
+        ref = "t10b"
+    else:
+        ref = treatment
+
+    df_prop, df_resp = get_prop_resp(treatment)
+    df_prop_ref, df_resp_ref = get_prop_resp(ref)
+
+    if SELECTION == "prop":
+        values = df_prop["feedback_accuracy"]
+        values_ref = df_prop_ref["feedback_accuracy"]
+    else:
+        values = df_resp["feedback_fairness"]
+        values_ref = df_resp_ref["feedback_fairness"]
+
+    # feedback_fairness
+
+    values_ref = values_ref.apply(lambda x: AI_FEEDBACK_ACCURACY_SCALAS_REV.get(x, x))
+    values = values.apply(lambda x: AI_FEEDBACK_ACCURACY_SCALAS_REV.get(x, x))
+
+    
+    # print("DIFF: ", values, values_ref)
+    # resp_values = metrics.get_data(metrics.get_rel_min_offer_df(df_resp))
+    # resp_ref_values = metrics.get_data(metrics.get_rel_min_offer_df(df_resp_ref))
+
+    values 
+
+    print("MEDIAN: ", values.median(), values_ref.median())
+    dof = 0
+    diff = 0
+    table, res = rp.crosstab(pd.Series(values), pd.Series(values_ref), test='g-test')
+    s, p, r = res.results.values
+    # s = res.results[2]
+    # p = res.results[3]
+    # r = res.results[9]
+    # diff = res.results[0] 
+    # dof = res.results[1]
+    # s = res.results[2]
+    # p = res.results[3]
+    # r = res.results[9]
+
+    tmp_res = None
+    tmp_res = stats.mannwhitneyu(values, values_ref, use_continuity=False)
+    # tmp_res = stats.ranksums(values, values_ref)
+    print("TMP values: ", tmp_res)
+    
+    print("Conclusion: ", generate_stat_sentence(np.mean(values_ref), np.std(values_ref), np.mean(values), np.std(values), s, p, dof, diff=diff, label1="t12.dss",  label2=treatment+".dss"))
+
+
+    print("Table:", table)        
+    print("Res:", res)
+
+    res = {
+        "rel. min_offer T12": metrics.get_mean(values_ref),
+        "rel. min_offer T13": metrics.get_mean(values),
+
+        # "rejection_ratio": rejection_ratio(df_prop)
+        }
+    test_label = f"(ttest independent) H0: equal"
+    res = {k: (f"{v:.3f}" if pd.notnull(v) and v!= int(v) else v) for k,v in res.items()}
+    res["min_offer" + test_label] = f"{s:.3f} (p: {p:.3f}, r: {r:.3f})"
+    return res
 
 
 def transformer_alt(tmp, data):
