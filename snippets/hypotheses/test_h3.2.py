@@ -11,7 +11,7 @@ import statsmodels.stats.api as sms
 import statsmodels.sandbox.stats.runs as sms2
 
 
-sys.path.append(os.path.abspath(".."))
+sys.path.extend([os.path.join(os.path.split(__file__)[0], parent) for parent in ["..", "../.."]])
 
 from survey._app import CODE_DIR, app
 from core.models.metrics import gain_mean, rejection_ratio, gain

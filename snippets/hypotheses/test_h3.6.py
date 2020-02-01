@@ -1,6 +1,10 @@
+import sys
+import os
 import argparse
 import pandas as pd
 import numpy as np
+
+sys.path.extend([os.path.join(os.path.split(__file__)[0], parent) for parent in ["..", "../.."]])
 
 from utils import get_con_and_dfs
 
