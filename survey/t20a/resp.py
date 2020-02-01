@@ -19,7 +19,7 @@ bp = Blueprint(f"{TREATMENT}.resp", __name__)
 
 REF = "t10a"
 with app.app_context():
-    create_resp_data_auto_prop_table(TREATMENT, REF)
+    create_resp_data_auto_prop_table(TREATMENT, REF, use_ai_offer=True)
 ######################################################
 
 
