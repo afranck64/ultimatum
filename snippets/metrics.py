@@ -71,10 +71,16 @@ def gain_responder(min_offer, offer):
     res[mask] = MAX_GAIN - res[mask]
     return res
 
+def get_gain_responder_df(df_full):
+    return 
 
+
+def get_rel_responder_abs_df(df_full):
+    return mard(gain_responder(df_full["min_offer"], df_full["offer"]), gain_responder(df_full["min_offer_final"], df_full["offer_final"]))
 
 def get_rel_min_offer_df(df):
     return ard(df["min_offer"], df["min_offer_dss"])
+    #return (df["min_offer_dss"] - df["min_offer"]) / df["min_offer"]
 
 
 
@@ -110,6 +116,9 @@ def get_rel_gain_proposer(min_offer, offer, offer_dss):
 
 def get_rel_gain_proposer_df(df):
     return get_rel_gain_proposer(df["min_offer_final"], df["offer"], df["offer_dss"])
+
+def get_rel_gain_responder_df(df):
+    return get_rel_gain_responder(df["min_offer"], df["min_offer_final"], df["offer_dss"])
 
 def get_responder_min_offer(df):
     return df["min_offer_final"]

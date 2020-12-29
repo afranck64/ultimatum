@@ -43,12 +43,12 @@ def get_dfs_full_prop():
 
     #TREATMENTS = {"t00", "t10a", "t10b", "t11a", "t11b", "t11c"}
     TREATMENTS_MAPPING = {
-        "t00": "T0.P",
-        "t10a": "TAI.Pu",
-        "t10b": "TAI.Pn",
-        "t11a": "TXAI.Pu",
-        "t11b": "TXAI.Pi",
-        "t11c": "TXAI.Pua",
+        "t00": "T0",
+        "t10a": "t1.0",
+        "t10b": "t1.1",
+        "t11a": "t1.2",
+        "t11b": "t1.3",
+        "t11c": "t1.4",
         
     }
     TREATMENTS = TREATMENTS_MAPPING.values()
@@ -76,12 +76,12 @@ def get_dfs_full_resp():
 
     TREATMENTS = {"t00", "t10a", "t11a", "t12", "t13", "t20"}
     TREATMENTS_MAPPING = {
-        "t00": "T0.R",
+        "t00": "T0",
     #     "t10a": "TAI.R",
     #     "t10b": "TAI.R",
-        "t12": "TAI.R",
-        "t13": "TXAI.R",
-        "t20": "TAIAuto.R",
+        "t12": "t2.0",
+        "t13": "t2.1",
+        #"t20": "t2.3",
         
     }
     TREATMENTS = sorted(TREATMENTS_MAPPING.values())
