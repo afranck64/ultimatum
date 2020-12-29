@@ -21,7 +21,7 @@ docker-compose run test
 ### Launch the survey website locally
 ```bash
 # The local address of the website will be printed in the terminal.
-docker-compose up web
+docker-compose up web_socket
 ```
 
 ### Launch jupyter notebook

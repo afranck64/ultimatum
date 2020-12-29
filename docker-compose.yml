@@ -3,13 +3,28 @@ services:
   web:
     restart: unless-stopped
     build: .
+    command: 
+      "gunicorn --log-file /code/out.log --log-level debug --error-logfile=- --workers 1 survey.app:app --bind $GUNICORN_BIND --timeout 300"
     container_name: web
-    ports:
-      - "5000:5000"
+    env_file: 
+      - .env
     volumes:
       - .:/code
     working_dir: /code
   
+  web_socket:
+    image: code_web
+    command: 
+      "gunicorn --log-file /code/out.log --log-level debug --error-logfile=- --workers 1 survey.app:app --bind 0.0.0.0:5000 --timeout 300"
+    environment: 
+      - GUNICORN_BIND=0.0.0.0:5000
+    ports:
+      - "${HOST_WEB_PORT:-5000}:5000"
+    volumes:
+      - .:/code
+    working_dir: /code
+  
+
   test:
     image: code_web
     command: pytest
