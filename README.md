@@ -10,7 +10,7 @@ First of all, you need [docker](https://docs.docker.com/install/) and [docker-co
 
 ### Build the project:
 ```bash
-docker-compose build
+./build.sh
 ```
 
 ### Launch tests:
