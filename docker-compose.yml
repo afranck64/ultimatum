@@ -2,10 +2,10 @@ version: '3'
 services:
   web:
     restart: unless-stopped
+    image: ultimatum_web
     build: .
     command: 
       "gunicorn --log-file /code/out.log --log-level debug --error-logfile=- --workers 1 survey.app:app --bind $GUNICORN_BIND --timeout 300"
-    container_name: web
     env_file: 
       - .env
     volumes:
@@ -13,7 +13,7 @@ services:
     working_dir: /code
   
   web_socket:
-    image: code_web
+    image: ultimatum_web
     command: 
       "gunicorn --log-file /code/out.log --log-level debug --error-logfile=- --workers 1 survey.app:app --bind 0.0.0.0:5000 --timeout 300"
     environment: 
@@ -26,13 +26,13 @@ services:
   
 
   test:
-    image: code_web
+    image: ultimatum_web
     command: pytest
   
   notebook:
     ports:
       - "8888:8888"
-    image: code_web
+    image: ultimatum_web
     volumes:
       - .:/code
     command: jupyter notebook --allow-root --ip=0.0.0.0 --port=8888
