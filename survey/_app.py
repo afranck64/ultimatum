@@ -20,15 +20,18 @@ app = Flask(__name__)
 csrf_protect = CSRFProtect(app)
 
 #["T10_FEEDBACK", "T10B", "T11A", "T11B", "T12A", "T13A", "T20A"]
-TREATMENTS = ["T00", "T10", "T11", "T12", "T13", "T20", "T21", "T22"] + ["T10_FEEDBACK", "T12A", "T11B", "T13A", "T10B", "T11A", "T20A"]
+TREATMENTS = ["T00", "T10", "T11", "T12", "T13", "T20"] + ["T10_FEEDBACK", "T12A", "T11B", "T13A", "T10B", "T11A", "T20A"] + ["T21", "T22", "T30", "T31"]
 
 TREATMENTS_AUTO_DSS = {
     "T20",
     "T21",
-    "T22"
+    "T22",
+    "T30",
+    "T31",
 }
 TREATMENTS_MODEL_REFS= {
     "T00": None,
+    "TAB": None,
     "T10": "T00",
     "T10_FEEDBACK": "T00",
     "T11": "T00",
@@ -43,6 +46,8 @@ TREATMENTS_MODEL_REFS= {
     "T12A": "T00",
     "T13A": "T00",
     "T20A": "T00",
+    "T30": "T00",
+    "T31": "T00",
 }
 
 VALUES_SEPARATOR = ":"
@@ -125,7 +130,7 @@ else:
 _treatments = []
 for treatment in TREATMENTS:
     app.config[treatment] = _env2bool(os.getenv(treatment)) or _env2bool(os.getenv("TXX"))
-    model_treatment = TREATMENTS_MODEL_REFS[treatment]
+    model_treatment = TREATMENTS_MODEL_REFS.get(treatment)
     model_key = f"{model_treatment}_MODEL"
     model_infos_key = f"{model_treatment}_MODEL_INFOS"
     if model_treatment is None:
@@ -155,6 +160,7 @@ for treatment in TREATMENTS:
                     app.logger.error(err)
             except Exception as err:
                 app.logger.warning(f"Disabling treatment {treatment} due to: {err}")
+app.logger.warn(f"Treatments: {_treatments}")
 app.config["TREATMENTS"] = _treatments
 app.config["TREATMENTS_AUTO_DSS"] = TREATMENTS_AUTO_DSS
 app.config["OUTPUT_DIR"] = os.getenv("OUTPUT_DIR", "./data/output")
