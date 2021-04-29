@@ -27,7 +27,9 @@ services:
 
   test:
     image: ultimatum_web
-    command: pytest
+    command: pytest tests/ -x
+    environment: 
+      - TXX=true
   
   notebook:
     ports:
