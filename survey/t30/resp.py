@@ -55,7 +55,7 @@ def feedback():
 
 @bp.route("/resp/done")
 def done():
-    return handle_done(TREATMENT)
+    return handle_done(TREATMENT, no_features=True)
 
 """
 import os
