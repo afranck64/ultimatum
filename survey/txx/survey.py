@@ -385,7 +385,7 @@ def handle_survey_done(template=None):
         dropped = response.get("drop")
         if dropped=="1":
             worker_code = WORKER_CODE_DROPPED
-            flash(f"You have been disqualified as you made more than {MAXIMUM_CONTROL_MISTAKES} mistakes on the control questions. You can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+            flash(f"You have been disqualified as you made more than {MAXIMUM_CONTROL_MISTAKES} mistakes on the control questions. Close this window and don't submit any completion on MTurk to avoid getting a REJECTION.")
         response["worker_id"] = worker_id
         response["job_id"] = job_id
         response["completion_code"] = worker_code
@@ -449,7 +449,7 @@ def handle_survey_feedback_done(template=None):
         dropped = response.get("drop")
         if dropped=="1":
             worker_code = WORKER_CODE_DROPPED
-            flash(f"You have been disqualified as you made more than {MAXIMUM_CONTROL_MISTAKES} mistakes on the control questions. You can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+            flash(f"You have been disqualified as you made more than {MAXIMUM_CONTROL_MISTAKES} mistakes on the control questions. Close this window and don't submit any completion on MTurk to avoid getting a REJECTION.")
         response["worker_id"] = worker_id
         response["job_id"] = job_id
         response["assignment_id"] = assignment_id

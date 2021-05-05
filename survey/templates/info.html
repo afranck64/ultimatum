@@ -1,22 +1,37 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% if job_id == "home" %}
-    {% if webhook %}
-    {% else %}
-        <br>
-        <div align="center">Thank you for taking part in our experiment.</div>
-    {% endif %}
-{% else %}
-    <br>
-    <div align="center">
-        Thank you for taking part in our experiment.
-    </div>
-    <div align="center">Your bonus will be transferred to you soon.</div>
-{% endif %}
 
-<div align="center">
     <br>
-    {{message}}
-</div>
+
+    {% if job_id == "home" %}
+        {% if webhook %}
+        {% else %}
+            <br>
+            <div align="center">Thank you for taking part in our experiment.</div>
+        {% endif %}
+    {% else %}
+
+        {% if worker_code != "dropped" %}
+            <div align="center">
+                <br>
+                Your survey completion code is: <br>
+                <br>
+                <strong>{{worker_code}}</strong>
+            </div>
+            <br>
+            <div align="center">
+                Thank you for taking part in our experiment.
+            </div>
+            <div align="center">Your bonus will be transferred to you soon.</div>
+            
+        {% endif%}        
+        
+    {% endif %}
+
+
+    <div align="center">
+        <br>
+        {{message}}
+    </div>
 {% endblock %}
