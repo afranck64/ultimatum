@@ -10,7 +10,8 @@ from flask import (
 from core.utils import cents_repr
 
 from survey._app import app, csrf_protect
-from survey.txx.prop import handle_check, handle_done, handle_index, insert_row, handle_index_dss
+from survey.txx.prop import handle_check, handle_done, handle_index, insert_row, handle_index_dss, handle_feedback
+from survey.globals import AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER, AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER, AI_SYSTEM_DESCRIPTION_EXTENDED_PROPOSER
 
 ############ Consts #################################
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
@@ -30,27 +31,21 @@ bp = Blueprint(f"{TREATMENT}.{BASE}", __name__)
 @bp.route("/prop/", methods=["GET", "POST"])
 def index():
     messages = []
-    # messages = [
-    #     """You have been assigned the role of a PROPOSER. As a PROPOSER, you will make an offer to the RESPONDER.""",
-    # ]
     return handle_index(TREATMENT, messages=messages)
 
-@csrf_protect.exempt
 @bp.route("/prop_dss/", methods=["GET", "POST"])
 def index_dss():
-    messages = [
-        """You have been assigned the role of a PROPOSER. As a PROPOSER, you will make an offer to the RESPONDER. Instead of purely relying on your own intuition, you can use an AI Recommendation System (Machine-Learning System) to help you with your offer. The system was trained using prior interactions of comparable bargaining situations.""",
-        """To use the AI System, simply select a test offer and submit it to the system. The system will tell you its estimates on:
-1. The probability that your offer will be accepted by your specific RESPONDER.
-2. The probability that your offer is the minimal offer accepted by your specific RESPONDER.
-
-You can use the system as often as you want."""
-    ]
+    messages = [AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER, AI_SYSTEM_DESCRIPTION_EXTENDED_PROPOSER, AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER]
     return handle_index_dss(TREATMENT, messages=messages)
 
 @bp.route("/prop/check/")
 def check():
     return handle_check(TREATMENT)
+
+@csrf_protect.exempt
+@bp.route("/prop_feedback/", methods=["GET", "POST"])
+def feedback():
+    return handle_feedback(TREATMENT)
 
 @bp.route("/prop/done")
 def done():
