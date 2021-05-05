@@ -9,7 +9,7 @@ from flask import (
 from survey._app import app, csrf_protect
 from survey.txx.resp import handle_done, handle_index_dss, handle_feedback
 from survey.txx.resp import handle_done, handle_index, handle_index_dss, handle_feedback
-from survey.globals import AI_SYSTEM_DESCRIPTION_BRIEF_STANDALONE_RESPONDER
+from survey.globals import AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_T3X, AI_SYSTEM_DESCRIPTION_BRIEF_STANDALONE_RESPONDER
 from survey.globals import AI_SYSTEM_AUTO_DESCRIPTION_BRIEF_RESPONDER, AI_SYSTEM_AUTO_DESCRIPTION_EXTENDED_RESPONDER
 
 ############ Consts #################################
@@ -24,7 +24,7 @@ bp = Blueprint(f"{TREATMENT}.resp", __name__)
 
 ############# HELPERS   ###########################
 
-
+@csrf_protect.exempt
 @bp.route("/resp/", methods=["GET", "POST"])
 def index():
     messages = None
@@ -38,12 +38,13 @@ def index_dss():
         "Thank you for your minimum offer. You will now make another decision as a RESPONDER. An AI Machine-Learning System actually autonomously make an offer to you on behalf of a human PROPOSER. The human PROPOSER does not make any decisions, they only receives whatever money the system earns from this task.",
         AI_SYSTEM_AUTO_DESCRIPTION_EXTENDED_RESPONDER,
     ]
-    return handle_index_dss(TREATMENT, messages=messages)
+    return handle_index_dss(TREATMENT, messages=messages, feedback_accuracy_scalas=AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_T3X)
+
 
 @csrf_protect.exempt
 @bp.route("/resp_feedback/", methods=["GET", "POST"])
 def feedback():
-    return handle_feedback(TREATMENT, template="txx/resp_dss_feedback_t2x.html")
+    return handle_feedback(TREATMENT, template="txx/resp_dss_feedback_t3x.html", feedback_accuracy_scalas=AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_T3X)
 
 
 @bp.route("/resp/done")

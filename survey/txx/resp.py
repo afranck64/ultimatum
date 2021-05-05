@@ -243,12 +243,14 @@ def handle_index(treatment, template=None, messages=None, has_dss_component=Fals
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
-def handle_index_dss(treatment, template=None, messages=None, dss_only=False):
+def handle_index_dss(treatment, template=None, messages=None, dss_only=False, feedback_accuracy_scalas=None):
     app.logger.debug("handle_index_dss")
     if messages is None:
         messages = []
     if template is None:
         template = f"txx/resp_dss.html"
+    if feedback_accuracy_scalas is None:
+        feedback_accuracy_scalas = AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS
     cookie_obj = get_cookie_obj(BASE)
     worker_code_key = f"{BASE}_worker_code"
     worker_id = request.args.get("worker_id", "na")
@@ -283,17 +285,19 @@ def handle_index_dss(treatment, template=None, messages=None, dss_only=False):
         return req_response
 
     cookie_obj[BASE] = True
-    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ResponderForm(), scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS))
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, form=ResponderForm(), scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=feedback_accuracy_scalas))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
-def handle_feedback(treatment, template=None, messages=None):
+def handle_feedback(treatment, template=None, messages=None, feedback_accuracy_scalas=None):
     app.logger.debug("handle_index_dss")
     cookie_obj = get_cookie_obj(BASE)
     if messages is None:
         messages = []
     if template is None:
         template = f"txx/resp_dss_feedback.html"
+    if feedback_accuracy_scalas is None:
+        feedback_accuracy_scalas = AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS
     if request.method == "POST":
         response = cookie_obj["response"]
         response["feedback_alternative"] = request.form["feedback_alternative"]
@@ -303,7 +307,7 @@ def handle_feedback(treatment, template=None, messages=None):
         req_response =  make_response(redirect(url_for(f"{treatment}.resp.done", **request.args)))
         set_cookie_obj(req_response, BASE, cookie_obj)
         return req_response
-    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS, form=FlaskForm()))
+    req_response = make_response(render_template(template, offer_values=OFFER_VALUES, scalas=AI_FEEDBACK_SCALAS, accuracy_scalas=feedback_accuracy_scalas, form=FlaskForm()))
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response 
 
