@@ -39,6 +39,17 @@ AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS = {
     "ai_much_better": "Better than the PROPOSER",
 }
 
+AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_T3X = {
+    1: "Less",
+    2: "",
+    3: "",
+    4: "Equal",
+    5: "",
+    6: "",
+    7: "More"
+}
+
+
 AI_SYSTEM_DESCRIPTION_BRIEF_STANDALONE_PROPOSER = """Thank you for your offer. You will now make another decision as a PROPOSER. This time you have the option to use an AI Recommendation System (AI System) to help you decide which offer to make. The system was trained using prior interactions of comparable bargaining situations."""
 
 AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER = """Thank you for your offer. You will now make another decision as a PROPOSER. This time you have the option to use an AI Recommendation System (AI System) to help you decide which offer to make."""
