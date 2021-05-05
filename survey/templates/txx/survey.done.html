@@ -11,19 +11,23 @@
             <div align="center">Thank you for taking part in our experiment.</div>
         {% endif %}
     {% else %}
-        <br>
-        <div align="center">
-            Thank you for taking part in our experiment.
-        </div>
-        <div align="center">Your bonus will be transferred to you soon.</div>
+
+            <br>
+            <div align="center">
+                Thank you for taking part in our experiment.
+            </div>
+        {% if worker_code != "dropped" %}
+            <div align="center">Your bonus will be transferred to you soon.</div>
+
+            <div align="center">
+                <br>
+                Your survey completion code is: <br>
+                <br>
+                <strong>{{worker_code}}</strong>
+            </div>
+        {% endif%}        
     {% endif %}
 
-    <div align="center">
-        <br>
-        Your survey completion code is: <br>
-        <br>
-        <strong>{{worker_code}}</strong>
-    </div>
     <div align="center">
         <br>
         {{message}}
