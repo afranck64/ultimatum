@@ -95,3 +95,9 @@ AI_SYSTEM_AUTO_DESCRIPTION_EXTENDED_RESPONDER = """The system was trained using 
 - The system learned a fixed optimal offer (AI_OFFER).
 - AI_OFFER was found by testing each possible offer on these prior bargaining situations and was selected as the one that provided the highest average gain to PROPOSERs.
 - Using the same process, the system also constructed an interval that judges offers that deviate from its recommendation."""
+
+AI_SYSTEM_DESCRIPTION_BRIEF_RESPONDER_T3X="""You have successfully submitted your minimum offer. Now, you have the option to revise your initial minimum offer by making a second decision in your role as RESPONDER.
+
+This second decision will be compared to your PROPOSER's offer and determine your bonus payoff from this task. For this second decision, you receive new information:
+
+Your matched PROPOSER does not actually make an offer themselves. Instead, an AI Machine-Learning System autonomously makes an offer on the human PROPOSER's behalf. The PROPOSER still receives whatever money the system earns from this task."""
