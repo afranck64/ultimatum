@@ -45,9 +45,10 @@ def is_resp_in_prop_result(resp_worker_id, job_id, treatment):
     return False
 
 
-def test_index(client, treatment, prefix=""):
+def test_index(client, treatment, prefix="", completion_code_prefix="resp:"):
     client = None
     job_id = "test"
+    completion_code_prefix_bytes = completion_code_prefix.encode("utf-8") if completion_code_prefix else b"resp:"
     for _ in range(TASK_REPETITION):
         client = get_client()
         resp_worker_id = generate_worker_id(f"{prefix}index_resp")
@@ -59,7 +60,7 @@ def test_index(client, treatment, prefix=""):
 
             res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
             process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
-            assert b"resp:" in res.data
+            assert completion_code_prefix_bytes in res.data
         time.sleep(WEBHOOK_DELAY)
         # let the auto-responder kick-in
         with app.app_context():
@@ -108,22 +109,24 @@ def test_resp_index(client, treatment):
     res = client.get(f"/{treatment}/resp/", follow_redirects=True).data
     assert b"RESPONDER" in res
 
-def test_resp_done_success(client, treatment):
+def test_resp_done_success(client, treatment, completion_code_prefix="resp:"):
+    completion_code_prefix_bytes = completion_code_prefix.encode("utf-8") if completion_code_prefix else b"resp:"
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
     res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
-    assert b"resp:" in res
+    assert completion_code_prefix_bytes in res
 
-def test_resp_done_both_models(client, treatment):
+def test_resp_done_both_models(client, treatment, completion_code_prefix="resp:"):
+    completion_code_prefix_bytes = completion_code_prefix.encode("utf-8") if completion_code_prefix else b"resp:"
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
     res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
-    assert b"resp:" in res
+    assert completion_code_prefix_bytes in res
 
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
     res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
-    assert b"resp:" in res
+    assert completion_code_prefix_bytes in res
 
 def test_prop_index(client, treatment):
     resp_worker_id = generate_worker_id("resp")
