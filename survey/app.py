@@ -8,6 +8,7 @@ from survey import tasks
 from survey.txx import handle_survey_cpc, handle_survey_cpc_done
 from survey.txx.survey import handle_survey, handle_survey_done
 from survey import admin
+from survey import dasbhoard
 
 from survey._app import app, csrf_protect
 
@@ -35,6 +36,7 @@ for treatment in app.config["TREATMENTS"]:
             pass
 
 app.register_blueprint(admin.bp)
+app.register_blueprint(dasbhoard.bp)
 
 
 @app.route("/")
