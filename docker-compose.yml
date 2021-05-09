@@ -15,7 +15,7 @@ services:
   web_socket:
     image: ultimatum_web
     command: 
-      "gunicorn --log-file /code/out.log --log-level debug --error-logfile=- --workers 1 survey.app:app --bind 0.0.0.0:5000 --timeout 300"
+      "gunicorn --log-file /code/out.log --log-level debug --error-logfile=- --reload --workers 1 survey.app:app --bind 0.0.0.0:5000 --timeout 300"
     environment: 
       - GUNICORN_BIND=0.0.0.0:5000
     ports:
