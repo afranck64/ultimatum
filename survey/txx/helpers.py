@@ -115,12 +115,7 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
         client.get(path, follow_redirects=True)
         app.logger.debug(f"Path: {path}, Path2: {path_dss}, Path-check: {path_check}")
         if dss_available:
-            # We send the secret_key_hash to have the ai_offer sent back!!!
-            # Use the ai's offer
-            data = {"offer": offer if offer != "auto" else 0}
-
-            res = client.post(path, data=data, follow_redirects=True)
-
+            # gather the "optimal" offer from the dss
             if offer == "auto":
                 info = client.get(path_check, follow_redirects=True)
                 try:
@@ -129,6 +124,8 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
                     app.logger.error(f"couldn't access to the ai_offer: - {info.data}")
                     app.log_exception(err)
                     offer = -1
+            data = {"offer": offer}
+            res = client.post(path, data=data, follow_redirects=True)
 
             data_dss = {
                 "offer_dss": offer,
@@ -141,8 +138,9 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
                 client.get(path_dss, follow_redirects=True)
                 client.get(path_check)
                 for _ in range(nb_dss_check):
-                    tmp = client.get(f"{path_check}?offer={random.choice(list(range(0, MAX_GAIN+1, 5)))}")
-                res = client.post(path_dss, data=data_dss, follow_redirects=True)
+                    client.get(f"{path_check}?offer={random.choice(list(range(0, MAX_GAIN+1, 5)))}")
+
+            res = client.post(path_dss, data=data_dss, follow_redirects=True)
 
             data_feedback = {
                 "feedback_alternative": random.choice(AI_FEEDBACK_SCALAS_KEYS),
@@ -152,6 +150,8 @@ def _process_prop(client, treatment, job_id="test", worker_id=None, offer=OFFER,
             } 
             res = client.post(path_feedback, data=data_feedback, follow_redirects=True)
         else:
+            if offer=="auto":
+                offer = MAX_GAIN // 2
             res = client.post(path, data={"offer":offer}, follow_redirects=True)
         return res
 
