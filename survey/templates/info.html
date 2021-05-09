@@ -24,7 +24,8 @@
                 Thank you for taking part in our experiment.
             </div>
             <div align="center">Your bonus will be transferred to you soon.</div>
-            
+        {% else %}
+            <div style="display:none;">worker_code: {{worker_code}}</div> <!-- useful for tests -->
         {% endif%}        
         
     {% endif %}
