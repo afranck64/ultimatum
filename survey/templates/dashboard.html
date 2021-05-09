@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block head%}
+<title> The Ultimatum Bargaining Experiment - Dashboard</title>
+<style>
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+        {% for treatment, treatment_info in infos.items() %}
+            {% if treatment_info.survey or treatment_info.resp or treatment_info.prop  %}
+            <table style="width:100%">
+                <tr>
+                    <th>Treatment</th>
+                    <th>infos</th>
+                </tr>
+                {% if treatment_info.survey %}
+                    <tr>
+                        <td>{{treatment}}.survey</td>
+                        <td>
+                            <ul>
+                            {% for item in treatment_info.survey %}
+                                <li>{{item.job_id}} - total (dropped) {{item.count}} ({{item.dropped}})</li>
+                            {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                {% endif %}
+                {% if treatment_info.resp %}
+                    <tr>
+                        <td>{{treatment}}.resp</td>
+                        <td>
+                            <ul>
+                                {% for key, value in treatment_info.resp.items()%}
+                                    <li>{{key}} - {{value}}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                {% endif %}
+                {% if treatment_info.prop %}
+                    <tr>
+                        <td>{{treatment}}.prop</td>
+                        <td>
+                            <ul>
+                                {% for key, value in treatment_info.prop.items()%}
+                                    <li>{{key}} - {{value}}</li>
+                                {% endfor %}
+                            <ul>
+                        </td>
+                    </tr>
+                {% endif %}
+            </table>
+            <br>
+            {% endif %}
+        {% endfor %}
+{% endblock %}
