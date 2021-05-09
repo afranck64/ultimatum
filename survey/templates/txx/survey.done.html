@@ -25,6 +25,8 @@
                 <br>
                 <strong>{{worker_code}}</strong>
             </div>
+        {% else %}
+            <div style="display:none;">worker_code: {{worker_code}}</div> <!-- useful for tests -->
         {% endif%}        
     {% endif %}
 
