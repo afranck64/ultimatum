@@ -33,6 +33,7 @@ def index():
     messages = []
     return handle_index(TREATMENT, messages=messages)
 
+@csrf_protect.exempt
 @bp.route("/prop_dss/", methods=["GET", "POST"])
 def index_dss():
     messages = [AI_SYSTEM_DESCRIPTION_BRIEF_PROPOSER, AI_SYSTEM_DESCRIPTION_EXTENDED_PROPOSER, AI_SYSTEM_DESCRIPTION_USAGE_PROPOSER]
