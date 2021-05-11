@@ -66,7 +66,7 @@ def get_treaments_infos(con, treatments):
 
 
 @csrf_protect.exempt
-@bp.route("/dashboard", methods=["GET", "POST"])
+@bp.route("/dashboard/", methods=["GET", "POST"])
 def index():
     app.logger.debug(f"dashboard.index")
     treatments = [treatment.lower() for treatment in reversed(app.config["TREATMENTS"])]

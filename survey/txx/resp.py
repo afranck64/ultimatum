@@ -289,9 +289,15 @@ def handle_index_dss(treatment, template=None, messages=None, dss_only=False, fe
     set_cookie_obj(req_response, BASE, cookie_obj)
     return req_response
 
-def handle_feedback(treatment, template=None, messages=None, feedback_accuracy_scalas=None):
+def handle_feedback(treatment, template=None, messages=None, feedback_accuracy_scalas=None, resp_feedback_fields=None):
     app.logger.debug("handle_index_dss")
     cookie_obj = get_cookie_obj(BASE)
+    if resp_feedback_fields is None:
+        resp_feedback_fields = [
+            "feedback_alternative",
+            "feedback_fairness",
+            "feedback_accuracy"
+        ]
     if messages is None:
         messages = []
     if template is None:
@@ -300,9 +306,8 @@ def handle_feedback(treatment, template=None, messages=None, feedback_accuracy_s
         feedback_accuracy_scalas = AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS
     if request.method == "POST":
         response = cookie_obj["response"]
-        response["feedback_alternative"] = request.form["feedback_alternative"]
-        response["feedback_fairness"] = request.form["feedback_fairness"]
-        response["feedback_accuracy"] = request.form["feedback_accuracy"]
+        for field in resp_feedback_fields:
+            response[field] = request.form[field]
         cookie_obj['response'] = response
         req_response =  make_response(redirect(url_for(f"{treatment}.resp.done", **request.args)))
         set_cookie_obj(req_response, BASE, cookie_obj)

@@ -45,7 +45,7 @@ def is_resp_in_prop_result(resp_worker_id, job_id, treatment):
     return False
 
 
-def test_index(client, treatment, prefix="", completion_code_prefix="resp:"):
+def test_index(client, treatment, prefix="", completion_code_prefix="resp:", resp_feedback_fields=None):
     client = None
     job_id = "test"
     completion_code_prefix_bytes = completion_code_prefix.encode("utf-8") if completion_code_prefix else b"resp:"
@@ -58,7 +58,7 @@ def test_index(client, treatment, prefix="", completion_code_prefix="resp:"):
             assert b"RESPONDER" in res.data
             # res = _process_resp_tasks(client, worker_id=worker_id)
 
-            res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+            res = _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer(), resp_feedback_fields=resp_feedback_fields)
             process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
             assert completion_code_prefix_bytes in res.data
         time.sleep(WEBHOOK_DELAY)
@@ -109,29 +109,29 @@ def test_resp_index(client, treatment):
     res = client.get(f"/{treatment}/resp/", follow_redirects=True).data
     assert b"RESPONDER" in res
 
-def test_resp_done_success(client, treatment, completion_code_prefix="resp:"):
+def test_resp_done_success(client, treatment, completion_code_prefix="resp:", resp_feedback_fields=None):
     completion_code_prefix_bytes = completion_code_prefix.encode("utf-8") if completion_code_prefix else b"resp:"
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
-    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
+    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer(), resp_feedback_fields=resp_feedback_fields).data
     assert completion_code_prefix_bytes in res
 
-def test_resp_done_both_models(client, treatment, completion_code_prefix="resp:"):
+def test_resp_done_both_models(client, treatment, completion_code_prefix="resp:", resp_feedback_fields=None):
     completion_code_prefix_bytes = completion_code_prefix.encode("utf-8") if completion_code_prefix else b"resp:"
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
-    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
+    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer(), resp_feedback_fields=resp_feedback_fields).data
     assert completion_code_prefix_bytes in res
 
     worker_id = generate_worker_id("resp")
     process_tasks(client, worker_id=worker_id)
-    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer()).data
+    res = _process_resp(client, treatment, worker_id=worker_id, min_offer=get_min_offer(), resp_feedback_fields=resp_feedback_fields).data
     assert completion_code_prefix_bytes in res
 
-def test_prop_index(client, treatment):
+def test_prop_index(client, treatment, resp_feedback_fields=None):
     resp_worker_id = generate_worker_id("resp")
     job_id = "test"
-    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer(), resp_feedback_fields=resp_feedback_fields)
     process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
     time.sleep(WEBHOOK_DELAY)
     time.sleep(WEBHOOK_DELAY)
@@ -165,7 +165,7 @@ def test_prop_index(client, treatment):
 #     assert b"prop:" in res.data
 
 
-def test_bonus_delayed(client, treatment, synchron=False):
+def test_bonus_delayed(client, treatment, synchron=False, resp_feedback_fields=None):
     # In real conditions, the tasks/webhook are delayed with +500 ms
     # we make sure the offer is accepted!
     min_offer = 0
@@ -173,7 +173,7 @@ def test_bonus_delayed(client, treatment, synchron=False):
         client = get_client()
         job_id = "test"
         resp_worker_id = generate_worker_id("bonus_resp")
-        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=min_offer, bonus_mode="random", synchron=synchron)
+        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=min_offer, bonus_mode="random", synchron=synchron, resp_feedback_fields=resp_feedback_fields)
         time.sleep(WEBHOOK_DELAY)
         # let the auto-responder kick-in
         with app.app_context():
@@ -187,7 +187,7 @@ def test_bonus_delayed(client, treatment, synchron=False):
             assert bonus_resp <=  tasks.MAX_BONUS + (MAX_GAIN - OFFER)
             assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
-def test_bonus_nodelay(client, treatment, synchron=True):
+def test_bonus_nodelay(client, treatment, synchron=True, resp_feedback_fields=None):
     # In real conditions, the tasks/webhook are delayed with +500 ms
     # we make sure the offer is accepted!
     min_offer = 0
@@ -195,7 +195,7 @@ def test_bonus_nodelay(client, treatment, synchron=True):
         client = get_client()
         job_id = "test"
         resp_worker_id = generate_worker_id("bonus_resp")
-        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=min_offer, bonus_mode="random", synchron=synchron)
+        _process_resp_tasks(client, treatment, worker_id=resp_worker_id, min_offer=min_offer, bonus_mode="random", synchron=synchron, resp_feedback_fields=resp_feedback_fields)
 
         time.sleep(WEBHOOK_DELAY)
         with app.app_context():
@@ -209,12 +209,12 @@ def test_bonus_nodelay(client, treatment, synchron=True):
             assert bonus_resp <=  tasks.MAX_BONUS + (MAX_GAIN - OFFER)
             assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
-def test_webhook(client, treatment):
+def test_webhook(client, treatment, resp_feedback_fields=None):
     # In real conditions, the tasks/webhook are delayed with +500 ms
     job_id = "test"
     resp_worker_id = generate_worker_id("webhook_resp")
     process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random")
-    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer(), resp_feedback_fields=resp_feedback_fields)
     emit_webhook(client, url=f"/{treatment}/webhook/", job_id=job_id, treatment=treatment, worker_id=resp_worker_id, by_get=True)
     time.sleep(WEBHOOK_DELAY)
     with app.app_context():
@@ -226,11 +226,11 @@ def test_webhook(client, treatment):
         assert is_worker_available(resp_worker_id, get_table("resp", job_id=job_id, schema="result", treatment=treatment))
         assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
-def test_auto_finalize(client, treatment):
+def test_auto_finalize(client, treatment, resp_feedback_fields=None):
     # Test automatic webhook triggering to finalize tasks
     job_id = "test"
     resp_worker_id = generate_worker_id("auto_resp")
-    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer())
+    _process_resp(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=get_min_offer(), resp_feedback_fields=resp_feedback_fields)
     process_tasks(client, job_id=job_id, worker_id=resp_worker_id, bonus_mode="random", url_kwargs={"auto_finalize": 1, "treatment": treatment})
     time.sleep(WEBHOOK_DELAY)
     with app.app_context():
@@ -243,11 +243,11 @@ def test_auto_finalize(client, treatment):
         assert is_resp_in_prop_result(resp_worker_id, job_id, treatment)
 
 
-def test_payment(client, treatment):
+def test_payment(client, treatment, resp_feedback_fields=None):
     with HTTMock(figure_eight_mock):
         job_id = "test"
         resp_worker_id = generate_worker_id("payment_resp")
-        _process_resp_tasks(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=MIN_OFFER)
+        _process_resp_tasks(client, treatment, job_id=job_id, worker_id=resp_worker_id, min_offer=MIN_OFFER, resp_feedback_fields=resp_feedback_fields)
         time.sleep(WEBHOOK_DELAY)
         for _ in range(5):
             emit_webhook(client, url=f"/{treatment}/webhook/", treatment=treatment, job_id="test", worker_id=resp_worker_id, by_get=False)
