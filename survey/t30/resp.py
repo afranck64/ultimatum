@@ -50,7 +50,19 @@ def index_dss():
 @csrf_protect.exempt
 @bp.route("/resp_feedback/", methods=["GET", "POST"])
 def feedback():
-    return handle_feedback(TREATMENT, template="txx/resp_dss_feedback_t3x.html", feedback_accuracy_scalas=AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_T3X)
+    resp_feedback_fields = [
+        "feedback_alternative",
+        "feedback_fairness",
+        "feedback_accuracy",
+        "feedback_ai_offers",
+        "feedback_fairness_against_ai"
+    ]
+    return handle_feedback(
+        TREATMENT,
+        template="txx/resp_dss_feedback_t3x.html",
+        feedback_accuracy_scalas=AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_T3X,
+        resp_feedback_fields=resp_feedback_fields
+        )
 
 
 @bp.route("/resp/done")

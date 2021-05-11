@@ -39,8 +39,8 @@ SURVEY_CHOICE_FIELDS = {"age", "gender", "income", "ethnicity", "test"}
 
 
 
-def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, clear_session=True, path=None, dss_available=False):
-    app.logger.debug("_process_resp")
+def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, clear_session=True, path=None, dss_available=False, resp_feedback_fields=None):
+    app.logger.error("_process_resp")
     MODEL_KEY = f"{TREATMENTS_MODEL_REFS[treatment.upper()]}_MODEL"
     dss_available = bool(app.config.get(MODEL_KEY))
     dss_available = dss_available and treatment[:3] not in {"t00", "t10", "t11"} #Treatments where the responder isn't informed about the DSS
@@ -48,6 +48,12 @@ def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MI
         worker_id = generate_worker_id()
     if path is None:
         path = f"/{treatment}/resp/?job_id={job_id}&worker_id={worker_id}"
+    if resp_feedback_fields is None:
+        resp_feedback_fields = [
+                "feedback_alternative",
+                "feedback_fairness",
+                "feedback_accuracy"
+        ]
     with app.test_request_context(path):
         if clear_session:
             with client:
@@ -65,24 +71,19 @@ def _process_resp(client, treatment, job_id="test", worker_id=None, min_offer=MI
             data_dss={
                 "min_offer": min_offer,
             }
-            res = client.post(path_dss, data=data_dss, follow_redirects=True)
-
-            data_feedback = {
-                "feedback_alternative": random.choice(AI_FEEDBACK_SCALAS_KEYS),
-                "feedback_fairness":  random.choice(AI_FEEDBACK_SCALAS_KEYS),
-                "feedback_accuracy": random.choice(AI_FEEDBACK_ACCURACY_RESPONDER_SCALAS_KEYS)
-            }
+            client.post(path_dss, data=data_dss, follow_redirects=True)
+            data_feedback = {field:random.choice(AI_FEEDBACK_SCALAS_KEYS) for field in resp_feedback_fields}
             path_feedback = f"/{treatment}/resp_feedback/?job_id={job_id}&worker_id={worker_id}"
             res = client.post(path_feedback, data=data_feedback, follow_redirects=True)
 
         return res
 
-def _process_resp_tasks(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, bonus_mode="random", clear_session=True, synchron=True, path=None):
+def _process_resp_tasks(client, treatment, job_id="test", worker_id=None, min_offer=MIN_OFFER, bonus_mode="random", clear_session=True, synchron=True, path=None, resp_feedback_fields=None):
     app.logger.debug("_process_resp_tasks")
     if worker_id is None:
         worker_id = generate_worker_id("resp")
     process_tasks(client, job_id=job_id, worker_id=worker_id, bonus_mode=bonus_mode)
-    res = _process_resp(client, treatment, job_id=job_id, worker_id=worker_id, min_offer=min_offer, clear_session=clear_session, path=path)
+    res = _process_resp(client, treatment, job_id=job_id, worker_id=worker_id, min_offer=min_offer, clear_session=clear_session, path=path, resp_feedback_fields=resp_feedback_fields)
     if synchron:
         emit_webhook(client, url=f"/{treatment}/webhook/?synchron=1", treatment=treatment, job_id=job_id, worker_id=worker_id)
     else:
@@ -169,7 +170,7 @@ def _process_prop_round(client, treatment, job_id="test", worker_id=None, offer=
         
     if not response_available:
         _process_resp_tasks(client, treatment=treatment, job_id=job_id, worker_id=None, min_offer=MIN_OFFER, bonus_mode="full")
-    res = _process_prop(client, treatment=treatment, job_id=job_id, worker_id=worker_id, offer=offer, response_available=True, path=path)
+    res = _process_prop(client, treatment=treatment, job_id=job_id, worker_id=worker_id, offer=offer, response_available=True, path=path, nb_dss_check=1)
     time.sleep(WEBHOOK_DELAY)
     if finalize_round:
         emit_webhook(client, url=webhook_url, treatment=treatment, job_id=job_id, worker_id=worker_id)

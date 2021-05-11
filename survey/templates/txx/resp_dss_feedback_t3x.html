@@ -131,9 +131,20 @@
                     </ul>
                 </label>
 
-                <label align="center" class="statement">On average, I think the AI System offers ... than a human PROPOSER:
+                <label align="center" class="statement">On average, I think the AI System offers ... than a human PROPOSER.
                     <ul class='likert'>
                         {% for value, label in accuracy_scalas.items() %}               
+                        <li>
+                            <label> <input type="radio" name="feedback_ai_offers" value="{{value}}" required>{{label}}</label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </label>
+            </div>
+
+                <label align="center" class="statement">On average, I think the AI System will earn the human proposer more than they would be able to do themself.
+                    <ul class='likert'>
+                        {% for value, label in scalas.items() %}               
                         <li>
                             <label> <input type="radio" name="feedback_accuracy" value="{{value}}" required>{{label}}</label>
                         </li>
