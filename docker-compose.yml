@@ -5,7 +5,7 @@ services:
     image: ultimatum_web
     build: .
     command: 
-      "gunicorn --log-file /code/out.log --log-level debug --error-logfile=- --workers 1 survey.app:app --bind $GUNICORN_BIND --timeout 300"
+      "gunicorn --log-file /code/out.log --log-level debug --capture-output --error-logfile=/code/out.log --workers 1 survey.app:app --bind $GUNICORN_BIND --timeout 300"
     env_file: 
       - .env
     volumes:
@@ -15,9 +15,11 @@ services:
   web_socket:
     image: ultimatum_web
     command: 
-      "gunicorn --log-file /code/out.log --log-level debug --error-logfile=- --reload --workers 1 survey.app:app --bind 0.0.0.0:5000 --timeout 300"
+      "gunicorn --log-file=/code/out.log --log-level debug --capture-output --error-logfile=/code/out.log --reload --workers 1 survey.app:app --bind 0.0.0.0:5000 --timeout 300"
     environment: 
       - GUNICORN_BIND=0.0.0.0:5000
+    env_file: 
+      - .env
     ports:
       - "${HOST_WEB_PORT:-5000}:5000"
     volumes:
