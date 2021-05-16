@@ -3,15 +3,16 @@
 {% block content %}
     {{ message }}
 
-    {% if worker_code %}
-        <div align="center">
-            Thank you for taking part in our experiment.
-        </div>
+    <div align="center">Thank you for taking part in our experiment.</div>
+    
+    {% if worker_code != "dropped" %}
         <div align="center">
             <br>
             Your survey completion code is: <br>
             <br>
             <strong>{{worker_code}}</strong>
         </div>
-    {% endif %}
+    {% else %}
+        <div style="display:none;">worker_code: {{worker_code}}</div> <!-- useful for tests -->
+    {% endif%}     
 {% endblock %}

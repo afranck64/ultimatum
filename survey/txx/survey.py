@@ -199,7 +199,8 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
         with con:
             res = con.execute(f"SELECT * from {table_all} WHERE worker_id=?", (worker_id,)).fetchone()
             if res:
-                flash(f"You already took part on this survey. You can just ignore this HIT for the assignment to be RETURNED later to another worker or you can submit right now for a REJECTION using the survey code provided.")
+                flash(f"You already took part on this survey.")
+                flash("You can just ignore this HIT for the assignment to be RETURNED later to another worker.")
                 req_response = make_response(render_template("error.html", worker_code=WORKER_CODE_DROPPED))
                 return req_response
 
