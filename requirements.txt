@@ -26,7 +26,7 @@ researchpy==0.2.3
 six==1.15.0
 statsmodels==0.12.1
 threadpoolctl==2.1.0
-urllib3==1.26.4
+urllib3==1.26.5
 Werkzeug==0.16.1
 WTForms==2.3.3
 #-------
