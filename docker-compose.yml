@@ -10,6 +10,7 @@ services:
       - .env
     volumes:
       - .:/code
+      - ~/.aws/:/root/.aws/
     working_dir: /code
   
   web_socket:
@@ -24,6 +25,7 @@ services:
       - "${HOST_WEB_PORT:-5000}:5000"
     volumes:
       - .:/code
+      - ~/.aws/:/root/.aws/
     working_dir: /code
   
 
