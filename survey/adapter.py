@@ -96,7 +96,8 @@ class MTurkAdapter(DefaultAdapter):
         referrer = request.headers.get("Referer")
         args_source = request.args
         app.logger.debug(f"adapter: referrer={referrer}")
-        if referrer:
+        app.logger.debug(f"Mturk request.args: {request.args}")
+        if referrer and "workerId" in referrer:
             parsed_url = urlparse(referrer)
             query = parse_qs(parsed_url.query)
             query_flat = {k:v[0] for k,v in query.items()}
