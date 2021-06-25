@@ -130,6 +130,19 @@ class MainFormFeeback(FlaskForm):
     test = RadioField("This is an attention check question. Please select the option 'BALL'", choices=[("apple", "APPLE"), ("ball", "BALL"), ("cat", "CAT")], validators=[DataRequired()])
     feedback = TextAreaField("Please enter your comments, feedback or suggestions below.")
 
+def select_adapter():
+    cookie_obj = get_cookie_obj(BASE)
+    adapter_cookie = get_adapter_from_dict(cookie_obj.get("adapter", {}))
+    adapter_args = get_adapter_from_dict(request.args)
+    adapter_referrer = get_adapter()
+    
+    if adapter_referrer.job_id not in {"", "na", None}:
+        adapter = adapter_referrer
+    elif adapter_cookie.job_id not in {"", "na", None}:
+        adapter = adapter_cookie
+    else:
+        adapter = adapter_args
+    return adapter
 
 def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=None, overview_url=None, resp_only=None, prop_only=None):
     app.logger.info("handle_survey")
@@ -143,16 +156,7 @@ def handle_survey(treatment=None, template=None, code_prefixes=None, form_class=
         overview_url = url_for("overview")
     cookie_obj = get_cookie_obj(BASE)
     
-    adapter_cookie = get_adapter_from_dict(cookie_obj.get("adapter", {}))
-    adapter_args = get_adapter_from_dict(request.args)
-    adapter_referrer = get_adapter()
-    
-    if adapter_referrer.job_id not in {"", "na", None}:
-        adapter = adapter_referrer
-    elif adapter_cookie.job_id not in {"", "na", None}:
-        adapter = adapter_cookie
-    else:
-        adapter = adapter_args
+    adapter = select_adapter()
 
     app.logger.debug(f"adapter: {adapter.to_dict()}")
     worker_code_key = f"{BASE}_worker_code"
@@ -484,6 +488,21 @@ def handle_survey_feedback_done(template=None):
                     app.logger.debug(f"try create new assignments")
                     create_res = api.create_additional_assignments(1)
                     app.logger.debug(f"post assignment creation: new-max: {api.get_max_judgments()} , mturk-api-res: {create_res}")
+        except Exception as err:
+            app.log_exception(err)
+
+        # directly reply to AWS as the survey should be served as an external question!
+        try:
+
+            adapter = select_adapter()
+            assignment_id = adapter.get_assignment_id()
+            submit_to_kwargs = adapter.get_submit_to_kwargs()
+            submit_to_url = adapter.get_submit_to_URL()
+
+            url = os.path.join(submit_to_url, f"mturk/externalSubmit")
+            payload = dict(submit_to_kwargs)
+            res = requests.post(url, data=payload)
+            app.logger.debug(f"submitted assignment to AWS: {res}")
         except Exception as err:
             app.log_exception(err)
         app.logger.info(f"handle_survey_done: saved new survey - job_id: {job_id}, worker_id: {worker_id}")

@@ -33,6 +33,18 @@ class RowState(object):
     HIDDEN_GOLD = "hidden_gold"
     CANCELED = "canceled"
 
+
+def get_mturk_client(sandbox=True):
+    endpoint_url = None
+    if sandbox:
+        endpoint_url = "https://mturk-requester-sandbox.us-east-1.amazonaws.com"
+    client = boto3.client(
+        'mturk',
+        region_name="us-east-1",
+        endpoint_url=endpoint_url
+    )
+    return client
+
 class MTurk(object):
     def __init__(self, job_id, api_key=None, api_version=None, sandbox=True, *args, **kwargs):
         """

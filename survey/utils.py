@@ -474,6 +474,27 @@ def pay_worker_bonus(job_id, worker_id, api, con=None, assignment_id=None, send_
     return False
 
 
+from boto.mturk.question import ExternalQuestion
+from survey.mturk import get_mturk_client
+def create_hit(treatment, max_assignment=12, frame_height=800, reward=0.5, sandbox=True):
+    url = f"https://tube.ddns.net/ultimatum/survey/{treatment}/?adapter=mturk" # <-- this is my website
+    mturk = get_mturk_client(sandbox)
+    frame_height = 800 # the height of the iframe holding the external hit
+
+    question = ExternalQuestion(url, frame_height=frame_height)
+    new_hit = mturk.create_hit(
+        Title='The Ultimatum Bargaining Experiment',
+        Description='Take part on an intresting experiment about human behaviour',
+        Keywords='survey, bargaining, experiment',
+        Reward='0.5',
+        MaxAssignments=max_assignment,
+        LifetimeInSeconds=7*24*3600,
+        AssignmentDurationInSeconds=60*30,
+        AutoApprovalDelayInSeconds=6*24*3600,
+        Question=question.get_as_xml(),   # <--- this does the trick
+    )
+    click.echo(f"New hit created: {new_hit}")
+    return new_hit
 
 ############################################################ CLI #
 
@@ -503,3 +524,15 @@ def _add_assignments():
     api = MTurk(job_id, sandbox=app.config["MTURK_SANDBOX"])
     api.create_additional_assignments(nb_assignments)
 app.cli.add_command(_add_assignments)
+
+@click.command('create_hit')
+@with_appcontext
+def _create_hit():
+    sandbox=app.config["MTURK_SANDBOX"]
+    click.echo(f"is_sandbox? {sandbox}")
+    treatment = input("treatment: ").lower()
+    max_assignments = int(input("max_assignments: "))
+    create_hit(treatment, max_assignment=max_assignments)
+
+
+app.cli.add_command(_create_hit)

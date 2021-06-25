@@ -30,7 +30,7 @@ class BaseAdapter(object):
         raise NotImplementedError
 
     @classmethod
-    def from_dict(self, dict_obj):
+    def from_dict(cls, dict_obj):
         raise NotImplementedError
 
     def get_api(self, sandbox=None):
