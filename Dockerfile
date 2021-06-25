@@ -3,9 +3,8 @@
 FROM python:3.8-slim-buster
 
 COPY requirements.txt requirements.txt
-COPY requirements-test.txt requirements-test.txt
 
-RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt -r requirements-test.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
 
 WORKDIR /code
 COPY . .
