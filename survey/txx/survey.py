@@ -424,6 +424,18 @@ def handle_survey_done(template=None):
                     app.logger.debug(f"post assignment creation: new-max: {api.get_max_judgments()} , mturk-api-res: {create_res}")
         except Exception as err:
             app.log_exception(err)
+        # directly reply to AWS as the survey should be served as an external question!
+        try:
+            adapter = select_adapter()
+            submit_to_kwargs = adapter.get_submit_to_kwargs()
+            submit_to_url = adapter.get_submit_to_URL()
+
+            url = os.path.join(submit_to_url, f"mturk/externalSubmit")
+            payload = dict(submit_to_kwargs)
+            res = requests.post(url, data=payload)
+            app.logger.debug(f"submitted assignment to AWS: {res}")
+        except Exception as err:
+            app.log_exception(err)
         app.logger.info(f"handle_survey_done: saved new survey - job_id: {job_id}, worker_id: {worker_id}")
     req_response = make_response(render_template(template, worker_code=worker_code, dropped=True))
     set_cookie_obj(req_response, BASE, cookie_obj)
@@ -434,6 +446,7 @@ def handle_survey_done(template=None):
 
 
 def handle_survey_feedback_done(template=None):
+    """ Only used for treatment t10_feedback"""
     if template is None:
         template = "txx/survey.done.html"
     cookie_obj = get_cookie_obj(BASE)
@@ -491,21 +504,7 @@ def handle_survey_feedback_done(template=None):
         except Exception as err:
             app.log_exception(err)
 
-        # directly reply to AWS as the survey should be served as an external question!
-        try:
-
-            adapter = select_adapter()
-            assignment_id = adapter.get_assignment_id()
-            submit_to_kwargs = adapter.get_submit_to_kwargs()
-            submit_to_url = adapter.get_submit_to_URL()
-
-            url = os.path.join(submit_to_url, f"mturk/externalSubmit")
-            payload = dict(submit_to_kwargs)
-            res = requests.post(url, data=payload)
-            app.logger.debug(f"submitted assignment to AWS: {res}")
-        except Exception as err:
-            app.log_exception(err)
-        app.logger.info(f"handle_survey_done: saved new survey - job_id: {job_id}, worker_id: {worker_id}")
+        app.logger.info(f"handle_survey_feedback_done: saved new survey - job_id: {job_id}, worker_id: {worker_id}")
     req_response = make_response(render_template(template, worker_code=worker_code, dropped=True))
     set_cookie_obj(req_response, BASE, cookie_obj)
     for cookie in session.get(ALL_COOKIES_KEY, []):

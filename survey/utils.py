@@ -481,6 +481,31 @@ def create_hit(treatment, max_assignment=12, frame_height=800, reward=0.5, sandb
     mturk = get_mturk_client(sandbox)
     frame_height = 800 # the height of the iframe holding the external hit
 
+    qualificationRequirements =  [
+        {
+            "QualificationTypeId": "000000000000000000L0",
+            "Comparator": "GreaterThanOrEqualTo",
+            "IntegerValues": [
+                80
+            ],
+            "RequiredToPreview": False,
+            "ActionsGuarded": "Accept"
+        },
+        {
+            "QualificationTypeId": "00000000000000000071",
+            "Comparator": "EqualTo",
+            "LocaleValues": [
+                {
+                    "Country": "US"
+                }
+            ],
+            "RequiredToPreview": False,
+            "ActionsGuarded": "Accept"
+        },
+    ]
+    if sandbox:
+        qualificationRequirements = []
+
     question = ExternalQuestion(url, frame_height=frame_height)
     new_hit = mturk.create_hit(
         Title='The Ultimatum Bargaining Experiment',
@@ -492,6 +517,7 @@ def create_hit(treatment, max_assignment=12, frame_height=800, reward=0.5, sandb
         AssignmentDurationInSeconds=60*30,
         AutoApprovalDelayInSeconds=6*24*3600,
         Question=question.get_as_xml(),   # <--- this does the trick
+        QualificationRequirements=qualificationRequirements,
     )
     click.echo(f"New hit created: {new_hit}")
     return new_hit
@@ -532,7 +558,7 @@ def _create_hit():
     click.echo(f"is_sandbox? {sandbox}")
     treatment = input("treatment: ").lower()
     max_assignments = int(input("max_assignments: "))
-    create_hit(treatment, max_assignment=max_assignments)
+    create_hit(treatment, max_assignment=max_assignments, sandbox=sandbox)
 
 
 app.cli.add_command(_create_hit)
