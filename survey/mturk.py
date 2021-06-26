@@ -49,16 +49,9 @@ class MTurk(object):
     def __init__(self, job_id, api_key=None, api_version=None, sandbox=True, *args, **kwargs):
         """
         Interface to the mturk api
-        :param api_version: (str, default: "v1" )
         """
-        endpoint_url = None
-        if sandbox:
-            endpoint_url = "https://mturk-requester-sandbox.us-east-1.amazonaws.com"
-        self.client = boto3.client(
-            'mturk',
-            region_name="us-east-1",
-            endpoint_url=endpoint_url
-            )
+
+        self.client = get_mturk_client(sandbox)
         self.job_id = job_id
         self.api_key = api_key
         self.api_version = api_version
