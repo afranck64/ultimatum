@@ -185,7 +185,7 @@
   <br>
   <input id="toggle_instructions" type="button" onclick="toggle_overview()" value="Hide Instructions" width="100px">
   <iframe onload="setIframeHeight(this.id)" id="overview" src="{{overview_url}}"  width="100%" height="1200px" style="display: block;" frameborder="1"></iframe>
-  <form method="POST" name="form" id="form">
+  <form method="POST" name="form" id="form" action="">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="drop" name="drop" id="drop" value="0" /> 
 

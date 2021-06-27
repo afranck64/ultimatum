@@ -24,7 +24,7 @@ table, th, td {
                         <td>
                             <ul>
                             {% for item in treatment_info.survey %}
-                                <li>{{item.job_id}} - total (dropped) {{item.count}} ({{item.dropped}})</li>
+                                <li>{{item.job_id}} - {{item.count}} ({{item.dropped}})</li>
                             {% endfor %}
                             </ul>
                         </td>
