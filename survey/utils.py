@@ -477,7 +477,7 @@ def pay_worker_bonus(job_id, worker_id, api, con=None, assignment_id=None, send_
 from boto.mturk.question import ExternalQuestion
 from survey.mturk import get_mturk_client
 def create_hit(treatment, max_assignment=12, frame_height=800, reward=0.5, sandbox=True):
-    url = f"https://tube.ddns.net/survey/{treatment}/?adapter=mturk" # <-- this is my website
+    url = f"https://tube.ddns.net/start/{treatment}/?adapter=mturk" # <-- this is my website
     mturk = get_mturk_client(sandbox)
 
     qualificationRequirements =  [
