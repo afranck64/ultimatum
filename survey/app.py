@@ -1,3 +1,4 @@
+from survey.txx.start import handle_start
 from flask import render_template
 from flask.logging import default_handler
 import warnings
@@ -31,7 +32,8 @@ for treatment in app.config["TREATMENTS"]:
             app.register_blueprint(txx.prop.bp, url_prefix=f"/{treatment.lower()}")
             app.register_blueprint(txx.resp.bp, url_prefix=f"/{treatment.lower()}")
             app.register_blueprint(txx.survey.bp, url_prefix=f"/survey/{treatment.lower()}")
-        except ImportError as err:
+            app.register_blueprint(txx.start.bp, url_prefix=f"/start/{treatment.lower()}")  #missing for some treatments
+        except (ImportError, AttributeError) as err:
             warnings.warn(f"Treatment: {treatment} ==> {err}")
             pass
 
@@ -47,6 +49,11 @@ def index():
 @app.route("/survey/", methods=["GET", "POST"])
 def survey():
     return handle_survey()
+
+@csrf_protect.exempt
+@app.route("/start/", methods=["GET"])
+def start():
+    return handle_start()
 
 @app.route("/survey/done")
 def survey_done():
