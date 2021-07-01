@@ -32,10 +32,10 @@ for treatment in app.config["TREATMENTS"]:
             app.register_blueprint(txx.prop.bp, url_prefix=f"/{treatment.lower()}")
             app.register_blueprint(txx.resp.bp, url_prefix=f"/{treatment.lower()}")
             app.register_blueprint(txx.survey.bp, url_prefix=f"/survey/{treatment.lower()}")
-            app.register_blueprint(txx.start.bp, url_prefix=f"/start/{treatment.lower()}")  #missing for some treatments
-        except (ImportError, AttributeError) as err:
+            if hasattr(txx, "start"):
+                app.register_blueprint(txx.start.bp, url_prefix=f"/start/{treatment.lower()}")  #missing for some treatments
+        except ImportError as err:
             warnings.warn(f"Treatment: {treatment} ==> {err}")
-            pass
 
 app.register_blueprint(admin.bp)
 app.register_blueprint(dasbhoard.bp)
