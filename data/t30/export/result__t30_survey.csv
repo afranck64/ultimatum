@@ -1,0 +1,151 @@
+gender,age,ethnicity,income,education,proposer,responder,money_division,code_resp_prop,code_cpc,code_risk,code_exp,code_cc,code_ras,test,feedback,proposer_responder,timestamp,worker_id,job_id,completion_code
+,,,,,incorrect1,incorrect1,correct,t,,,,,,ball,NICE,incorrect1,2021-07-01 18:03:55.003257,AJBJC#####F2I,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,dropped
+,,,,,incorrect1,correct,correct,,,,,,,ball,,correct,2021-07-01 18:17:50.259048,A156U#####I5JV,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,dropped
+male,2635_years,white,I earn nearly equal incomes from crowdsourced microtasks and other job(s),bachelor_degree,correct,correct,correct,respNF:h67qP,,,,,,ball,very interesting task,correct,2021-07-01 18:31:46.933960,A1ET0#####1YJJ,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,t30:sWZ8S
+female,2635_years,black_or_african_american,Secondary source of income,high_school_degree,correct,correct,correct,respNF:2xhZg,,,,,,ball,No additional comments by me.,correct,2021-07-01 18:44:34.079052,A2F5Q#####7KF7,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,t30:jxkWs
+,,,,,correct,correct,,,,,,,,ball,,correct,2021-07-01 18:50:02.158324,A2SJ6#####8278,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,dropped
+male,3645_years,hispanic_latino,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:pTpvA,,,,,,ball,none,correct,2021-07-01 18:54:54.506008,A15T9#####3X7Q,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:vXArq
+female,1825_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:IF33E,,,,,,ball,Good survey,correct,2021-07-01 18:56:13.212327,A10IW#####H7AN,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:A6iAh
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-01 18:57:37.547460,AGBSA#####QHL,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,2635_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:RdQ7W,,,,,,ball,,correct,2021-07-01 18:58:18.038732,A3KK1#####0N1Z,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Lo3V8
+female,2635_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:3IYHQ,,,,,,ball,,correct,2021-07-01 19:01:49.709419,A1VXD#####97OF,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:bqRMW
+male,4655_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:NqvnT,,,,,,ball,nice,correct,2021-07-01 19:02:10.139401,A1UIE#####QLH4,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:CAG8y
+female,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:Q1vr9,,,,,,ball,great survey. ,correct,2021-07-01 19:02:20.018457,A90B6#####6OY,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Qw5N7
+male,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:8nS0m,,,,,,ball,,correct,2021-07-01 19:03:49.763772,ATJ92#####76Z,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,t30:LPJIq
+female,2635_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:x0Pqs,,,,,,ball,nice task.,correct,2021-07-01 19:04:01.681764,A3O60#####DYB2,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,t30:KZQam
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-01 19:04:10.933498,A2PVZ#####RKA1,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,white,Primary source of income,doctorate_degree,correct,correct,correct,respNF:6wqVv,,,,,,ball,Nice survey,correct,2021-07-01 19:05:20.343939,A1SXF#####M8SP,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:5G02j
+,,,,,correct,correct,incorrect2,,,,,,,,,correct,2021-07-01 19:05:26.045864,A1F7F#####L05T,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:dwG6c,,,,,,ball,,correct,2021-07-01 19:05:34.697168,A1BT5#####BIJY,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:fAMMb
+male,2635_years,hispanic_latino:white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:YAQsb,,,,,,ball,this is really good and intersting,correct,2021-07-01 19:05:46.638185,A225T#####JEDX,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:FSn4T
+female,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:k6qwK,,,,,,ball,,correct,2021-07-01 19:06:53.027491,ATCSO#####PPF,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,t30:RmnP7
+male,3645_years,hispanic_latino,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:LqlcE,,,,,,ball,Interesting,correct,2021-07-01 19:07:16.485136,A3BOK#####J16O,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:np5BQ
+,,,,,correct,incorrect2,incorrect1,,,,,,,ball,,incorrect1,2021-07-01 19:08:07.348109,A14KB#####TVHJ,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,2635_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:HXNWT,,,,,,ball,none ty,correct,2021-07-01 19:08:13.608920,A304U#####1J89,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:avhGF
+,,,,,correct,correct,incorrect2,,,,,,,,,correct,2021-07-01 19:10:37.622729,AGD1X#####DQI,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,incorrect2,incorrect1,incorrect1,,,,,,,,,incorrect2,2021-07-01 19:10:40.000345,AXUTI#####5G5,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,5665_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:m60hN,,,,,,ball,,correct,2021-07-01 19:10:44.078325,A1P2R#####S5BT,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:qSFFF
+female,4655_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:BTHwP,,,,,,ball,Nothing,correct,2021-07-01 19:10:59.479881,ACEH0#####N3K,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:aJena
+male,2635_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:EP5Xn,,,,,,ball,,correct,2021-07-01 19:11:28.720400,A37XB#####33FE,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:7t7km
+,,,,,correct,correct,incorrect1,,,,,,,,,correct,2021-07-01 19:11:32.306826,A1JWF#####XQKU,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,correct,incorrect2,,,,,,,ball,GOOD,incorrect1,2021-07-01 19:11:33.810301,A3FJ0#####J4JW,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,2635_years,black_or_african_american,Primary source of income,high_school_degree,correct,correct,correct,respNF:g4jtk,,,,,,ball,,correct,2021-07-01 19:11:50.712565,A3P57#####KNCE,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:rO8gi
+female,4655_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:taqI3,,,,,,ball,nice,correct,2021-07-01 19:12:28.606157,A24PR#####KGO3,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:3We4h
+female,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:1aIWY,,,,,,ball,good,correct,2021-07-01 19:12:43.347000,A1M2O#####DO0U,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:XhD5Q
+male,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:9YW2K,,,,,,ball,NONE,correct,2021-07-01 19:13:37.087937,A292N#####O16T,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:ga6Qy
+male,1825_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:6BjB8,,,,,,ball,,correct,2021-07-01 19:13:46.728265,AK6Y1#####T3A,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:zG6JR
+male,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:TVT7F,,,,,,ball,,correct,2021-07-01 19:14:21.768111,A1XYT#####DKRT,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:rFydS
+female,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct, respNF:pC8De ,,,,,,ball,nice,correct,2021-07-01 19:15:28.602454,A31VL#####Y6OR,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Cy3Ff
+male,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:Fkuyn,,,,,,ball,,correct,2021-07-01 19:16:02.506946,A3O2S#####SLG5,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:NNLUb
+female,4655_years,white,Primary source of income,bachelor_degree,correct,correct,correct,respNF:zGtEo,,,,,,ball,Good.,correct,2021-07-01 19:17:26.851488,AKFFO#####FJ6,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:1kePW
+female,4655_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:1FBqN,,,,,,ball,,correct,2021-07-01 19:18:00.146405,A2U45#####P7D8,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:syjt6
+,,,,,correct,correct,incorrect2,,,,,,,ball,,correct,2021-07-01 19:18:00.627378,AFXXR#####PC6,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:xKi0n,,,,,,ball,,correct,2021-07-01 19:19:08.916568,A92KV#####TU4,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:MH70h
+female,4655_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:B5QeK,,,,,,ball,Nothing,correct,2021-07-01 19:19:58.856926,A3TVW#####RCU,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:SYqkv
+,,,,,correct,incorrect2,incorrect2,,,,,,,ball,good,incorrect1,2021-07-01 19:21:01.123811,ADAN6#####2AV,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,incorrect1,incorrect2,,,,,,,ball,,incorrect1,2021-07-01 19:21:42.338851,A1KBK#####IL5A,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,4655_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:yHM2l,,,,,,ball,Nothing,correct,2021-07-01 19:22:21.223777,AO3IL#####W7Y,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:cdLLB
+,,,,,correct,correct,correct,dropped,,,,,,,,correct,2021-07-01 19:24:16.611708,A2VZS#####SYM8,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,incorrect2,incorrect2,,,,,,,,,incorrect1,2021-07-01 19:25:03.491023,A2CF1#####TLKA,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,2635_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:OIE6d,,,,,,ball,No issues,correct,2021-07-01 19:25:59.688194,A2NA6#####3KFH,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:TXd9d
+,,,,,incorrect1,incorrect2,incorrect1,,,,,,,ball,,incorrect2,2021-07-01 19:26:40.103779,A1MMW#####BJG,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,incorrect1,incorrect2,incorrect2,,,,,,,ball,GOOD,incorrect1,2021-07-01 19:26:59.714743,A1YXK#####R5I1,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:8KH6S,,,,,,ball,good,correct,2021-07-01 19:27:16.243667,A3N0J#####S1B6,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:uHdqT
+female,1825_years,white,Primary source of income,bachelor_degree,correct,correct,correct,respNF:EgKCJ,,,,,,ball,Good work.,correct,2021-07-01 19:27:27.739152,AFXF3#####597,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:bgIwp
+male,2635_years,hispanic_latino,Primary source of income,bachelor_degree,correct,correct,correct,respNF:h2kOX,,,,,,ball,,correct,2021-07-01 19:27:42.369673,AVKRM#####HUM,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:bnUdg
+female,3645_years,white,I earn nearly equal incomes from crowdsourced microtasks and other job(s),master_degree,correct,correct,correct,respNF:09fbd,,,,,,ball,A good survey,correct,2021-07-01 19:29:28.746957,AYS1B#####UHG,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:7nkAE
+male,2635_years,black_or_african_american,Primary source of income,bachelor_degree,correct,correct,correct,respNF:Ro7st,,,,,,ball,good,correct,2021-07-01 19:31:27.144011,A211Z#####DWDQ,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:LAlfp
+,,,,,incorrect1,incorrect1,incorrect2,,,,,,,ball,,incorrect2,2021-07-01 19:32:49.779821,A1K0F#####NTEI,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,3645_years,asian,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:U35KY,,,,,,ball,,correct,2021-07-01 19:34:36.622639,A2G7D#####PTKA,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:KyXUI
+female,2635_years,white,I earn nearly equal incomes from crowdsourced microtasks and other job(s),master_degree,correct,correct,correct,respNF:TBCgi,,,,,,ball,good.,correct,2021-07-01 19:34:38.742429,A3BO3#####7Q5H,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:3wcJX
+male,3645_years,white,Primary source of income,bachelor_degree,correct,correct,correct,respNF:hrC7S,,,,,,ball,very interesting task,correct,2021-07-01 19:34:44.557215,A3BLJ#####25YU,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:XqNT2
+male,2635_years,white,Primary source of income,bachelor_degree,correct,correct,correct,respNF:BLL3K,,,,,,ball,,correct,2021-07-01 19:37:05.316099,A13GU#####ZZDL,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:14arm
+female,3645_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:cq2k0,,,,,,ball,none,correct,2021-07-01 19:37:46.772263,A2MM8#####5ZNJ,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Hv4GA
+male,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:6ovjA,,,,,,ball,,correct,2021-07-01 19:40:37.551049,A3N8N#####UPT3,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:yzsfA
+male,2635_years,white,Primary source of income,master_degree,correct,correct,correct,respNF:jfBvu,,,,,,ball,good,correct,2021-07-01 19:41:29.032355,A3MDV#####Y0D3,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:zsiQh
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-01 19:41:38.450506,AHMJH#####GYT,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,incorrect1,correct,,,,,,,,,correct,2021-07-01 19:42:03.568550,A1DII#####QHH0,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,incorrect2,correct,incorrect1,,,,,,,,,correct,2021-07-01 19:42:16.219167,A1WT9#####DLKN,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:MLCDf,,,,,,ball,good task ,correct,2021-07-01 19:42:36.874302,A2G32#####VDHH,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:SoruQ
+male,4655_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:0m20T,,,,,,ball,nteresting study,correct,2021-07-01 19:43:32.848670,ALACB#####07P,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:FCmJZ
+female,1825_years,white,Primary source of income,master_degree,correct,correct,correct,respNF:YDs5v,,,,,,ball,none,correct,2021-07-01 19:43:41.189429,A3UYS#####JS1D,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:LExVA
+female,2635_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:YKZI6,,,,,,ball,,correct,2021-07-01 19:44:21.917584,A2NHF#####M8QR,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:sYDQj
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-01 19:45:10.511692,ACMPT#####J9E,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:cW23P,,,,,,ball,,correct,2021-07-01 19:45:25.543590,A39FJ#####T28,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:8kStV
+,,,,,correct,correct,incorrect1,,,,,,,,,correct,2021-07-01 19:46:41.293695,A2FEC#####3VAI,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,2635_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:xMEli,,,,,,ball,,correct,2021-07-01 19:47:33.260445,A2XS4#####8PD4,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:TS0R6
+,,,,,incorrect2,correct,,,,,,,,,,incorrect1,2021-07-01 19:48:58.680213,A23IT#####SF85,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,white,Secondary source of income,doctorate_degree,correct,correct,correct,respNF:Kwfa2,,,,,,ball,,correct,2021-07-01 19:49:00.426018,A1IWR#####AB0Z,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:0bUnk
+female,2635_years,asian,Primary source of income,high_school_degree,correct,correct,correct,respNF:SgfRh,,,,,,ball,,correct,2021-07-01 19:49:29.807553,A28U7#####CS1U,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:oz5Bs
+,,,,,correct,correct,incorrect2,,,,,,,,,correct,2021-07-01 19:53:49.410642,A2KND#####F7JL,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,dropped
+female,3645_years,white,Secondary source of income,other,correct,correct,correct,respNF:KdBps,,,,,,ball,Associate's Degree,correct,2021-07-01 19:56:27.541464,A36UF#####O9GJ,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:PzHh0
+female,1825_years,white,Secondary source of income,master_degree,correct,correct,correct,respNF:0dqEP,,,,,,ball,i,correct,2021-07-01 19:56:55.377841,A2DVV#####NCT5,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:i38hX
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-01 19:57:07.092538,A3SA9#####23NN,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,4655_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:ISUyK,,,,,,ball,"no feedback at this time, thank you",correct,2021-07-01 19:58:01.528944,AW081#####T14,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:JHSOi
+male,2635_years,black_or_african_american,Primary source of income,master_degree,correct,correct,correct,respNF:7uf8i,,,,,,ball,,correct,2021-07-01 19:58:34.982263,A3VNG#####2XW9,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:eAvNs
+male,4655_years,white,Primary source of income,high_school_degree,correct,correct,correct,respNF:19wRZ,,,,,,ball,,correct,2021-07-01 19:59:00.201703,A110K#####7SUJ,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Oy2uh
+male,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:IEz49,,,,,,ball,,correct,2021-07-01 20:01:03.924997,A3B9M#####CQWX,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:t3CI7
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-01 20:01:14.924886,A1YSF#####S67Z,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,2635_years,hispanic_latino,Secondary source of income,high_school_degree,correct,correct,correct,respNF:Gv5Ze,,,,,,ball,,correct,2021-07-01 20:03:25.836762,A3R0Y#####KWK3,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:41CTV
+male,2635_years,white,Secondary source of income,master_degree,correct,correct,correct,respNF:Hiz59,,,,,,ball,"Fun Study, thanks",correct,2021-07-01 20:06:57.248192,A30CV#####9OLN,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:nIdCN
+,,,,,incorrect1,incorrect2,correct,,,,,,,ball,good study always.,incorrect1,2021-07-01 20:07:43.628219,A3JGW#####XOVI,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:QzHzG,,,,,,ball,It was quite an engaging study,correct,2021-07-01 20:07:54.586458,A2P8V#####L5I4,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:04b9M
+,,,,,incorrect2,,correct,,,,,,,ball,,correct,2021-07-01 20:08:02.008115,APQL6#####KDO,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,2635_years,white,I earn nearly equal incomes from crowdsourced microtasks and other job(s),bachelor_degree,correct,correct,correct,respNF:usZVV,,,,,,ball,good,correct,2021-07-01 20:10:07.686818,AJWEF#####GUC,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:03HdB
+male,3645_years,white,Primary source of income,bachelor_degree,correct,correct,correct,respNF:Xnvy7,,,,,,ball,"hmm, all good",correct,2021-07-01 20:12:26.335993,A1L9J#####RQMU,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:5FErx
+,,,,,correct,correct,incorrect1,,,,,,,,,correct,2021-07-01 20:13:15.526184,A6ASU#####EYV,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:qfEx0,,,,,,ball,None,correct,2021-07-01 20:14:23.654657,A2YFQ#####AN9I,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Y26JX
+male,2635_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:Z6e8x,,,,,,ball,,correct,2021-07-01 20:15:10.919409,A3PXU#####8WRW,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:MM5eB
+,,,,,correct,correct,,,,,,,,,,correct,2021-07-01 20:16:02.171659,A1AFX#####GT68,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:VCLRg,,,,,,ball,,correct,2021-07-01 20:16:42.467743,A1R78#####68GY,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:9H0l5
+male,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:m8oF4,,,,,,ball,This survey was very interesting.,correct,2021-07-01 20:19:29.982188,A2Y7N#####TCR8,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:mMsCZ
+male,1825_years,american_indian_or_alaska_native,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:VpXPD,,,,,,ball,na,correct,2021-07-01 20:20:53.744744,AK77E#####KJG,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:CFCPi
+,,,,,correct,correct,incorrect2,,,,,,,,,correct,2021-07-01 20:21:14.573006,A36SN#####DKI5,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:S9nWL,,,,,,ball,,correct,2021-07-01 20:22:11.607308,A2OS3#####M69E,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,t30:YF0v8
+,,,,,correct,correct,incorrect1,,,,,,,,,correct,2021-07-01 20:26:09.790051,AB2QG#####8TM,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-01 20:26:33.771354,AREQ4#####ENT,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:ceBvL,,,,,,ball,,correct,2021-07-01 20:31:36.875928,A2ML7#####HJO7,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:34Qnx
+female,1825_years,white,Primary source of income,bachelor_degree,correct,correct,correct,respNF:whQ59,,,,,,ball,Good work.,correct,2021-07-01 20:31:49.514415,A1VBN#####USU7,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:CrDXa
+,,,,,correct,correct,,,,,,,,ball,,correct,2021-07-01 20:33:29.812350,A37TJ#####9D65,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,4655_years,asian,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:99UEa,,,,,,ball,,correct,2021-07-01 20:35:10.139100,A337Y#####Y4QI,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:QWY52
+female,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:yvELr,,,,,,ball,GREAT,correct,2021-07-01 20:38:11.104804,A36DA#####D5FX,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:B8gdk
+female,1825_years,,I earn nearly equal incomes from crowdsourced microtasks and other job(s),master_degree,correct,correct,correct,,,,,,,ball,Very Interesting,correct,2021-07-01 20:38:22.342800,A3FKS#####GM7I,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,4655_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:gHM4a,,,,,,ball,Thanks for the HIT!  I did my best and hope the data is useful!,correct,2021-07-01 20:39:01.612769,A1F9K#####9DTA,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:B9E6b
+male,2635_years,black_or_african_american,Secondary source of income,high_school_degree,correct,correct,correct, respNF:uA6Vw ,,,,,,ball,,correct,2021-07-01 20:45:50.690468,A1G34#####G1R8,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:BWNRv
+female,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:Kmjel,,,,,,ball,N/A,correct,2021-07-01 20:48:09.476243,AKNBC#####NDO,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:HMqu2
+male,2635_years,black_or_african_american,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:MIawe,,,,,,ball,,correct,2021-07-01 20:51:42.811320,ASD8F#####ZBF,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:E7koZ
+male,2635_years,white,Secondary source of income,master_degree,correct,correct,correct,respNF:fMzbL,,,,,,ball,good survey,correct,2021-07-01 20:57:55.757922,A3O9C#####VJLA,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:erdgH
+male,2635_years,asian,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:lXNnK,,,,,,ball,,correct,2021-07-01 21:02:14.201039,A2RWL#####FZA7,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:mYBVN
+female,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:8lBWq,,,,,,ball,NA,correct,2021-07-01 21:05:44.423368,A1TPG#####D68E,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:EjxW2
+male,5665_years,asian,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:z2w71,,,,,,ball,,correct,2021-07-01 21:07:41.870818,A1IJ5#####TT46,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:YND1u
+male,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:XuVcQ,,,,,,ball,,correct,2021-07-01 21:17:23.641647,A3F8K#####X8UR,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:cMgzy
+female,1825_years,asian,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:mF0dS,,,,,,ball,,correct,2021-07-01 21:19:42.897712,A2MS1#####X9FZ,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:DeMh7
+male,2635_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:VRaaw,,,,,,ball,good study,correct,2021-07-01 21:20:48.847080,A2Q8H#####1MKN,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:aUyhM
+male,2635_years,hispanic_latino,Secondary source of income,high_school_degree,correct,correct,correct,respNF:ZZCuu,,,,,,ball,,correct,2021-07-01 21:30:42.991907,AZ2P6#####6SH,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:2crHa
+male,4655_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:NE4zK,,,,,,ball,,correct,2021-07-01 21:34:47.035189,A5A14#####J23,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:u2g0A
+female,2635_years,white,Primary source of income,high_school_degree,correct,correct,correct,respNF:HPlt3,,,,,,ball,"fun idea, enjoyed trying.",correct,2021-07-01 21:39:32.818849,A2GSJ#####TMDH,38F60IALBJNPAQJAR8J7V8Y5H2OT0C,t30:Q4W5M
+female,4655_years,white,Secondary source of income,master_degree,correct,correct,correct, respNF:XB2oR ,,,,,,ball,NILL,correct,2021-07-01 21:54:35.007642,A1DWS#####8X0K,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:EFvyJ
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-01 22:37:08.965479,A2KGQ#####1PTO,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:cvzdO,,,,,,ball,,correct,2021-07-01 22:39:39.174445,A2VN5#####7P0R,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:t9wjF
+male,2635_years,asian,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:6xMDQ,,,,,,ball,,correct,2021-07-01 23:17:42.550418,A1P3H#####LJMP,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:bP7cJ
+male,older_than_65_years,white,Primary source of income,master_degree,correct,correct,correct,respNF:aicjn,,,,,,ball,nice,correct,2021-07-01 23:44:23.748740,A2T8B#####QFI,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Hhtot
+male,2635_years,white,Secondary source of income,master_degree,correct,correct,correct,respNF:8Sl3O,,,,,,ball,GOOD,correct,2021-07-02 15:06:30.893487,A1SPD#####Y9YX,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:gFJNK
+female,3645_years,white,Secondary source of income,high_school_degree,correct,correct,correct,respNF:0Imod,,,,,,ball,,correct,2021-07-02 15:14:29.389286,A2LF8#####1GR2,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:wyrtY
+,,,,,correct,correct,incorrect1,,,,,,,ball,,correct,2021-07-02 15:28:53.210386,A2P8V#####MOIL,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-02 15:31:44.333945,AC8SG#####2AU,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,,incorrect1,correct,,,,,,,ball,,correct,2021-07-02 15:35:58.847326,AQFEA#####5YY,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,correct,,,,,,,,,,incorrect1,2021-07-02 15:41:22.171160,AWNZF#####Z2G,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,2635_years,white,Secondary source of income,master_degree,correct,correct,correct,respNF:c8cP3,,,,,,ball,INTERESTING,correct,2021-07-02 15:52:33.524902,AE2T3#####R51,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:SCD8z
+male,2635_years,white,Secondary source of income,bachelor_degree,correct,correct,correct,respNF:PIAyU,,,,,,ball,,correct,2021-07-02 15:56:17.716492,A51J9#####CO0,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:PEAOo
+female,3645_years,white,Secondary source of income,master_degree,correct,correct,correct,respNF:04ZMG,,,,,,ball,,correct,2021-07-02 16:11:34.356716,A193D#####FSVT,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:lnAYi
+,,,,,correct,correct,,,,,,,,,,incorrect1,2021-07-02 16:15:16.958465,A2V1X#####2HQZ,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,correct,correct,,,,,,,,,correct,2021-07-02 16:23:54.964678,APPOO#####S7M,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,incorrect1,incorrect2,incorrect1,,,,,,,,,incorrect2,2021-07-02 16:24:25.921803,A2243#####76QA,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+male,3645_years,white,Primary source of income,bachelor_degree,correct,correct,correct,respNF:1M7k8,,,,,,ball,good,correct,2021-07-02 16:31:40.806011,A3FZG#####HBRW,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Q8Ty5
+female,1825_years,white,Primary source of income,bachelor_degree,correct,correct,correct,respNF:RPxjp,,,,,,ball,none,correct,2021-07-02 16:38:27.383707,AQDW1#####HTY,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:Ze9Lc
+,,,,,correct,correct,incorrect2,,,,,,,,,correct,2021-07-02 17:14:56.464536,A1453#####825Y,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,correct,correct,,,,,,,ball,,,2021-07-02 17:22:01.141301,A2WMA#####AG6J,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,correct,incorrect2,,,,,,,,,correct,2021-07-02 17:24:06.438104,A12CG#####EXHV,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,,,correct,,,,,,,ball,,incorrect2,2021-07-02 17:38:12.834600,A1FIP#####FYXS,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+,,,,,correct,correct,incorrect2,,,,,,,,,correct,2021-07-02 18:30:22.116689,AZ1AV#####RGO,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,dropped
+female,2635_years,asian,Primary source of income,bachelor_degree,correct,correct,correct,respNF:pwHdR,,,,,,ball,,correct,2021-07-02 20:09:13.703488,A1GZ4#####TCES,31MCUE39CNSHMDW1QV2JYNHNUK4G3P,t30:fVbfk
