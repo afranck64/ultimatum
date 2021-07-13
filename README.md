@@ -36,11 +36,16 @@ docker-compose up web
 docker-compose up notebook
 ```
 
-## Survey/HITs commands
+### Survey/HITs commands
 The following commands require credentials for a AWS user with MTurk policies to be configured in ~/.aws. The folder ~/.aws is mounted onto the container.
 ```bash
 docker-compose run web create_hit                       # create a new mturk HIT
 docker-compose run web add_assignments                  # add new assignments to a given task
 docker-compose run web approve_and_reject_assignments   # approve/reject assignments and and pay assignments bonus
 docker-compose run web pay_bonus_assignments            # pay assignments bonus
+docker-compose run web flask routes                     # show the routes for the app.
 ```
+
+### Web entry points:
+- /start/`treatmentid`/ e.g. /start/t00/
+- /survey/`treatmentid`/ e.g. /survey/t00/
