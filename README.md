@@ -47,5 +47,5 @@ docker-compose run web flask routes                     # show the routes for th
 ```
 
 ### Web entry points:
-- /start/`treatmentid`/ e.g. /start/t00/
-- /survey/`treatmentid`/ e.g. /survey/t00/
+- /start/`treatmentid`/ e.g. /start/t00/?job_id=demo
+- /survey/`treatmentid`/ e.g. /survey/t00/?job_id=demo
