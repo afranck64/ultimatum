@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint
-from . import index, prop, resp, survey
+from . import index, prop, resp, survey, start
 
 
 TREATMENT = os.path.split(os.path.split(__file__)[0])[1]
