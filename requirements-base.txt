@@ -7,6 +7,6 @@ h5py
 gunicorn
 scikit-learn
 flask_wtf
-Werkzeug==0.16.1
+Werkzeug==2.2.3
 statsmodels==0.12.1
 researchpy
